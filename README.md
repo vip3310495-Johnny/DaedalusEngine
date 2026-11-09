@@ -1,4 +1,4 @@
-# DaedalusEngine V1.1.0
+# DaedalusEngine V1.1.1
 
 電力電子電路模擬器（Windows 11，Rust 原生程式）。
 以網頁版「電力電子電路模擬器 V3.2.1」為參考重新實作，包含其全部元件模型，`.psimx` 電路檔兩邊通用。
@@ -9,7 +9,7 @@
 
 ## 安裝與解除安裝
 
-- 執行 `DaedalusEngine-Setup-V1.1.0.exe`。**不需要系統管理員權限**：程式安裝於
+- 執行 `DaedalusEngine-Setup-V1.1.1.exe`。**不需要系統管理員權限**：程式安裝於
   `%LOCALAPPDATA%\Programs\DaedalusEngine`，捷徑與檔案關聯只寫入目前使用者（HKCU）。
 - 安裝內容：`DaedalusEngine.exe`（圖形介面）、`daedalus-cli.exe`（命令列批次模擬）、`uninstall.exe`、本說明。
 - **更新／修復**：已安裝時再執行安裝程式（或「設定 › 應用程式 › 已安裝的應用程式 › DaedalusEngine › 修改」）會進入維護畫面，
@@ -28,8 +28,8 @@
 ### 命令列（自動化部署）
 
 ```
-DaedalusEngine-Setup-V1.1.0.exe --silent [--dir <資料夾>] [--no-desktop|--desktop] [--no-assoc|--assoc] [--launch]   安裝或更新
-DaedalusEngine-Setup-V1.1.0.exe --silent --repair    修復已安裝的程式（uninstall.exe 亦可）
+DaedalusEngine-Setup-V1.1.1.exe --silent [--dir <資料夾>] [--no-desktop|--desktop] [--no-assoc|--assoc] [--launch]   安裝或更新
+DaedalusEngine-Setup-V1.1.1.exe --silent --repair    修復已安裝的程式（uninstall.exe 亦可）
 uninstall.exe --maintain                             開啟維護畫面（更新／修復／解除安裝）
 uninstall.exe --uninstall --silent [--purge]
 ```
@@ -210,6 +210,14 @@ Simulation Control 的「高精度模式」設為 1、填入目標誤差（預�
 - **V1.1.0**：安裝程式新增維護畫面（更新／修復／降級／解除安裝）；修復會逐位元組檢查程式檔案、捷徑、檔案關聯與
   登錄資訊並列出修復項目；更新沿用原本的捷徑與關聯選擇；Windows「設定 › 應用程式」可用「修改」開啟維護畫面；
   新增命令列 `--repair`、`--maintain`。模擬引擎與 V1.0.1 相同。
+- **V1.1.1**（資安修正）：
+  - 運算式與 C 程式方塊限制巢狀深度（64 層）與單一運算式長度（1000 個運算元），惡意電路檔無法再以極深的括號或
+    超長運算式讓程式堆疊溢位而當掉；循環緩衝區／陣列／堆疊長度上限 100 萬、電路未知數上限 12 000，避免耗盡記憶體。
+  - 安裝程式拒絕安裝到「不是 DaedalusEngine 安裝」的非空資料夾（命令列 `--dir` 指向既有資料夾時，原本會覆寫
+    並在解除安裝時刪除同名的 README.md／LICENSE）；解除安裝前再確認資料夾確實是本程式；自我刪除指令不再受 `%` 環境變數展開影響；
+    系統 DLL 只從 System32 載入（防止下載資料夾中的同名 DLL 被載入）。
+  - 建置流程：GitHub Actions 全部釘選到固定版本（commit SHA）、測試用 ngspice 檢查 SHA-256、每次建置以 `cargo audit`
+    檢查相依套件已知漏洞、自動測試安裝／修復／解除安裝；新增 [SECURITY.md](SECURITY.md)。
 
 ---
 
@@ -233,7 +241,7 @@ bash tools/verify.sh                              # 範例對理論、AC 掃頻�
 node tools/examples/gen.js                        # 由 defs*.js 產生 25 個驗證範例
 node tools/examples/verify.js                     # 執行並比對全部範例（263 項，AC 範例自動加 --ac）
 node tools/examples/coverage.js -m                # 範例的元件涵蓋率
-powershell -ExecutionPolicy Bypass -File tools\package.ps1   # 產生 dist\DaedalusEngine-Setup-V1.1.0.exe
+powershell -ExecutionPolicy Bypass -File tools\package.ps1   # 產生 dist\DaedalusEngine-Setup-V1.1.1.exe
 ```
 
 專案結構：`crates/daedalus-core`（模擬引擎）、`daedalus-app`（GUI）、`daedalus-cli`（命令列）、
@@ -253,6 +261,14 @@ Copyright (C) 2026 Johnny.ch.Tsai
 本程式希望能有所助益，但**不提供任何擔保**，亦無適售性或特定目的適用性的默示擔保。授權全文見 [LICENSE](LICENSE)。
 
 本專案由 Johnny.ch.Tsai 以 AI（Anthropic Claude）輔助開發，每個版本都以 `tools/` 中的測試驗證。
+
+## 安全性
+
+- 程式沒有任何網路功能；安裝不需系統管理員權限，只寫入安裝資料夾、目前使用者的捷徑與 HKCU 登錄。
+- 電路檔中的 **C 程式方塊**會在模擬時執行檔案裡的程式碼，但它在本程式自己的直譯器中執行：不能存取檔案、網路或其他程式，
+  有執行次數、記憶體與巢狀深度上限，惡意檔案最多只會被拒絕並顯示錯誤。仍建議只模擬可信來源的電路檔。
+- 下載後可用 `certutil -hashfile <檔名> SHA256` 對照 Release 中的 `SHA256SUMS.txt`。
+- 發現資安問題請依 [SECURITY.md](SECURITY.md) 私下回報。
 
 ## 程式碼簽章
 

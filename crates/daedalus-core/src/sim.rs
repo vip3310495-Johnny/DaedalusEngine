@@ -756,6 +756,9 @@ fn solve_lin(lu: &mut Lu, b: &[f64], x: &mut [f64], r: &mut [f64], d: &mut [f64]
     }
 }
 
+/// unknowns (nodes + branch variables) the dense matrix storage allows: 12 000² × 8 B ≈ 1.2 GB
+const MAX_UNKNOWNS: usize = 12_000;
+
 impl Sim {
     /* ---------- construction ---------- */
     pub fn new(net: &Netlist, o: SimOpts) -> R<Sim> {
@@ -1012,6 +1015,10 @@ impl Sim {
         s.n = nnode + b.n_var as usize;
         s.n_c = b.n_c as usize;
         let n = s.n;
+        // the matrix keeps dense n×n values: refuse sizes that cannot fit in memory (also a crafted file)
+        if n > MAX_UNKNOWNS {
+            return Err(SimError::new(format!("電路過大：{} 個未知數（上限 {}）。", n, MAX_UNKNOWNS)));
+        }
         s.e.ps = vec![0.0; b.ps_len.max(1)];
         s.e.cs = vec![0.0; b.cs_len.max(1)];
         s.e.scratch = vec![0.0; b.scratch_len.max(1)];

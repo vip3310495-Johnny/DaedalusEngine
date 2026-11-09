@@ -259,11 +259,19 @@ enum Res {
     Arg(usize),
 }
 
+/// limits that keep a crafted expression from overflowing the stack (parse, evaluation and drop all recurse)
+const MAX_DEPTH: usize = 64;
+const MAX_OPERANDS: usize = 1000;
+
 struct Parser<'a, R: Fn(&str) -> Option<Res>> {
     t: &'a [Tok],
     i: usize,
     res: R,
     list: bool,
+    /// current nesting of unary / parenthesis levels
+    depth: usize,
+    /// operands parsed in the current expression (bounds the length of left-deep operator chains)
+    ops: usize,
 }
 
 impl<'a, R: Fn(&str) -> Option<Res>> Parser<'a, R> {
@@ -359,6 +367,19 @@ impl<'a, R: Fn(&str) -> Option<Res>> Parser<'a, R> {
         }
     }
     fn unary(&mut self) -> Result<Node, ExprError> {
+        self.ops += 1;
+        if self.ops > MAX_OPERANDS {
+            return err(format!("運算式過長（超過 {} 個運算元）", MAX_OPERANDS));
+        }
+        if self.depth >= MAX_DEPTH {
+            return err(format!("運算式巢狀過深（超過 {} 層）", MAX_DEPTH));
+        }
+        self.depth += 1;
+        let r = self.unary_inner();
+        self.depth -= 1;
+        r
+    }
+    fn unary_inner(&mut self) -> Result<Node, ExprError> {
         match self.t.get(self.i) {
             Some(Tok::Op { v: "-", .. }) => {
                 self.i += 1;
@@ -593,7 +614,7 @@ fn compile(src: &str, res: impl Fn(&str) -> Option<Res>) -> Result<Node, ExprErr
     if toks.is_empty() {
         return err("空白運算式");
     }
-    let mut p = Parser { t: &toks, i: 0, res, list: false };
+    let mut p = Parser { t: &toks, i: 0, res, list: false, depth: 0, ops: 0 };
     let n = p.expr()?;
     if p.i < toks.len() {
         return err(format!("多餘的內容，靠近 \"{}\"", tok_text(&toks[p.i])));
@@ -651,12 +672,13 @@ pub fn eval_list(src: &str, syms: &Syms) -> Result<Vec<f64>, ExprError> {
     let toks = tokenize(s)?;
     let mut out = Vec::new();
     let res = |nm: &str| syms.get(nm).map(|v| Res::Val(*v));
-    let mut p = Parser { t: &toks, i: 0, res, list: true };
+    let mut p = Parser { t: &toks, i: 0, res, list: true, depth: 0, ops: 0 };
     while p.i < toks.len() {
         if p.is_op(",") {
             p.i += 1;
             continue;
         }
+        p.ops = 0;
         let n = p.expr()?;
         out.push(n.eval(&[]));
     }
@@ -830,5 +852,21 @@ mod tests {
     fn fns() {
         let f = compile_fn("x1*x2+t", &["t", "x1", "x2"], &Syms::new()).unwrap();
         assert_eq!(f.call(&[1.0, 2.0, 3.0]), 7.0);
+    }
+    /// crafted input must give an error, never a stack overflow
+    #[test]
+    fn hostile_input_is_bounded() {
+        let deep = format!("{}1{}", "(".repeat(100_000), ")".repeat(100_000));
+        assert!(eval_const(&deep, &Syms::new()).is_err());
+        let neg = format!("{}1", "-".repeat(100_000));
+        assert!(eval_const(&neg, &Syms::new()).is_err());
+        let chain = vec!["1"; 200_000].join("+");
+        assert!(eval_const(&chain, &Syms::new()).is_err());
+        let list_item = format!("1 2 {}", vec!["1"; 200_000].join("+"));
+        assert!(eval_list(&list_item, &Syms::new()).is_err());
+        // ordinary sizes still work
+        assert_eq!(c(&vec!["1"; 500].join("+")), 500.0);
+        assert_eq!(c(&format!("{}2{}", "(".repeat(40), ")".repeat(40))), 2.0);
+        assert_eq!(eval_list(&vec!["1"; 5000].join(" "), &Syms::new()).unwrap().len(), 5000);
     }
 }

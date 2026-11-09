@@ -1,0 +1,8 @@
+# Keeps the SHA-pinned GitHub Actions current (opens a pull request when an action has a new release).
+# Rust dependencies are checked for known vulnerabilities by `cargo audit` in every build instead.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

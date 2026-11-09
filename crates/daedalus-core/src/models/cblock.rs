@@ -332,7 +332,15 @@ struct Ps<'a> {
     n_loc: usize,
     glob_mode: bool,
     statics: Vec<DeclItem>,
+    /// current expression nesting (unary / parenthesis levels) and statement nesting
+    depth: usize,
+    sdepth: usize,
+    /// operands parsed in the current statement (bounds left-deep operator chains)
+    ops: usize,
 }
+/// limits that keep crafted C code from overflowing the stack (parse, evaluation and drop all recurse)
+const MAX_DEPTH: usize = 64;
+const MAX_OPERANDS: usize = 1000;
 type PR<T> = Result<T, String>;
 const TYPES: &[&str] = &["double", "float", "int", "long", "short", "char", "bool", "unsigned", "signed", "static", "const", "volatile", "register", "extern", "_Bool"];
 
@@ -442,12 +450,12 @@ impl<'a> Ps<'a> {
                 if self.eat("{") {
                     let mut l = Vec::new();
                     if !self.is_op("}") {
-                        l.push(self.assign()?);
+                        { self.ops = 0; l.push(self.assign()?); }
                         while self.eat(",") {
                             if self.is_op("}") {
                                 break;
                             }
-                            l.push(self.assign()?);
+                            { self.ops = 0; l.push(self.assign()?); }
                         }
                     }
                     self.expect("}")?;
@@ -485,6 +493,18 @@ impl<'a> Ps<'a> {
         Ok(St::Decl(items))
     }
     fn stmt(&mut self) -> PR<St> {
+        if self.sdepth >= MAX_DEPTH {
+            return Err(format!("程式區塊巢狀過深（超過 {} 層）", MAX_DEPTH));
+        }
+        let saved = self.ops;
+        self.ops = 0;
+        self.sdepth += 1;
+        let r = self.stmt_inner();
+        self.sdepth -= 1;
+        self.ops = saved;
+        r
+    }
+    fn stmt_inner(&mut self) -> PR<St> {
         if self.is_type_start() {
             let d = self.decl()?;
             self.expect(";")?;
@@ -728,6 +748,19 @@ impl<'a> Ps<'a> {
         }
     }
     fn unary(&mut self) -> PR<Ex> {
+        self.ops += 1;
+        if self.ops > MAX_OPERANDS {
+            return Err(format!("運算式過長（單一敘述超過 {} 個運算元）", MAX_OPERANDS));
+        }
+        if self.depth >= MAX_DEPTH {
+            return Err(format!("運算式巢狀過深（超過 {} 層）", MAX_DEPTH));
+        }
+        self.depth += 1;
+        let r = self.unary_inner();
+        self.depth -= 1;
+        r
+    }
+    fn unary_inner(&mut self) -> PR<Ex> {
         if self.eat("-") {
             return Ok(Ex::Neg(Box::new(self.unary()?)));
         }
@@ -1326,7 +1359,7 @@ pub fn make(ctx: &mut ElCtx) -> R<Vec<Box<dyn Inst>>> {
     let gt = lex(&gsrc, &mut macros).map_err(|m| ctx.err(format!("C 程式碼語法錯誤：{}", m)))?;
     let st = lex(&ssrc, &mut macros).map_err(|m| ctx.err(format!("C 程式碼語法錯誤：{}", m)))?;
     // global section
-    let mut ps = Ps { t: &gt, i: 0, scopes: vec![HashMap::new()], n_glob: 0, n_loc: 0, glob_mode: true, statics: vec![] };
+    let mut ps = Ps { t: &gt, i: 0, scopes: vec![HashMap::new()], n_glob: 0, n_loc: 0, glob_mode: true, statics: vec![], depth: 0, sdepth: 0, ops: 0 };
     let glob = ps.block_items(false).map_err(|m| ctx.err(format!("C 程式碼語法錯誤（全域變數）：{}", m)))?;
     let gscope = ps.scopes.pop().unwrap();
     let n_glob = ps.n_glob;
@@ -1342,7 +1375,7 @@ pub fn make(ctx: &mut ElCtx) -> R<Vec<Box<dyn Inst>>> {
         base.insert(format!("y{}", i + 1), (Slot::L(i), Kind::Scalar));
         out_slots.push(i);
     }
-    let mut ps2 = Ps { t: &st, i: 0, scopes: vec![base, gscope], n_glob, n_loc: nout, glob_mode: false, statics: vec![] };
+    let mut ps2 = Ps { t: &st, i: 0, scopes: vec![base, gscope], n_glob, n_loc: nout, glob_mode: false, statics: vec![], depth: 0, sdepth: 0, ops: 0 };
     let code = ps2.block_items(false).map_err(|m| ctx.err(format!("C 程式碼語法錯誤：{}", m)))?;
     let statics = std::mem::take(&mut ps2.statics);
     Ok(vec![Box::new(CBlock {
@@ -1369,7 +1402,7 @@ mod tests {
         let mut m = HashMap::new();
         let gt = lex(glob, &mut m).unwrap();
         let st = lex(code, &mut m).unwrap();
-        let mut ps = Ps { t: &gt, i: 0, scopes: vec![HashMap::new()], n_glob: 0, n_loc: 0, glob_mode: true, statics: vec![] };
+        let mut ps = Ps { t: &gt, i: 0, scopes: vec![HashMap::new()], n_glob: 0, n_loc: 0, glob_mode: true, statics: vec![], depth: 0, sdepth: 0, ops: 0 };
         let g = ps.block_items(false).unwrap();
         let gs = ps.scopes.pop().unwrap();
         let mut base = HashMap::new();
@@ -1377,7 +1410,7 @@ mod tests {
         base.insert("delt".to_string(), (Slot::P(1), Kind::Scalar));
         base.insert("x1".to_string(), (Slot::P(2), Kind::Scalar));
         base.insert("y1".to_string(), (Slot::L(0), Kind::Scalar));
-        let mut ps2 = Ps { t: &st, i: 0, scopes: vec![base, gs], n_glob: ps.n_glob, n_loc: 1, glob_mode: false, statics: vec![] };
+        let mut ps2 = Ps { t: &st, i: 0, scopes: vec![base, gs], n_glob: ps.n_glob, n_loc: 1, glob_mode: false, statics: vec![], depth: 0, sdepth: 0, ops: 0 };
         let c = ps2.block_items(false).unwrap();
         let mut gv = vec![V::N(0.0); ps2.n_glob];
         let mut lv = vec![V::N(0.0); ps2.n_loc];
@@ -1409,5 +1442,30 @@ mod tests {
         assert_eq!(run1("", "y1 = (x1 > 1) ? fabs(-3.0) : 0;", 2.0), 3.0);
         assert_eq!(run1("", "int k = 0; while (1) { k++; if (k >= 10) break; } y1 = k;", 0.0), 10.0);
         assert_eq!(run1("", "y1 = 1 << 4 | 1;", 0.0), 17.0);
+    }
+    fn parse_err(code: &str) -> bool {
+        let mut m = HashMap::new();
+        let st = match lex(code, &mut m) {
+            Ok(t) => t,
+            Err(_) => return true,
+        };
+        let mut base = HashMap::new();
+        base.insert("y1".to_string(), (Slot::L(0), Kind::Scalar));
+        let mut ps = Ps { t: &st, i: 0, scopes: vec![base], n_glob: 0, n_loc: 1, glob_mode: false, statics: vec![], depth: 0, sdepth: 0, ops: 0 };
+        ps.block_items(false).is_err()
+    }
+    /// crafted C code must give an error, never a stack overflow
+    #[test]
+    fn hostile_code_is_bounded() {
+        assert!(parse_err(&format!("y1 = {}1{};", "(".repeat(100_000), ")".repeat(100_000))));
+        assert!(parse_err(&format!("y1 = {}1;", "-".repeat(100_000))));
+        assert!(parse_err(&format!("y1 = {};", vec!["1"; 200_000].join("+"))));
+        assert!(parse_err(&format!("y1 = {};", vec!["1"; 200_000].join(","))));
+        assert!(parse_err(&format!("{}y1 = 1;{}", "{".repeat(10_000), "}".repeat(10_000))));
+        assert!(parse_err(&format!("{}y1 = 1;", "if (1) ".repeat(10_000))));
+        // a long initializer table is fine: each item is its own expression
+        let table = format!("double tab[3000] = {{{}}}; y1 = tab[2999];", vec!["2"; 3000].join(","));
+        assert_eq!(run1("", &table, 0.0), 2.0);
+        assert_eq!(run1("", &format!("y1 = {};", vec!["1"; 500].join("+")), 0.0), 500.0);
     }
 }

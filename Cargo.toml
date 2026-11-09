@@ -3,7 +3,7 @@ resolver = "2"
 members = ["crates/daedalus-core", "crates/daedalus-cli", "crates/daedalus-app", "crates/daedalus-installer", "crates/daedalus-icongen"]
 
 [workspace.package]
-version = "1.1.0"
+version = "1.1.1"
 edition = "2021"
 authors = ["Johnny.ch.Tsai"]
 license = "GPL-3.0-only"

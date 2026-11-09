@@ -11,7 +11,7 @@ use winreg::RegKey;
 pub const APP: &str = "DaedalusEngine";
 pub const APP_EXE: &str = "DaedalusEngine.exe";
 pub const UNINSTALLER: &str = "uninstall.exe";
-pub const VERSION: &str = "V1.1.0";
+pub const VERSION: &str = "V1.1.1";
 pub const VERSION_NUM: &str = env!("CARGO_PKG_VERSION");
 pub const PUBLISHER: &str = "Johnny.ch.Tsai";
 pub const DESC: &str = "DaedalusEngine 電力電子電路模擬器";
@@ -181,11 +181,21 @@ fn check_dir(dir: &Path) -> Result<(), String> {
     if dir.exists() && !dir.is_dir() {
         return Err(format!("{} 不是資料夾。", dir.display()));
     }
+    // a non-empty folder that is not an installation of this program: installing would overwrite (and
+    // uninstalling would later delete) files there with the same names, e.g. someone's README.md or LICENSE
+    if dir.is_dir() && !is_install_dir(dir) && fs::read_dir(dir).map(|mut r| r.next().is_some()).unwrap_or(false) {
+        return Err(format!("{} 已有其他檔案。請選擇空資料夾，或名為 DaedalusEngine 的新資料夾。", dir.display()));
+    }
     fs::create_dir_all(dir).map_err(|e| perm_msg(dir, &e))?;
     let probe = dir.join(".daedalus-write-test");
     fs::write(&probe, b"ok").map_err(|e| perm_msg(dir, &e))?;
     let _ = fs::remove_file(probe);
     Ok(())
+}
+
+/// does the folder hold an installation of this program (its main program or uninstaller)?
+pub fn is_install_dir(dir: &Path) -> bool {
+    dir.join(APP_EXE).is_file() || dir.join(UNINSTALLER).is_file()
 }
 
 fn perm_msg(dir: &Path, e: &std::io::Error) -> String {
@@ -385,6 +395,11 @@ fn unassociate() {
 /// delete the program's files from `dir` (never anything else); returns warnings
 fn remove_files(dir: &Path) -> Vec<String> {
     let mut warn = vec![];
+    if !is_install_dir(dir) {
+        // the registered location no longer holds the program: delete nothing there
+        warn.push(format!("{} 中找不到 DaedalusEngine，未刪除任何檔案。", dir.display()));
+        return warn;
+    }
     let me = std::env::current_exe().ok().and_then(|p| fs::canonicalize(p).ok());
     let mut names: Vec<String> = unpack().map(|f| f.into_iter().map(|x| x.0).collect()).unwrap_or_else(|_| vec![APP_EXE.into()]);
     names.push(UNINSTALLER.into());
@@ -446,7 +461,13 @@ pub fn schedule_self_delete(dir: &Path) {
     if !in_dir {
         return;
     }
-    let cmd = format!("/C ping -n 4 127.0.0.1 >NUL & del /F /Q \"{}\" & rmdir \"{}\"", me.display(), dir.display());
+    let (m, d) = (me.display().to_string(), dir.display().to_string());
+    if m.contains('%') || d.contains('%') {
+        // cmd.exe would expand %VAR% inside the quotes: leave uninstall.exe in place instead
+        log(&format!("self-delete skipped (path contains %): {}", m));
+        return;
+    }
+    let cmd = format!("/C ping -n 4 127.0.0.1 >NUL & del /F /Q \"{}\" & rmdir \"{}\"", m, d);
     const CREATE_NO_WINDOW: u32 = 0x0800_0000;
     let _ = std::process::Command::new("cmd.exe").raw_arg(cmd).current_dir(std::env::temp_dir()).creation_flags(CREATE_NO_WINDOW).spawn();
 }

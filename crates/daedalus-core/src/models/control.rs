@@ -1979,6 +1979,9 @@ impl Inst for Alpha {
 }
 
 /* ------------------------------------------------------------------ factories */
+/// largest buffer / array / stack a file may ask for (keeps a crafted .psimx from exhausting memory)
+const MAX_VEC: i64 = 1_000_000;
+
 pub fn make(ctx: &mut ElCtx) -> R<Option<Vec<Box<dyn Inst>>>> {
     let t = ctx.typ.clone();
     let c0 = |ctx: &ElCtx| ctx.c(0);
@@ -2361,7 +2364,11 @@ pub fn make(ctx: &mut ElCtx) -> R<Option<Vec<Box<dyn Inst>>>> {
             vec![Box::new(Samp { ins: vec![i], o, fs, so, k: SampK::Quant { n, a, b, c, d, rnd: t == "DIGIT2" }, y: 0.0, is_hit: false })]
         }
         "CBUF" => {
-            let l = ctx.int_req("L")?.max(1) as usize;
+            let l = ctx.int_req("L")?.max(1);
+            if l > MAX_VEC {
+                return Err(ctx.err(format!("長度 L 上限為 {}", MAX_VEC)));
+            }
+            let l = l as usize;
             let fs = ctx.pos("fs")?;
             let (i, o) = (ctx.c(0)?, ctx.c(1)?);
             let so = ctx.b.req_c(l + 1);
@@ -2369,7 +2376,11 @@ pub fn make(ctx: &mut ElCtx) -> R<Option<Vec<Box<dyn Inst>>>> {
         }
         "ARRAY" => {
             let vals = ctx.list("vals")?;
-            let l = ctx.int("L", vals.len() as f64)?.max(0) as usize;
+            let l = ctx.int("L", vals.len() as f64)?.max(0);
+            if l > MAX_VEC {
+                return Err(ctx.err(format!("長度 L 上限為 {}", MAX_VEC)));
+            }
+            let l = l as usize;
             let arr: Vec<f64> = (0..l).map(|i| vals.get(i).copied().filter(|v| *v != 0.0 && !v.is_nan()).unwrap_or(0.0)).collect();
             misc(vec![], vec![ctx.c(0)?], MiscK::Array(arr))
         }
@@ -2383,7 +2394,11 @@ pub fn make(ctx: &mut ElCtx) -> R<Option<Vec<Box<dyn Inst>>>> {
             misc(vec![i], vec![ctx.c(1)?], MiscK::MemRead(off))
         }
         "STACK" => {
-            let depth = ctx.int("depth", 8.0)?.max(1) as usize;
+            let depth = ctx.int("depth", 8.0)?.max(1);
+            if depth > MAX_VEC {
+                return Err(ctx.err(format!("堆疊深度上限為 {}", MAX_VEC)));
+            }
+            let depth = depth as usize;
             let ins = [ctx.c(0)?, ctx.c(1)?, ctx.c(2)?];
             let o = ctx.c(3)?;
             vec![Box::new(Stack { ins, o, depth, st: vec![], pst: vec![], y: 0.0, last_y: NAN })]
