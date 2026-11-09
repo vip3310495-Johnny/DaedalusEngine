@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <!-- 2 波形化翼：一個 PWM 脈衝之後掠起成羽翼曲線，飛向太陽 -->
+  <defs><linearGradient id="ln" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#38BDF8"/><stop offset="1" stop-color="#A78BFA"/></linearGradient></defs>
+  <rect x="8" y="8" width="240" height="240" rx="56" fill="#0B1220"/>
+  <circle cx="200" cy="64" r="18" fill="#FFC23D"/>
+  <path d="M44 182 H66 V146 H96 V182 H114 C158 182 182 140 184 96" fill="none" stroke="url(#ln)" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

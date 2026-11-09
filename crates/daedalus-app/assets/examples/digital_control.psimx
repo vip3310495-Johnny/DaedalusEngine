@@ -1,0 +1,1860 @@
+{
+ "app": "psimweb",
+ "version": "V1.1.0",
+ "doc": {
+  "elements": [
+   {
+    "id": 1,
+    "type": "TEXT",
+    "x": -20,
+    "y": -8,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "取樣頻率 fs = 2 kHz（T = 0.5 ms，取樣時刻 k·T 為模擬斷點），輸入 u = sin(2π·100t)。\n零階保持、單位延遲、離散微分 (u(n) − u(n−1))/T、離散積分（梯形／後向／前向尤拉）、可重置積分（外部上升緣 7.25 ms、17.25 ms）、\n內部重置積分（18000 °/s，0 ~ 360° 環繞）、FIR（4 點平均）、IIR Butterworth（fc = 1 kHz@10 kHz 係數）、z 轉移函數 0.1/(z − 0.9)、\n量化（8 位元截斷／四捨五入）、8 位元 A/D（Vref = 1、2 kHz 時脈上升緣）接 D/A。與差分方程式逐取樣比較。"
+    }
+   },
+   {
+    "id": 2,
+    "type": "SIMCTRL",
+    "x": -20,
+    "y": -4,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "dt": "10u",
+     "tt": "20m",
+     "tp": "0",
+     "ps": "1",
+     "lte": "1",
+     "ltetol": "1e-3",
+     "interp": "1",
+     "damp": "1",
+     "acc": "0",
+     "etol": "1e-6",
+     "maxlv": "8"
+    }
+   },
+   {
+    "id": 3,
+    "type": "VSIN",
+    "x": -13,
+    "y": 14,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Uu",
+    "params": {
+     "Vm": "1",
+     "f": "100",
+     "ph": "0",
+     "off": "0",
+     "ts": "0"
+    }
+   },
+   {
+    "id": 5,
+    "type": "LABEL",
+    "x": -13,
+    "y": 10,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "u"
+    }
+   },
+   {
+    "id": 7,
+    "type": "GND",
+    "x": -13,
+    "y": 18,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 8,
+    "type": "VSIN",
+    "x": 1,
+    "y": 14,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Ux",
+    "params": {
+     "Vm": "0.4",
+     "f": "100",
+     "ph": "0",
+     "off": "0.5",
+     "ts": "0"
+    }
+   },
+   {
+    "id": 10,
+    "type": "LABEL",
+    "x": 1,
+    "y": 10,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "xs"
+    }
+   },
+   {
+    "id": 12,
+    "type": "GND",
+    "x": 1,
+    "y": 18,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 13,
+    "type": "VSIN",
+    "x": 15,
+    "y": 14,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Uq",
+    "params": {
+     "Vm": "0.9",
+     "f": "100",
+     "ph": "0",
+     "off": "0.0123",
+     "ts": "0"
+    }
+   },
+   {
+    "id": 15,
+    "type": "LABEL",
+    "x": 15,
+    "y": 10,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "uq"
+    }
+   },
+   {
+    "id": 17,
+    "type": "GND",
+    "x": 15,
+    "y": 18,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 18,
+    "type": "VSTEP",
+    "x": 29,
+    "y": 14,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Us",
+    "params": {
+     "V": "1",
+     "ts": "0.25m"
+    }
+   },
+   {
+    "id": 20,
+    "type": "LABEL",
+    "x": 29,
+    "y": 10,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "st"
+    }
+   },
+   {
+    "id": 22,
+    "type": "GND",
+    "x": 29,
+    "y": 18,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 23,
+    "type": "VSTEP",
+    "x": -13,
+    "y": 28,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Uw",
+    "params": {
+     "V": "18000",
+     "ts": "0.25m"
+    }
+   },
+   {
+    "id": 25,
+    "type": "LABEL",
+    "x": -13,
+    "y": 24,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "sw"
+    }
+   },
+   {
+    "id": 27,
+    "type": "GND",
+    "x": -13,
+    "y": 32,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 28,
+    "type": "VSQU",
+    "x": 1,
+    "y": 28,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Urst",
+    "params": {
+     "Vpp": "1",
+     "f": "100",
+     "D": "0.1",
+     "off": "0",
+     "ph": "261"
+    }
+   },
+   {
+    "id": 30,
+    "type": "LABEL",
+    "x": 1,
+    "y": 24,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "rst"
+    }
+   },
+   {
+    "id": 32,
+    "type": "GND",
+    "x": 1,
+    "y": 32,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 33,
+    "type": "VSQU",
+    "x": 15,
+    "y": 28,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Uclk",
+    "params": {
+     "Vpp": "1",
+     "f": "2k",
+     "D": "0.5",
+     "off": "0",
+     "ph": "180"
+    }
+   },
+   {
+    "id": 35,
+    "type": "LABEL",
+    "x": 15,
+    "y": 24,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "clk"
+    }
+   },
+   {
+    "id": 37,
+    "type": "GND",
+    "x": 15,
+    "y": 32,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 38,
+    "type": "CONST",
+    "x": 29,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Kref",
+    "params": {
+     "v": "1"
+    }
+   },
+   {
+    "id": 40,
+    "type": "LABEL",
+    "x": 33,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "vref"
+    }
+   },
+   {
+    "id": 41,
+    "type": "ZOH",
+    "x": -12,
+    "y": 41,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Zh",
+    "params": {
+     "fs": "2k"
+    }
+   },
+   {
+    "id": 43,
+    "type": "LABEL",
+    "x": -16,
+    "y": 41,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "u"
+    }
+   },
+   {
+    "id": 45,
+    "type": "LABEL",
+    "x": -8,
+    "y": 41,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_zoh"
+    }
+   },
+   {
+    "id": 46,
+    "type": "VP",
+    "x": 3,
+    "y": 41,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_zoh",
+    "params": {}
+   },
+   {
+    "id": 48,
+    "type": "LABEL",
+    "x": 3,
+    "y": 45,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_zoh"
+    }
+   },
+   {
+    "id": 49,
+    "type": "UDELAY",
+    "x": 18,
+    "y": 41,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Ud",
+    "params": {
+     "fs": "2k"
+    }
+   },
+   {
+    "id": 51,
+    "type": "LABEL",
+    "x": 14,
+    "y": 41,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "u"
+    }
+   },
+   {
+    "id": 53,
+    "type": "LABEL",
+    "x": 22,
+    "y": 41,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_ud"
+    }
+   },
+   {
+    "id": 54,
+    "type": "VP",
+    "x": 33,
+    "y": 41,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_udelay",
+    "params": {}
+   },
+   {
+    "id": 56,
+    "type": "LABEL",
+    "x": 33,
+    "y": 45,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_ud"
+    }
+   },
+   {
+    "id": 57,
+    "type": "DD",
+    "x": -12,
+    "y": 54,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Dd",
+    "params": {
+     "fs": "2k"
+    }
+   },
+   {
+    "id": 59,
+    "type": "LABEL",
+    "x": -16,
+    "y": 54,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "u"
+    }
+   },
+   {
+    "id": 61,
+    "type": "LABEL",
+    "x": -8,
+    "y": 54,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_dd"
+    }
+   },
+   {
+    "id": 62,
+    "type": "VP",
+    "x": 3,
+    "y": 54,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_dd",
+    "params": {}
+   },
+   {
+    "id": 64,
+    "type": "LABEL",
+    "x": 3,
+    "y": 58,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_dd"
+    }
+   },
+   {
+    "id": 65,
+    "type": "ID",
+    "x": 18,
+    "y": 54,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "It",
+    "params": {
+     "alg": "0",
+     "y0": "0",
+     "fs": "2k"
+    }
+   },
+   {
+    "id": 67,
+    "type": "LABEL",
+    "x": 14,
+    "y": 54,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "u"
+    }
+   },
+   {
+    "id": 69,
+    "type": "LABEL",
+    "x": 22,
+    "y": 54,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_it"
+    }
+   },
+   {
+    "id": 70,
+    "type": "VP",
+    "x": 33,
+    "y": 54,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_id_trap",
+    "params": {}
+   },
+   {
+    "id": 72,
+    "type": "LABEL",
+    "x": 33,
+    "y": 58,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_it"
+    }
+   },
+   {
+    "id": 73,
+    "type": "ID",
+    "x": -12,
+    "y": 67,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Ib",
+    "params": {
+     "alg": "1",
+     "y0": "0",
+     "fs": "2k"
+    }
+   },
+   {
+    "id": 75,
+    "type": "LABEL",
+    "x": -16,
+    "y": 67,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "u"
+    }
+   },
+   {
+    "id": 77,
+    "type": "LABEL",
+    "x": -8,
+    "y": 67,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_ib"
+    }
+   },
+   {
+    "id": 78,
+    "type": "VP",
+    "x": 3,
+    "y": 66,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_id_be",
+    "params": {}
+   },
+   {
+    "id": 80,
+    "type": "LABEL",
+    "x": 3,
+    "y": 70,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_ib"
+    }
+   },
+   {
+    "id": 81,
+    "type": "ID",
+    "x": 18,
+    "y": 67,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "If",
+    "params": {
+     "alg": "2",
+     "y0": "0",
+     "fs": "2k"
+    }
+   },
+   {
+    "id": 83,
+    "type": "LABEL",
+    "x": 14,
+    "y": 67,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "u"
+    }
+   },
+   {
+    "id": 85,
+    "type": "LABEL",
+    "x": 22,
+    "y": 67,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_if"
+    }
+   },
+   {
+    "id": 86,
+    "type": "VP",
+    "x": 33,
+    "y": 66,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_id_fe",
+    "params": {}
+   },
+   {
+    "id": 88,
+    "type": "LABEL",
+    "x": 33,
+    "y": 70,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_if"
+    }
+   },
+   {
+    "id": 89,
+    "type": "IRSTD",
+    "x": -12,
+    "y": 79,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Ir",
+    "params": {
+     "alg": "1",
+     "y0": "0",
+     "flag": "0",
+     "fs": "2k"
+    }
+   },
+   {
+    "id": 91,
+    "type": "LABEL",
+    "x": -16,
+    "y": 79,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "st"
+    }
+   },
+   {
+    "id": 93,
+    "type": "LABEL",
+    "x": -12,
+    "y": 83,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "rst"
+    }
+   },
+   {
+    "id": 95,
+    "type": "LABEL",
+    "x": -8,
+    "y": 79,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_ir"
+    }
+   },
+   {
+    "id": 96,
+    "type": "VP",
+    "x": 3,
+    "y": 79,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_irstd",
+    "params": {}
+   },
+   {
+    "id": 98,
+    "type": "LABEL",
+    "x": 3,
+    "y": 83,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_ir"
+    }
+   },
+   {
+    "id": 99,
+    "type": "IRSTI",
+    "x": 18,
+    "y": 79,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Ii",
+    "params": {
+     "alg": "0",
+     "y0": "0",
+     "lo": "0",
+     "hi": "360",
+     "fs": "2k"
+    }
+   },
+   {
+    "id": 101,
+    "type": "LABEL",
+    "x": 14,
+    "y": 79,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "sw"
+    }
+   },
+   {
+    "id": 103,
+    "type": "LABEL",
+    "x": 22,
+    "y": 79,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_ii"
+    }
+   },
+   {
+    "id": 104,
+    "type": "VP",
+    "x": 33,
+    "y": 79,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_irsti",
+    "params": {}
+   },
+   {
+    "id": 106,
+    "type": "LABEL",
+    "x": 33,
+    "y": 83,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_ii"
+    }
+   },
+   {
+    "id": 107,
+    "type": "FIR",
+    "x": -12,
+    "y": 92,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Fr",
+    "params": {
+     "b": "0.25 0.25 0.25 0.25",
+     "fs": "2k"
+    }
+   },
+   {
+    "id": 109,
+    "type": "LABEL",
+    "x": -16,
+    "y": 92,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "u"
+    }
+   },
+   {
+    "id": 111,
+    "type": "LABEL",
+    "x": -8,
+    "y": 92,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_fir"
+    }
+   },
+   {
+    "id": 112,
+    "type": "VP",
+    "x": 3,
+    "y": 92,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_fir",
+    "params": {}
+   },
+   {
+    "id": 114,
+    "type": "LABEL",
+    "x": 3,
+    "y": 96,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_fir"
+    }
+   },
+   {
+    "id": 115,
+    "type": "FILTD",
+    "x": 18,
+    "y": 92,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Fd",
+    "params": {
+     "b": "0.0201 0.0402 0.0201",
+     "a": "1 -1.561 0.6414",
+     "fs": "2k"
+    }
+   },
+   {
+    "id": 117,
+    "type": "LABEL",
+    "x": 14,
+    "y": 92,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "u"
+    }
+   },
+   {
+    "id": 119,
+    "type": "LABEL",
+    "x": 22,
+    "y": 92,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_iir"
+    }
+   },
+   {
+    "id": 120,
+    "type": "VP",
+    "x": 33,
+    "y": 92,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_iir",
+    "params": {}
+   },
+   {
+    "id": 122,
+    "type": "LABEL",
+    "x": 33,
+    "y": 96,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_iir"
+    }
+   },
+   {
+    "id": 123,
+    "type": "TFZ",
+    "x": -12,
+    "y": 105,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Tz",
+    "params": {
+     "b": "0 0.1",
+     "a": "1 -0.9",
+     "fs": "2k"
+    }
+   },
+   {
+    "id": 125,
+    "type": "LABEL",
+    "x": -16,
+    "y": 105,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "u"
+    }
+   },
+   {
+    "id": 127,
+    "type": "LABEL",
+    "x": -8,
+    "y": 105,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_tfz"
+    }
+   },
+   {
+    "id": 128,
+    "type": "VP",
+    "x": 3,
+    "y": 105,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_tfz",
+    "params": {}
+   },
+   {
+    "id": 130,
+    "type": "LABEL",
+    "x": 3,
+    "y": 109,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_tfz"
+    }
+   },
+   {
+    "id": 131,
+    "type": "DIGIT",
+    "x": 18,
+    "y": 105,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Q1",
+    "params": {
+     "N": "8",
+     "vimin": "-1",
+     "vimax": "1",
+     "vomin": "0",
+     "vomax": "255",
+     "fs": "2k"
+    }
+   },
+   {
+    "id": 133,
+    "type": "LABEL",
+    "x": 14,
+    "y": 105,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "uq"
+    }
+   },
+   {
+    "id": 135,
+    "type": "LABEL",
+    "x": 22,
+    "y": 105,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_q1"
+    }
+   },
+   {
+    "id": 136,
+    "type": "VP",
+    "x": 33,
+    "y": 105,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_quant",
+    "params": {}
+   },
+   {
+    "id": 138,
+    "type": "LABEL",
+    "x": 33,
+    "y": 109,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_q1"
+    }
+   },
+   {
+    "id": 139,
+    "type": "DIGIT2",
+    "x": -12,
+    "y": 118,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Q2",
+    "params": {
+     "N": "8",
+     "vimin": "-1",
+     "vimax": "1",
+     "vomin": "0",
+     "vomax": "255",
+     "fs": "2k"
+    }
+   },
+   {
+    "id": 141,
+    "type": "LABEL",
+    "x": -16,
+    "y": 118,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "uq"
+    }
+   },
+   {
+    "id": 143,
+    "type": "LABEL",
+    "x": -8,
+    "y": 118,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_q2"
+    }
+   },
+   {
+    "id": 144,
+    "type": "VP",
+    "x": 3,
+    "y": 118,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_quant2",
+    "params": {}
+   },
+   {
+    "id": 146,
+    "type": "LABEL",
+    "x": 3,
+    "y": 122,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_q2"
+    }
+   },
+   {
+    "id": 147,
+    "type": "ADC",
+    "x": 19,
+    "y": 120,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Ad",
+    "params": {
+     "bits": "8"
+    }
+   },
+   {
+    "id": 149,
+    "type": "LABEL",
+    "x": 14,
+    "y": 119,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "xs"
+    }
+   },
+   {
+    "id": 151,
+    "type": "LABEL",
+    "x": 19,
+    "y": 115,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "vref"
+    }
+   },
+   {
+    "id": 153,
+    "type": "LABEL",
+    "x": 14,
+    "y": 121,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "clk"
+    }
+   },
+   {
+    "id": 155,
+    "type": "LABEL",
+    "x": 24,
+    "y": 120,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "code"
+    }
+   },
+   {
+    "id": 156,
+    "type": "VP",
+    "x": 35,
+    "y": 118,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_adc",
+    "params": {}
+   },
+   {
+    "id": 158,
+    "type": "LABEL",
+    "x": 35,
+    "y": 122,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "code"
+    }
+   },
+   {
+    "id": 159,
+    "type": "DAC",
+    "x": -11,
+    "y": 135,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Da",
+    "params": {
+     "bits": "8"
+    }
+   },
+   {
+    "id": 161,
+    "type": "LABEL",
+    "x": -16,
+    "y": 135,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "code"
+    }
+   },
+   {
+    "id": 163,
+    "type": "LABEL",
+    "x": -11,
+    "y": 130,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "vref"
+    }
+   },
+   {
+    "id": 165,
+    "type": "LABEL",
+    "x": -6,
+    "y": 135,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_dac"
+    }
+   },
+   {
+    "id": 166,
+    "type": "VP",
+    "x": 5,
+    "y": 133,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_dac",
+    "params": {}
+   },
+   {
+    "id": 168,
+    "type": "LABEL",
+    "x": 5,
+    "y": 137,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_dac"
+    }
+   }
+  ],
+  "wires": [
+   {
+    "id": 4,
+    "x1": -13,
+    "y1": 12,
+    "x2": -13,
+    "y2": 10
+   },
+   {
+    "id": 6,
+    "x1": -13,
+    "y1": 16,
+    "x2": -13,
+    "y2": 18
+   },
+   {
+    "id": 9,
+    "x1": 1,
+    "y1": 12,
+    "x2": 1,
+    "y2": 10
+   },
+   {
+    "id": 11,
+    "x1": 1,
+    "y1": 16,
+    "x2": 1,
+    "y2": 18
+   },
+   {
+    "id": 14,
+    "x1": 15,
+    "y1": 12,
+    "x2": 15,
+    "y2": 10
+   },
+   {
+    "id": 16,
+    "x1": 15,
+    "y1": 16,
+    "x2": 15,
+    "y2": 18
+   },
+   {
+    "id": 19,
+    "x1": 29,
+    "y1": 12,
+    "x2": 29,
+    "y2": 10
+   },
+   {
+    "id": 21,
+    "x1": 29,
+    "y1": 16,
+    "x2": 29,
+    "y2": 18
+   },
+   {
+    "id": 24,
+    "x1": -13,
+    "y1": 26,
+    "x2": -13,
+    "y2": 24
+   },
+   {
+    "id": 26,
+    "x1": -13,
+    "y1": 30,
+    "x2": -13,
+    "y2": 32
+   },
+   {
+    "id": 29,
+    "x1": 1,
+    "y1": 26,
+    "x2": 1,
+    "y2": 24
+   },
+   {
+    "id": 31,
+    "x1": 1,
+    "y1": 30,
+    "x2": 1,
+    "y2": 32
+   },
+   {
+    "id": 34,
+    "x1": 15,
+    "y1": 26,
+    "x2": 15,
+    "y2": 24
+   },
+   {
+    "id": 36,
+    "x1": 15,
+    "y1": 30,
+    "x2": 15,
+    "y2": 32
+   },
+   {
+    "id": 39,
+    "x1": 31,
+    "y1": 27,
+    "x2": 33,
+    "y2": 27
+   },
+   {
+    "id": 42,
+    "x1": -14,
+    "y1": 41,
+    "x2": -16,
+    "y2": 41
+   },
+   {
+    "id": 44,
+    "x1": -10,
+    "y1": 41,
+    "x2": -8,
+    "y2": 41
+   },
+   {
+    "id": 47,
+    "x1": 3,
+    "y1": 43,
+    "x2": 3,
+    "y2": 45
+   },
+   {
+    "id": 50,
+    "x1": 16,
+    "y1": 41,
+    "x2": 14,
+    "y2": 41
+   },
+   {
+    "id": 52,
+    "x1": 20,
+    "y1": 41,
+    "x2": 22,
+    "y2": 41
+   },
+   {
+    "id": 55,
+    "x1": 33,
+    "y1": 43,
+    "x2": 33,
+    "y2": 45
+   },
+   {
+    "id": 58,
+    "x1": -14,
+    "y1": 54,
+    "x2": -16,
+    "y2": 54
+   },
+   {
+    "id": 60,
+    "x1": -10,
+    "y1": 54,
+    "x2": -8,
+    "y2": 54
+   },
+   {
+    "id": 63,
+    "x1": 3,
+    "y1": 56,
+    "x2": 3,
+    "y2": 58
+   },
+   {
+    "id": 66,
+    "x1": 16,
+    "y1": 54,
+    "x2": 14,
+    "y2": 54
+   },
+   {
+    "id": 68,
+    "x1": 20,
+    "y1": 54,
+    "x2": 22,
+    "y2": 54
+   },
+   {
+    "id": 71,
+    "x1": 33,
+    "y1": 56,
+    "x2": 33,
+    "y2": 58
+   },
+   {
+    "id": 74,
+    "x1": -14,
+    "y1": 67,
+    "x2": -16,
+    "y2": 67
+   },
+   {
+    "id": 76,
+    "x1": -10,
+    "y1": 67,
+    "x2": -8,
+    "y2": 67
+   },
+   {
+    "id": 79,
+    "x1": 3,
+    "y1": 68,
+    "x2": 3,
+    "y2": 70
+   },
+   {
+    "id": 82,
+    "x1": 16,
+    "y1": 67,
+    "x2": 14,
+    "y2": 67
+   },
+   {
+    "id": 84,
+    "x1": 20,
+    "y1": 67,
+    "x2": 22,
+    "y2": 67
+   },
+   {
+    "id": 87,
+    "x1": 33,
+    "y1": 68,
+    "x2": 33,
+    "y2": 70
+   },
+   {
+    "id": 90,
+    "x1": -14,
+    "y1": 79,
+    "x2": -16,
+    "y2": 79
+   },
+   {
+    "id": 92,
+    "x1": -12,
+    "y1": 81,
+    "x2": -12,
+    "y2": 83
+   },
+   {
+    "id": 94,
+    "x1": -10,
+    "y1": 79,
+    "x2": -8,
+    "y2": 79
+   },
+   {
+    "id": 97,
+    "x1": 3,
+    "y1": 81,
+    "x2": 3,
+    "y2": 83
+   },
+   {
+    "id": 100,
+    "x1": 16,
+    "y1": 79,
+    "x2": 14,
+    "y2": 79
+   },
+   {
+    "id": 102,
+    "x1": 20,
+    "y1": 79,
+    "x2": 22,
+    "y2": 79
+   },
+   {
+    "id": 105,
+    "x1": 33,
+    "y1": 81,
+    "x2": 33,
+    "y2": 83
+   },
+   {
+    "id": 108,
+    "x1": -14,
+    "y1": 92,
+    "x2": -16,
+    "y2": 92
+   },
+   {
+    "id": 110,
+    "x1": -10,
+    "y1": 92,
+    "x2": -8,
+    "y2": 92
+   },
+   {
+    "id": 113,
+    "x1": 3,
+    "y1": 94,
+    "x2": 3,
+    "y2": 96
+   },
+   {
+    "id": 116,
+    "x1": 16,
+    "y1": 92,
+    "x2": 14,
+    "y2": 92
+   },
+   {
+    "id": 118,
+    "x1": 20,
+    "y1": 92,
+    "x2": 22,
+    "y2": 92
+   },
+   {
+    "id": 121,
+    "x1": 33,
+    "y1": 94,
+    "x2": 33,
+    "y2": 96
+   },
+   {
+    "id": 124,
+    "x1": -14,
+    "y1": 105,
+    "x2": -16,
+    "y2": 105
+   },
+   {
+    "id": 126,
+    "x1": -10,
+    "y1": 105,
+    "x2": -8,
+    "y2": 105
+   },
+   {
+    "id": 129,
+    "x1": 3,
+    "y1": 107,
+    "x2": 3,
+    "y2": 109
+   },
+   {
+    "id": 132,
+    "x1": 16,
+    "y1": 105,
+    "x2": 14,
+    "y2": 105
+   },
+   {
+    "id": 134,
+    "x1": 20,
+    "y1": 105,
+    "x2": 22,
+    "y2": 105
+   },
+   {
+    "id": 137,
+    "x1": 33,
+    "y1": 107,
+    "x2": 33,
+    "y2": 109
+   },
+   {
+    "id": 140,
+    "x1": -14,
+    "y1": 118,
+    "x2": -16,
+    "y2": 118
+   },
+   {
+    "id": 142,
+    "x1": -10,
+    "y1": 118,
+    "x2": -8,
+    "y2": 118
+   },
+   {
+    "id": 145,
+    "x1": 3,
+    "y1": 120,
+    "x2": 3,
+    "y2": 122
+   },
+   {
+    "id": 148,
+    "x1": 16,
+    "y1": 119,
+    "x2": 14,
+    "y2": 119
+   },
+   {
+    "id": 150,
+    "x1": 19,
+    "y1": 117,
+    "x2": 19,
+    "y2": 115
+   },
+   {
+    "id": 152,
+    "x1": 16,
+    "y1": 121,
+    "x2": 14,
+    "y2": 121
+   },
+   {
+    "id": 154,
+    "x1": 22,
+    "y1": 120,
+    "x2": 24,
+    "y2": 120
+   },
+   {
+    "id": 157,
+    "x1": 35,
+    "y1": 120,
+    "x2": 35,
+    "y2": 122
+   },
+   {
+    "id": 160,
+    "x1": -14,
+    "y1": 135,
+    "x2": -16,
+    "y2": 135
+   },
+   {
+    "id": 162,
+    "x1": -11,
+    "y1": 132,
+    "x2": -11,
+    "y2": 130
+   },
+   {
+    "id": 164,
+    "x1": -8,
+    "y1": 135,
+    "x2": -6,
+    "y2": 135
+   },
+   {
+    "id": 167,
+    "x1": 5,
+    "y1": 135,
+    "x2": 5,
+    "y2": 137
+   }
+  ],
+  "nid": 169
+ },
+ "screens": [
+  [
+   "Y_zoh",
+   "Y_udelay"
+  ],
+  [
+   "Y_dd"
+  ],
+  [
+   "Y_id_trap",
+   "Y_id_be",
+   "Y_id_fe"
+  ],
+  [
+   "Y_irstd",
+   "Y_irsti"
+  ],
+  [
+   "Y_fir",
+   "Y_iir",
+   "Y_tfz"
+  ],
+  [
+   "Y_quant",
+   "Y_quant2"
+  ],
+  [
+   "Y_adc"
+  ],
+  [
+   "Y_dac"
+  ]
+ ]
+}

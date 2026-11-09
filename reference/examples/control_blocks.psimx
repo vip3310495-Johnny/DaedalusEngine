@@ -1,0 +1,1305 @@
+{
+ "app": "psimweb",
+ "version": "V1.1.0",
+ "doc": {
+  "elements": [
+   {
+    "id": 1,
+    "type": "TEXT",
+    "x": -20,
+    "y": -8,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "輸入：u1 = 1 ms 時的單位步階、u2 = 100 Hz 正弦、常數 0.5。\n比例 3·u2；積分 1/(s·1ms) → 斜坡；PI k=2、T=1ms → 2 + 2(t−1ms)/1ms；微分 T = 1 ms → 0.628·cos；\n可重置積分（每 5 ms 歸零）→ 鋸齒；減法、三輸入加法；限制 ±0.5；變化率限制 100/s；單位延遲；2 ms 延遲。"
+    }
+   },
+   {
+    "id": 2,
+    "type": "SIMCTRL",
+    "x": -20,
+    "y": -4,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "dt": "10u",
+     "tt": "20m",
+     "tp": "0",
+     "ps": "1",
+     "lte": "1",
+     "ltetol": "1e-3",
+     "interp": "1",
+     "damp": "1",
+     "acc": "0",
+     "etol": "1e-6",
+     "maxlv": "8"
+    }
+   },
+   {
+    "id": 3,
+    "type": "VSTEP",
+    "x": -13,
+    "y": 14,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "U1",
+    "params": {
+     "V": "1",
+     "ts": "1m"
+    }
+   },
+   {
+    "id": 5,
+    "type": "LABEL",
+    "x": -13,
+    "y": 10,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "u1"
+    }
+   },
+   {
+    "id": 7,
+    "type": "GND",
+    "x": -13,
+    "y": 18,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 8,
+    "type": "VSIN",
+    "x": 1,
+    "y": 14,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "U2",
+    "params": {
+     "Vm": "1",
+     "f": "100",
+     "ph": "0",
+     "off": "0",
+     "ts": "0"
+    }
+   },
+   {
+    "id": 10,
+    "type": "LABEL",
+    "x": 1,
+    "y": 10,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "u2"
+    }
+   },
+   {
+    "id": 12,
+    "type": "GND",
+    "x": 1,
+    "y": 18,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 13,
+    "type": "CONST",
+    "x": 15,
+    "y": 13,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "K05",
+    "params": {
+     "v": "0.5"
+    }
+   },
+   {
+    "id": 15,
+    "type": "LABEL",
+    "x": 19,
+    "y": 13,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "c"
+    }
+   },
+   {
+    "id": 16,
+    "type": "CONST",
+    "x": 31,
+    "y": 13,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "K1",
+    "params": {
+     "v": "1"
+    }
+   },
+   {
+    "id": 18,
+    "type": "LABEL",
+    "x": 35,
+    "y": 13,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "one"
+    }
+   },
+   {
+    "id": 19,
+    "type": "VSQU",
+    "x": -13,
+    "y": 28,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Rst",
+    "params": {
+     "Vpp": "1",
+     "f": "200",
+     "D": "0.5",
+     "off": "0",
+     "ph": "0"
+    }
+   },
+   {
+    "id": 21,
+    "type": "LABEL",
+    "x": -13,
+    "y": 24,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "rst"
+    }
+   },
+   {
+    "id": 23,
+    "type": "GND",
+    "x": -13,
+    "y": 32,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 24,
+    "type": "P",
+    "x": 2,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Pk",
+    "params": {
+     "k": "3"
+    }
+   },
+   {
+    "id": 26,
+    "type": "LABEL",
+    "x": -2,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "u2"
+    }
+   },
+   {
+    "id": 28,
+    "type": "LABEL",
+    "x": 6,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y_p"
+    }
+   },
+   {
+    "id": 29,
+    "type": "VP",
+    "x": 17,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_p",
+    "params": {}
+   },
+   {
+    "id": 31,
+    "type": "LABEL",
+    "x": 17,
+    "y": 31,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y_p"
+    }
+   },
+   {
+    "id": 32,
+    "type": "I",
+    "x": 32,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Int",
+    "params": {
+     "T": "1m",
+     "y0": "0"
+    }
+   },
+   {
+    "id": 34,
+    "type": "LABEL",
+    "x": 28,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "u1"
+    }
+   },
+   {
+    "id": 36,
+    "type": "LABEL",
+    "x": 36,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y_i"
+    }
+   },
+   {
+    "id": 37,
+    "type": "VP",
+    "x": -13,
+    "y": 41,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_i",
+    "params": {}
+   },
+   {
+    "id": 39,
+    "type": "LABEL",
+    "x": -13,
+    "y": 45,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y_i"
+    }
+   },
+   {
+    "id": 40,
+    "type": "PI",
+    "x": 2,
+    "y": 41,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Pi",
+    "params": {
+     "k": "2",
+     "T": "1m"
+    }
+   },
+   {
+    "id": 42,
+    "type": "LABEL",
+    "x": -2,
+    "y": 41,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "u1"
+    }
+   },
+   {
+    "id": 44,
+    "type": "LABEL",
+    "x": 6,
+    "y": 41,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y_pi"
+    }
+   },
+   {
+    "id": 45,
+    "type": "VP",
+    "x": 17,
+    "y": 41,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_pi",
+    "params": {}
+   },
+   {
+    "id": 47,
+    "type": "LABEL",
+    "x": 17,
+    "y": 45,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y_pi"
+    }
+   },
+   {
+    "id": 48,
+    "type": "DIFF",
+    "x": 32,
+    "y": 41,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Df",
+    "params": {
+     "T": "1m"
+    }
+   },
+   {
+    "id": 50,
+    "type": "LABEL",
+    "x": 28,
+    "y": 41,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "u2"
+    }
+   },
+   {
+    "id": 52,
+    "type": "LABEL",
+    "x": 36,
+    "y": 41,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y_d"
+    }
+   },
+   {
+    "id": 53,
+    "type": "VP",
+    "x": -13,
+    "y": 54,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_d",
+    "params": {}
+   },
+   {
+    "id": 55,
+    "type": "LABEL",
+    "x": -13,
+    "y": 58,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y_d"
+    }
+   },
+   {
+    "id": 56,
+    "type": "RESETI",
+    "x": 2,
+    "y": 54,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Ri",
+    "params": {
+     "T": "1m",
+     "y0": "0",
+     "flag": "0"
+    }
+   },
+   {
+    "id": 58,
+    "type": "LABEL",
+    "x": -2,
+    "y": 54,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "one"
+    }
+   },
+   {
+    "id": 60,
+    "type": "LABEL",
+    "x": 6,
+    "y": 54,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y_ri"
+    }
+   },
+   {
+    "id": 62,
+    "type": "LABEL",
+    "x": 2,
+    "y": 58,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "rst"
+    }
+   },
+   {
+    "id": 63,
+    "type": "VP",
+    "x": 17,
+    "y": 54,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_ri",
+    "params": {}
+   },
+   {
+    "id": 65,
+    "type": "LABEL",
+    "x": 17,
+    "y": 58,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y_ri"
+    }
+   },
+   {
+    "id": 66,
+    "type": "SUB2",
+    "x": 32,
+    "y": 54,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Sb",
+    "params": {}
+   },
+   {
+    "id": 68,
+    "type": "LABEL",
+    "x": 28,
+    "y": 54,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "u2"
+    }
+   },
+   {
+    "id": 70,
+    "type": "LABEL",
+    "x": 32,
+    "y": 58,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "c"
+    }
+   },
+   {
+    "id": 72,
+    "type": "LABEL",
+    "x": 36,
+    "y": 54,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y_sub"
+    }
+   },
+   {
+    "id": 73,
+    "type": "VP",
+    "x": -13,
+    "y": 67,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_sub",
+    "params": {}
+   },
+   {
+    "id": 75,
+    "type": "LABEL",
+    "x": -13,
+    "y": 71,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y_sub"
+    }
+   },
+   {
+    "id": 76,
+    "type": "SUM3",
+    "x": 2,
+    "y": 68,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "S3",
+    "params": {
+     "k1": "1",
+     "k2": "2",
+     "k3": "-1"
+    }
+   },
+   {
+    "id": 78,
+    "type": "LABEL",
+    "x": 2,
+    "y": 64,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "u1"
+    }
+   },
+   {
+    "id": 80,
+    "type": "LABEL",
+    "x": -2,
+    "y": 68,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "u2"
+    }
+   },
+   {
+    "id": 82,
+    "type": "LABEL",
+    "x": 2,
+    "y": 72,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "c"
+    }
+   },
+   {
+    "id": 84,
+    "type": "LABEL",
+    "x": 6,
+    "y": 68,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y_sum"
+    }
+   },
+   {
+    "id": 85,
+    "type": "VP",
+    "x": 17,
+    "y": 67,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_sum",
+    "params": {}
+   },
+   {
+    "id": 87,
+    "type": "LABEL",
+    "x": 17,
+    "y": 71,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y_sum"
+    }
+   },
+   {
+    "id": 88,
+    "type": "LIM",
+    "x": 32,
+    "y": 67,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Lm",
+    "params": {
+     "lo": "-0.5",
+     "hi": "0.5"
+    }
+   },
+   {
+    "id": 90,
+    "type": "LABEL",
+    "x": 28,
+    "y": 67,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "u2"
+    }
+   },
+   {
+    "id": 92,
+    "type": "LABEL",
+    "x": 36,
+    "y": 67,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y_lim"
+    }
+   },
+   {
+    "id": 93,
+    "type": "VP",
+    "x": -13,
+    "y": 81,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_lim",
+    "params": {}
+   },
+   {
+    "id": 95,
+    "type": "LABEL",
+    "x": -13,
+    "y": 85,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y_lim"
+    }
+   },
+   {
+    "id": 96,
+    "type": "LIMDVDT",
+    "x": 2,
+    "y": 81,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Ld",
+    "params": {
+     "L": "100"
+    }
+   },
+   {
+    "id": 98,
+    "type": "LABEL",
+    "x": -2,
+    "y": 81,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "u1"
+    }
+   },
+   {
+    "id": 100,
+    "type": "LABEL",
+    "x": 6,
+    "y": 81,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y_ld"
+    }
+   },
+   {
+    "id": 101,
+    "type": "VP",
+    "x": 17,
+    "y": 81,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_ld",
+    "params": {}
+   },
+   {
+    "id": 103,
+    "type": "LABEL",
+    "x": 17,
+    "y": 85,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y_ld"
+    }
+   },
+   {
+    "id": 104,
+    "type": "UTD",
+    "x": 32,
+    "y": 81,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Ud",
+    "params": {}
+   },
+   {
+    "id": 106,
+    "type": "LABEL",
+    "x": 28,
+    "y": 81,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "u2"
+    }
+   },
+   {
+    "id": 108,
+    "type": "LABEL",
+    "x": 36,
+    "y": 81,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y_ud"
+    }
+   },
+   {
+    "id": 109,
+    "type": "VP",
+    "x": -13,
+    "y": 93,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_ud",
+    "params": {}
+   },
+   {
+    "id": 111,
+    "type": "LABEL",
+    "x": -13,
+    "y": 97,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y_ud"
+    }
+   },
+   {
+    "id": 112,
+    "type": "TDELAY",
+    "x": 2,
+    "y": 94,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Td",
+    "params": {
+     "Td": "2m"
+    }
+   },
+   {
+    "id": 114,
+    "type": "LABEL",
+    "x": -2,
+    "y": 94,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "u2"
+    }
+   },
+   {
+    "id": 116,
+    "type": "LABEL",
+    "x": 6,
+    "y": 94,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y_td"
+    }
+   },
+   {
+    "id": 117,
+    "type": "VP",
+    "x": 17,
+    "y": 93,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_td",
+    "params": {}
+   },
+   {
+    "id": 119,
+    "type": "LABEL",
+    "x": 17,
+    "y": 97,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y_td"
+    }
+   }
+  ],
+  "wires": [
+   {
+    "id": 4,
+    "x1": -13,
+    "y1": 12,
+    "x2": -13,
+    "y2": 10
+   },
+   {
+    "id": 6,
+    "x1": -13,
+    "y1": 16,
+    "x2": -13,
+    "y2": 18
+   },
+   {
+    "id": 9,
+    "x1": 1,
+    "y1": 12,
+    "x2": 1,
+    "y2": 10
+   },
+   {
+    "id": 11,
+    "x1": 1,
+    "y1": 16,
+    "x2": 1,
+    "y2": 18
+   },
+   {
+    "id": 14,
+    "x1": 17,
+    "y1": 13,
+    "x2": 19,
+    "y2": 13
+   },
+   {
+    "id": 17,
+    "x1": 33,
+    "y1": 13,
+    "x2": 35,
+    "y2": 13
+   },
+   {
+    "id": 20,
+    "x1": -13,
+    "y1": 26,
+    "x2": -13,
+    "y2": 24
+   },
+   {
+    "id": 22,
+    "x1": -13,
+    "y1": 30,
+    "x2": -13,
+    "y2": 32
+   },
+   {
+    "id": 25,
+    "x1": 0,
+    "y1": 27,
+    "x2": -2,
+    "y2": 27
+   },
+   {
+    "id": 27,
+    "x1": 4,
+    "y1": 27,
+    "x2": 6,
+    "y2": 27
+   },
+   {
+    "id": 30,
+    "x1": 17,
+    "y1": 29,
+    "x2": 17,
+    "y2": 31
+   },
+   {
+    "id": 33,
+    "x1": 30,
+    "y1": 27,
+    "x2": 28,
+    "y2": 27
+   },
+   {
+    "id": 35,
+    "x1": 34,
+    "y1": 27,
+    "x2": 36,
+    "y2": 27
+   },
+   {
+    "id": 38,
+    "x1": -13,
+    "y1": 43,
+    "x2": -13,
+    "y2": 45
+   },
+   {
+    "id": 41,
+    "x1": 0,
+    "y1": 41,
+    "x2": -2,
+    "y2": 41
+   },
+   {
+    "id": 43,
+    "x1": 4,
+    "y1": 41,
+    "x2": 6,
+    "y2": 41
+   },
+   {
+    "id": 46,
+    "x1": 17,
+    "y1": 43,
+    "x2": 17,
+    "y2": 45
+   },
+   {
+    "id": 49,
+    "x1": 30,
+    "y1": 41,
+    "x2": 28,
+    "y2": 41
+   },
+   {
+    "id": 51,
+    "x1": 34,
+    "y1": 41,
+    "x2": 36,
+    "y2": 41
+   },
+   {
+    "id": 54,
+    "x1": -13,
+    "y1": 56,
+    "x2": -13,
+    "y2": 58
+   },
+   {
+    "id": 57,
+    "x1": 0,
+    "y1": 54,
+    "x2": -2,
+    "y2": 54
+   },
+   {
+    "id": 59,
+    "x1": 4,
+    "y1": 54,
+    "x2": 6,
+    "y2": 54
+   },
+   {
+    "id": 61,
+    "x1": 2,
+    "y1": 56,
+    "x2": 2,
+    "y2": 58
+   },
+   {
+    "id": 64,
+    "x1": 17,
+    "y1": 56,
+    "x2": 17,
+    "y2": 58
+   },
+   {
+    "id": 67,
+    "x1": 30,
+    "y1": 54,
+    "x2": 28,
+    "y2": 54
+   },
+   {
+    "id": 69,
+    "x1": 32,
+    "y1": 56,
+    "x2": 32,
+    "y2": 58
+   },
+   {
+    "id": 71,
+    "x1": 34,
+    "y1": 54,
+    "x2": 36,
+    "y2": 54
+   },
+   {
+    "id": 74,
+    "x1": -13,
+    "y1": 69,
+    "x2": -13,
+    "y2": 71
+   },
+   {
+    "id": 77,
+    "x1": 2,
+    "y1": 66,
+    "x2": 2,
+    "y2": 64
+   },
+   {
+    "id": 79,
+    "x1": 0,
+    "y1": 68,
+    "x2": -2,
+    "y2": 68
+   },
+   {
+    "id": 81,
+    "x1": 2,
+    "y1": 70,
+    "x2": 2,
+    "y2": 72
+   },
+   {
+    "id": 83,
+    "x1": 4,
+    "y1": 68,
+    "x2": 6,
+    "y2": 68
+   },
+   {
+    "id": 86,
+    "x1": 17,
+    "y1": 69,
+    "x2": 17,
+    "y2": 71
+   },
+   {
+    "id": 89,
+    "x1": 30,
+    "y1": 67,
+    "x2": 28,
+    "y2": 67
+   },
+   {
+    "id": 91,
+    "x1": 34,
+    "y1": 67,
+    "x2": 36,
+    "y2": 67
+   },
+   {
+    "id": 94,
+    "x1": -13,
+    "y1": 83,
+    "x2": -13,
+    "y2": 85
+   },
+   {
+    "id": 97,
+    "x1": 0,
+    "y1": 81,
+    "x2": -2,
+    "y2": 81
+   },
+   {
+    "id": 99,
+    "x1": 4,
+    "y1": 81,
+    "x2": 6,
+    "y2": 81
+   },
+   {
+    "id": 102,
+    "x1": 17,
+    "y1": 83,
+    "x2": 17,
+    "y2": 85
+   },
+   {
+    "id": 105,
+    "x1": 30,
+    "y1": 81,
+    "x2": 28,
+    "y2": 81
+   },
+   {
+    "id": 107,
+    "x1": 34,
+    "y1": 81,
+    "x2": 36,
+    "y2": 81
+   },
+   {
+    "id": 110,
+    "x1": -13,
+    "y1": 95,
+    "x2": -13,
+    "y2": 97
+   },
+   {
+    "id": 113,
+    "x1": 0,
+    "y1": 94,
+    "x2": -2,
+    "y2": 94
+   },
+   {
+    "id": 115,
+    "x1": 4,
+    "y1": 94,
+    "x2": 6,
+    "y2": 94
+   },
+   {
+    "id": 118,
+    "x1": 17,
+    "y1": 95,
+    "x2": 17,
+    "y2": 97
+   }
+  ],
+  "nid": 120
+ },
+ "screens": [
+  [
+   "Y_i",
+   "Y_pi",
+   "Y_ld"
+  ],
+  [
+   "Y_p",
+   "Y_d",
+   "Y_lim"
+  ],
+  [
+   "Y_ri"
+  ],
+  [
+   "Y_sub",
+   "Y_sum"
+  ],
+  [
+   "Y_ud",
+   "Y_td"
+  ]
+ ]
+}

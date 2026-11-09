@@ -1,0 +1,204 @@
+{
+ "app": "psimweb",
+ "version": "V3.2.1",
+ "doc": {
+  "elements": [
+   {
+    "id": 1,
+    "type": "VSIN",
+    "x": 0,
+    "y": 4,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vac",
+    "params": {
+     "Vm": "1",
+     "f": "1k",
+     "ph": "0",
+     "off": "0",
+     "ts": "0"
+    }
+   },
+   {
+    "id": 2,
+    "type": "GND",
+    "x": 0,
+    "y": 6,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 4,
+    "type": "R",
+    "x": 3,
+    "y": 2,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "R1",
+    "params": {
+     "R": "2"
+    }
+   },
+   {
+    "id": 5,
+    "type": "L",
+    "x": 7,
+    "y": 2,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "L1",
+    "params": {
+     "L": "1m",
+     "i0": "0"
+    }
+   },
+   {
+    "id": 6,
+    "type": "C",
+    "x": 9,
+    "y": 4,
+    "rot": 1,
+    "mir": false,
+    "dis": false,
+    "name": "C1",
+    "params": {
+     "C": "10u",
+     "v0": "0"
+    }
+   },
+   {
+    "id": 7,
+    "type": "R",
+    "x": 13,
+    "y": 4,
+    "rot": 1,
+    "mir": false,
+    "dis": false,
+    "name": "RL",
+    "params": {
+     "R": "20"
+    }
+   },
+   {
+    "id": 10,
+    "type": "ACP",
+    "x": 11,
+    "y": 0,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vout",
+    "params": {}
+   },
+   {
+    "id": 11,
+    "type": "VP",
+    "x": 15,
+    "y": 0,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vo",
+    "params": {}
+   },
+   {
+    "id": 13,
+    "type": "ACSWEEP",
+    "x": 20,
+    "y": 2,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "f0": "10",
+     "f1": "1M",
+     "n": "120",
+     "flag": "0",
+     "src": "Vac",
+     "a0": "1",
+     "a1": "1",
+     "extra": "",
+     "method": "1",
+     "settle": "5",
+     "mcyc": "4",
+     "maxc": "60",
+     "tol": "0.1",
+     "tpre": "-1",
+     "tset": "0",
+     "base": "1"
+    }
+   },
+   {
+    "id": 14,
+    "type": "SIMCTRL",
+    "x": 20,
+    "y": -2,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "dt": "1u",
+     "tt": "10m",
+     "tp": "0",
+     "ps": "1",
+     "lte": "1",
+     "ltetol": "1e-3",
+     "interp": "1",
+     "damp": "1"
+    }
+   },
+   {
+    "id": 15,
+    "type": "TEXT",
+    "x": 0,
+    "y": -4,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "線性頻域法：直接解複數 MNA，速度快、結果為解析解。按 F5 執行。"
+    }
+   }
+  ],
+  "wires": [
+   {
+    "id": 3,
+    "x1": 0,
+    "y1": 2,
+    "x2": 1,
+    "y2": 2
+   },
+   {
+    "id": 8,
+    "x1": 9,
+    "y1": 2,
+    "x2": 13,
+    "y2": 2
+   },
+   {
+    "id": 9,
+    "x1": 0,
+    "y1": 6,
+    "x2": 13,
+    "y2": 6
+   },
+   {
+    "id": 12,
+    "x1": 13,
+    "y1": 2,
+    "x2": 15,
+    "y2": 2
+   }
+  ],
+  "nid": 16
+ }
+}

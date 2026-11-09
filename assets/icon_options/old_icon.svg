@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <!-- DaedalusEngine: the wings Daedalus built for Icarus, rising toward the sun over a PWM waveform -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2c43a8"/>
+      <stop offset="0.55" stop-color="#17256e"/>
+      <stop offset="1" stop-color="#0a1238"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#fff6cf"/>
+      <stop offset="0.55" stop-color="#ffc83d"/>
+      <stop offset="1" stop-color="#f08c00"/>
+    </radialGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffd25e" stop-opacity="0.6"/>
+      <stop offset="1" stop-color="#ffd25e" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="fth" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.75" stop-color="#eef2ff"/>
+      <stop offset="1" stop-color="#ffd27a"/>
+    </linearGradient>
+    <linearGradient id="trace" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ff9f1c"/>
+      <stop offset="1" stop-color="#ffd166"/>
+    </linearGradient>
+    <!-- a feather along +x, quill root at the origin -->
+    <path id="f" d="M0 0 C 18 -9 52 -10 78 -3 C 82 -2 82 2 78 3 C 52 9 18 8 0 0 Z"/>
+    <!-- right wing, shoulder at the origin -->
+    <g id="wing">
+      <!-- secondaries hanging toward the body -->
+      <use href="#f" fill="url(#fth)" transform="translate(10 -6) rotate(78) scale(0.62 1)"/>
+      <use href="#f" fill="url(#fth)" transform="translate(22 -14) rotate(62) scale(0.72 1)"/>
+      <use href="#f" fill="url(#fth)" transform="translate(34 -22) rotate(46) scale(0.80 1)"/>
+      <use href="#f" fill="url(#fth)" transform="translate(46 -30) rotate(30) scale(0.88 1)"/>
+      <!-- primaries sweeping outward from the wrist -->
+      <use href="#f" fill="url(#fth)" transform="translate(58 -38) rotate(14) scale(0.96 1)"/>
+      <use href="#f" fill="url(#fth)" transform="translate(64 -42) rotate(-2) scale(1.00 1)"/>
+      <use href="#f" fill="url(#fth)" transform="translate(68 -46) rotate(-17) scale(0.98 1)"/>
+      <use href="#f" fill="url(#fth)" transform="translate(70 -50) rotate(-32) scale(0.86 1)"/>
+      <!-- leading edge (arm with coverts) -->
+      <path d="M-2 4 C 10 -14 38 -44 74 -54 C 80 -55 84 -50 78 -45 C 56 -30 30 -10 8 10 Z" fill="#dfe6fb"/>
+      <path d="M0 0 C 14 -16 40 -42 74 -52" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+    </g>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="52" fill="url(#sky)"/>
+  <rect x="8" y="8" width="240" height="240" rx="52" fill="none" stroke="#ffffff" stroke-opacity="0.10" stroke-width="2"/>
+  <!-- the sun -->
+  <circle cx="128" cy="58" r="50" fill="url(#glow)"/>
+  <circle cx="128" cy="58" r="22" fill="url(#sun)"/>
+  <!-- wings -->
+  <g transform="translate(134 156) rotate(-10) scale(0.80)"><use href="#wing"/></g>
+  <g transform="translate(122 156) scale(-1 1) rotate(-10) scale(0.80)"><use href="#wing"/></g>
+  <!-- body: a power node -->
+  <circle cx="128" cy="158" r="9" fill="#ffd166" stroke="#0a1238" stroke-width="3"/>
+  <!-- PWM switching waveform -->
+  <path d="M34 218 H62 V198 H96 V218 H110 V198 H152 V218 H162 V198 H196 V218 H222" fill="none" stroke="url(#trace)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

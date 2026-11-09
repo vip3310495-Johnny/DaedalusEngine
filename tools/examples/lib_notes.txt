@@ -1,0 +1,773 @@
+## RC | R-C Branch | R-C 串聯支路 | pins: 1:p@-3,0 2:p@3,0 | bb -3,-0.8,3,0.8
+   R-C 串聯支路：R、C 串聯成單一支路，以單一支路電流變數求解（v = R·i + L·di/dt + vC）。任一參數設 0 表示該元件不存在，但不可全部為 0。
+   - R="1" Ω Resistance 電阻 串聯電阻；0 表示無此元件。
+   - C="100u" F Capacitance 電容 串聯電容；0 表示無此元件（短路）。
+   - v0="0" V Initial Cap. Voltage 初始電壓 電容初始電壓。
+## LC | L-C Branch | L-C 串聯支路 | pins: 1:p@-3,0 2:p@3,0 | bb -3,-0.8,3,0.8
+   L-C 串聯支路：L、C 串聯成單一支路，以單一支路電流變數求解（v = R·i + L·di/dt + vC）。任一參數設 0 表示該元件不存在，但不可全部為 0。
+   - L="1m" H Inductance 電感 串聯電感；0 表示無此元件。
+   - C="100u" F Capacitance 電容 串聯電容；0 表示無此元件（短路）。
+   - i0="0" A Initial Current 初始電流 支路初始電流。
+   - v0="0" V Initial Cap. Voltage 初始電壓 電容初始電壓。
+## RLC | R-L-C Branch | R-L-C 串聯支路 | pins: 1:p@-4,0 2:p@4,0 | bb -4,-0.8,4,0.8
+   R-L-C 串聯支路：R、L、C 串聯成單一支路，以單一支路電流變數求解（v = R·i + L·di/dt + vC）。任一參數設 0 表示該元件不存在，但不可全部為 0。
+   - R="1" Ω Resistance 電阻 串聯電阻；0 表示無此元件。
+   - L="1m" H Inductance 電感 串聯電感；0 表示無此元件。
+   - C="100u" F Capacitance 電容 串聯電容；0 表示無此元件（短路）。
+   - i0="0" A Initial Current 初始電流 支路初始電流。
+   - v0="0" V Initial Cap. Voltage 初始電壓 電容初始電壓。
+## R3 | 3-ph Resistor | 三相電阻 | pins: A:p@-2,-1 B:p@-2,0 C:p@-2,1 a:p@2,-1 b:p@2,0 c:p@2,1 | bb -2,-1.6,2,1.5
+   三相電阻：三相對稱支路，每相各為 R 串聯，初始電流與電容電壓皆為 0。有圓點的一相為 A 相（最上方）。
+   - R="1" Ω Resistance 電阻 串聯電阻；0 表示無此元件。
+## RL3 | 3-ph R-L Branch | 三相 R-L 支路 | pins: A:p@-2,-1 B:p@-2,0 C:p@-2,1 a:p@2,-1 b:p@2,0 c:p@2,1 | bb -2,-1.6,2,1.5
+   三相 R-L 支路：三相對稱支路，每相各為 R-L 串聯，初始電流與電容電壓皆為 0。有圓點的一相為 A 相（最上方）。
+   - R="1" Ω Resistance 電阻 串聯電阻；0 表示無此元件。
+   - L="1m" H Inductance 電感 串聯電感；0 表示無此元件。
+## RC3 | 3-ph R-C Branch | 三相 R-C 支路 | pins: A:p@-2,-1 B:p@-2,0 C:p@-2,1 a:p@2,-1 b:p@2,0 c:p@2,1 | bb -2,-1.6,2,1.5
+   三相 R-C 支路：三相對稱支路，每相各為 R-C 串聯，初始電流與電容電壓皆為 0。有圓點的一相為 A 相（最上方）。
+   - R="1" Ω Resistance 電阻 串聯電阻；0 表示無此元件。
+   - C="100u" F Capacitance 電容 串聯電容；0 表示無此元件（短路）。
+## RLC3 | 3-ph R-L-C Branch | 三相 R-L-C 支路 | pins: A:p@-2,-1 B:p@-2,0 C:p@-2,1 a:p@2,-1 b:p@2,0 c:p@2,1 | bb -2,-1.6,2,1.5
+   三相 R-L-C 支路：三相對稱支路，每相各為 R-L-C 串聯，初始電流與電容電壓皆為 0。有圓點的一相為 A 相（最上方）。
+   - R="1" Ω Resistance 電阻 串聯電阻；0 表示無此元件。
+   - L="1m" H Inductance 電感 串聯電感；0 表示無此元件。
+   - C="100u" F Capacitance 電容 串聯電容；0 表示無此元件（短路）。
+## RHEO | Rheostat | 可變電阻 | pins: k:p@-2,0 m:p@2,0 t:p@0,-2 | bb -2,-2,2,0.6
+   附抽頭的電阻。k–t 之間為 R·Tap，t–m 之間為 R·(1−Tap)。
+   - R="10" Ω Total Resistance 總電阻 k 與 m 之間的總電阻。
+   - tap="0.5"  Tap Position (0 to 1) 抽頭位置；k 與 t 之間電阻 = R·Tap。
+## LSAT | Saturable Inductor | 飽和電感 | pins: 1:p@-2,0 2:p@2,0 | bb -2,-1,2,0.4
+   考慮鐵心飽和的非線性電感。以 (i, L) 點定義磁通鏈 λ = L·i 的分段線性曲線，模擬時以牛頓法求解。
+   - tab="1 10m 2 6m 5 3m"  Current vs. Inductance (i1 L1 i2 L2 ...) 成對的 (電流, 電感)，L = λ/i；電流必須遞增。λ–i 曲線以分段線性近似。
+## NONI | Nonlinear Element (i=f(v)) | 非線性元件（電導型） | pins: 1:p@-2,0 2:p@2,0 | bb -2,-0.8,2,0.8
+   電導型非線性元件 i = f(v)。需提供運算式與其導數；良好的初始值與上下限有助收斂。例：二極體 i = 1e-14·(e^(40v) − 1)。
+   - f="1e-14*(exp(40*v)-1)"  Expression f(v) 電流 i 對電壓 v 的函數，v = v(1) − v(2)。
+   - df="40e-14*exp(40*v)"  Expression df/dv f(v) 對 v 的導數，供牛頓法使用。
+   - x0="0" V Initial Value vo 初始電壓猜值。
+   - lo="-1000" V Lower Limit of v 迭代時 v 的下限。
+   - hi="1" V Upper Limit of v 迭代時 v 的上限。
+## NONV | Nonlinear Element (v=f(i)) | 非線性元件（電阻型） | pins: 1:p@-2,0 2:p@2,0 | bb -2,-0.8,2,0.8
+   電阻型非線性元件 v = f(i)，以牛頓法求解。
+   - f="10*i+0.1*i^3"  Expression f(i) 電壓 v 對電流 i 的函數，i 由接腳 1 流向接腳 2。
+   - df="10+0.3*i^2"  Expression df/di f(i) 對 i 的導數。
+   - x0="0" A Initial Value io 初始電流猜值。
+   - lo="-1000" A Lower Limit of i 迭代時 i 的下限。
+   - hi="1000" A Upper Limit of i 迭代時 i 的上限。
+## ZENER | Zener | 稽納二極體 | pins: A:p@-2,0 K:p@2,0 | bb -2,-0.9,2,0.9
+   稽納二極體。理想模型：順偏時如一般二極體；逆偏時 VKA 超過 VB 即箝位於 VB（實際為 VB + Ron·I）。SPICE 模型：崩潰區以 BV、IBV 的指數特性表示（膝點軟化），自訂參數未給 BV 時取 VB 參數。
+   - vb="5.1" V Breakdown Voltage 崩潰電壓 逆向崩潰電壓 VB。
+   - vf="0" V Forward Voltage Drop 順向壓降 順向導通壓降。
+   - ron="10u" Ω On Resistance 導通電阻 
+   - roff="1M" Ω Off Resistance 關斷電阻 關斷時的漏電阻。PSIM 固定為 1 MΩ；模擬 100 kΩ 等級的高阻抗類比電路時建議改為 1G 以上，否則漏電流會造成可觀的誤差。
+   - model="ideal"  Model 模型 {ideal:理想（分段線性）; ZENER:通用稽納（崩潰電壓取 VB 參數）; custom:自訂（下方 SPICE 參數）} 選擇理想（分段線性）模型或 SPICE 物理模型。物理模型以牛頓法求解指數 / 平方律特性與接面電荷，精度與 SPICE 相同但較慢。
+   - spice=""  SPICE 模型參數（空白＝使用所選型號） 可直接貼上廠商的 .model 敘述或 KEY=VALUE 參數（SPICE 單位：M = 毫、MEG = 百萬）。有填寫時優先於上方型號。溫度固定 27 °C，溫度係數與高階效應參數會被忽略並提出警告。
+## DIAC | DIAC | 雙向觸發二極體 | pins: 1:p@-2,0 2:p@2,0 | bb -2,-1.2,2,1.2
+   雙向觸發二極體：任一方向電壓超過轉折電壓即雪崩導通，導通壓降為 Breakback Voltage，電流降到零時關斷。
+   - vbo="30" V Breakover Voltage 轉折電壓 開始導通的轉折電壓。
+   - vbb="5" V Breakback Voltage 導通壓降 雪崩導通後的壓降。
+## THY | Thyristor | 閘流體 SCR | pins: A:p@-2,0 K:p@2,0 Gate:g@1,2 | bb -2,-0.8,2,2
+   閘流體：閘極訊號為高（> 0.5）且順偏時導通；導通後即使閘極訊號消失仍維持導通，直到電流低於維持電流。閘極必須接 Gating Block、On-Off Controller 或 Alpha Controller 等控制訊號。
+   - vf="0" V Voltage Drop 導通壓降 導通壓降。
+   - ih="0" A Holding Current 維持電流 電流低於此值即關斷。
+   - il="0" A Latching Current 栓鎖電流 觸發脈波移除後維持導通所需的最小電流。
+   - init="0"  Initial Position 初始狀態 {0:0：關斷 (Off); 1:1：導通 (On)} 模擬開始時開關的狀態。
+## TRIAC | TRIAC | 雙向閘流體 | pins: 1:p@-2,0 2:p@2,0 Gate:g@1,2 | bb -2,-1.2,2,2
+   雙向閘流體，等同兩個反向並聯的閘流體共用閘極；閘極為高且任一方向順偏即導通，電流過零時關斷（維持與栓鎖電流為 0）。
+   - vf="0" V Voltage Drop 導通壓降 導通壓降。
+## GTO | GTO | 閘關閘流體 | pins: A:p@-2,0 K:p@2,0 Gate:g@1,2 | bb -2,-0.8,2,2
+   閘關閘流體（對稱型，可阻斷正反向電壓）：閘極為高且順偏時導通；閘極轉低或電流降到零時關斷。
+   - vf="0" V Voltage Drop 導通壓降 導通壓降。
+   - init="0"  Initial Position 初始狀態 {0:0：關斷 (Off); 1:1：導通 (On)} 模擬開始時開關的狀態。
+## NPN | npn Transistor | NPN 電晶體（開關） | pins: C:p@0,-2 E:p@0,2 B:g@-2,0 | bb -2,-2,0.6,2
+   開關模式 NPN 電晶體（理想開關）：基極（閘極）訊號為高且 VCE > 0 時導通；閘極轉低或電流降到零時關斷。注意：此模型由閘極電壓訊號控制，而非基極電流，且可阻斷反向電壓。
+   - vf="0" V Saturation Voltage 飽和壓降 C-E 導通壓降。
+   - init="0"  Initial Position 初始狀態 {0:0：關斷 (Off); 1:1：導通 (On)} 模擬開始時開關的狀態。
+   - roff="1M" Ω Off Resistance 關斷電阻 關斷時的漏電阻。PSIM 固定為 1 MΩ；模擬 100 kΩ 等級的高阻抗類比電路時建議改為 1G 以上，否則漏電流會造成可觀的誤差。
+## PNP | pnp Transistor | PNP 電晶體（開關） | pins: C:p@0,-2 E:p@0,2 B:g@-2,0 | bb -2,-2,0.6,2
+   開關模式 PNP 電晶體：閘極訊號為低且負偏（VCE < 0）時導通，電流由 E 流向 C；閘極轉高或電流降到零時關斷。
+   - vf="0" V Saturation Voltage 飽和壓降 E-C 導通壓降。
+   - init="0"  Initial Position 初始狀態 {0:0：關斷 (Off); 1:1：導通 (On)} 模擬開始時開關的狀態。
+   - roff="1M" Ω Off Resistance 關斷電阻 關斷時的漏電阻。PSIM 固定為 1 MΩ；模擬 100 kΩ 等級的高阻抗類比電路時建議改為 1G 以上，否則漏電流會造成可觀的誤差。
+## IGBT | IGBT | IGBT | pins: C:p@0,-2 E:p@0,2 G:g@-2,0 | bb -2,-2,1.3,2
+   IGBT 開關模組：主動開關加反並聯二極體。閘極為高且 VCE > 0 時主開關導通；閘極轉低或電流反向時關斷，反向電流經由二極體流通。電流探棒量到的是整個模組電流。
+   - vf="0" V Saturation Voltage 飽和壓降 主開關導通壓降。
+   - vd="0" V Diode Voltage Drop 二極體壓降 反並聯二極體壓降。
+   - init="0"  Initial Position 初始狀態 {0:0：關斷 (Off); 1:1：導通 (On)} 模擬開始時開關的狀態。
+## PMOS | p-MOSFET | P 通道 MOSFET | pins: D:p@0,-2 S:p@0,2 G:g@-2,0 | bb -2,-2,1.2,2
+   P 通道 MOSFET 開關模組：閘極訊號為低且 VDS < 0 時導通（電流由 S 流向 D）；含反並聯本體二極體（D→S）。
+   - ron="10u" Ω On Resistance 導通電阻 通道導通電阻。
+   - vd="0" V Diode Voltage Drop 二極體壓降 本體二極體壓降。
+   - init="0"  Initial Position 初始狀態 {0:0：關斷 (Off); 1:1：導通 (On)} 模擬開始時開關的狀態。
+   - roff="1M" Ω Off Resistance 關斷電阻 關斷時的漏電阻。PSIM 固定為 1 MΩ；模擬 100 kΩ 等級的高阻抗類比電路時建議改為 1G 以上，否則漏電流會造成可觀的誤差。
+## SSWI | Bi-directional Switch | 雙向開關 | pins: 1:p@-2,0 2:p@2,0 Gate:g@0,2 | bb -2,-1,2,2
+   雙向開關：閘極訊號為高即導通，不論電壓極性，可雙向導通；閘極轉低即關斷。
+   - ron="10u" Ω On Resistance 導通電阻 
+   - init="0"  Initial Position 初始狀態 {0:0：關斷 (Off); 1:1：導通 (On)} 模擬開始時開關的狀態。
+## PBSW | Push Button Switch | 按鈕開關 | pins: 1:p@-2,0 2:p@2,0 | bb -2,-1.6,2,0.4
+   按鈕開關：以初始狀態加上指定的切換時間點操作（例如 5 ms 按下、12 ms 放開）。切換時刻會被設為模擬斷點，時間精確對齊。
+   - init="0"  Initial Position 初始狀態 {0:0：關斷 (Off); 1:1：導通 (On)} 模擬開始時開關的狀態。
+   - times="" s Toggle Time(s) 切換時間 在這些時間點切換開關狀態（以空白分隔，例如 "5m 12m"）。留白表示整段模擬維持初始狀態。
+## SSWI3 | 3-ph Bi-directional Switch | 三相雙向開關 | pins: A:p@-2,-1 B:p@-2,0 C:p@-2,1 a:p@2,-1 b:p@2,0 c:p@2,1 Gate:g@0,3 | bb -2,-1.6,2,3
+   三個由同一閘極訊號控制的雙向開關（A-a、B-b、C-c）。
+   - ron="10u" Ω On Resistance 導通電阻 
+## SPDT | SPDT Bi-directional Switch | 單刀雙擲雙向開關 | pins: COM:p@-2,0 1:p@2,-1 2:p@2,1 Gate:g@0,2 | bb -2,-1.5,2,2
+   單刀雙擲（SPDT）雙向開關：閘極訊號為高時 COM 接到 1、2 斷開；為低時 COM 接到 2、1 斷開（圖上的刀片畫在閘極為低的位置）。兩個接點同時切換（理想，無先斷後接延遲）；初始狀態以 t=0 的閘極訊號為準。
+   - ron="10u" Ω On Resistance 導通電阻 
+   - init="0"  Initial Position 初始狀態 {0:0：關斷 (Off); 1:1：導通 (On)} 模擬開始時開關的狀態。
+## DPST | DPST Bi-directional Switch | 雙刀單擲雙向開關 | pins: 1a:p@-2,-1 2a:p@2,-1 1b:p@-2,1 2b:p@2,1 Gate:g@0,3 | bb -2,-1.8,2,3
+   雙刀單擲（DPST）雙向開關：兩組雙向開關（1a-2a、1b-2b）由同一閘極訊號控制，閘極為高時兩組同時導通、為低時同時斷開。
+   - ron="10u" Ω On Resistance 導通電阻 
+   - init="0"  Initial Position 初始狀態 {0:0：關斷 (Off); 1:1：導通 (On)} 模擬開始時開關的狀態。
+## DPDT | DPDT Bi-directional Switch | 雙刀雙擲雙向開關 | pins: COMa:p@-2,-2 a1:p@2,-3 a2:p@2,-1 COMb:p@-2,2 b1:p@2,1 b2:p@2,3 Gate:g@0,4 | bb -2,-3.5,2,4
+   雙刀雙擲（DPDT）雙向開關：兩組 SPDT 由同一閘極訊號控制。閘極為高時 COMa→a1、COMb→b1；為低時 COMa→a2、COMb→b2。常用於極性反轉或兩組電路同時切換。
+   - ron="10u" Ω On Resistance 導通電阻 
+   - init="0"  Initial Position 初始狀態 {0:0：關斷 (Off); 1:1：導通 (On)} 模擬開始時開關的狀態。
+## PNP3 | pnp Transistor (3-state) | PNP 電晶體（SPICE 模型） | pins: C:p@0,-2 E:p@0,2 B:p@-2,0 | bb -2,-2,0.6,2
+   PNP 雙極電晶體，預設為 SPICE Gummel-Poon 模型（參數同 NPN，極性相反，電流由 E 流向 C）。Model 選「舊版三態」時改用分段線性模型。
+   - beta="100"  Current Gain beta 電流增益 
+   - vr="0.7" V Bias Voltage Vr 射基電壓 
+   - vsat="0.2" V Vec,sat 飽和電壓 
+   - roff="1M" Ω Off Resistance 關斷電阻 關斷時的漏電阻。PSIM 固定為 1 MΩ；模擬 100 kΩ 等級的高阻抗類比電路時建議改為 1G 以上，否則漏電流會造成可觀的誤差。
+   - model="2N3906"  Model 模型 {2N3906:2N3906 / MMBT3906; custom:自訂（下方 SPICE 參數）; 3state:舊版三態分段線性（β、Vr、Vsat）} 選擇理想（分段線性）模型或 SPICE 物理模型。物理模型以牛頓法求解指數 / 平方律特性與接面電荷，精度與 SPICE 相同但較慢。
+   - spice=""  SPICE 模型參數（空白＝使用所選型號） 可直接貼上廠商的 .model 敘述或 KEY=VALUE 參數（SPICE 單位：M = 毫、MEG = 百萬）。有填寫時優先於上方型號。溫度固定 27 °C，溫度係數與高階效應參數會被忽略並提出警告。
+## MOS3 | MOSFET (3-state) | N 通道 MOSFET（SPICE 模型） | pins: D:p@0,-2 S:p@0,2 G:p@-2,0 | bb -2,-2,1.2,2
+   N 通道 MOSFET，閘極為功率節點。預設為 SPICE level-1（Shichman-Hodges）模型：VTO、KP（含 W/L）、LAMBDA（通道長度調變）、RD/RS，閘極電容 CGS/CGD 與 CDS（定值），本體二極體 IS/N/RB/CJO/TT；臨界點以數 mV 寬度平滑處理以利收斂。通用型號參數為近似值，精確分析請貼上廠商模型中對應的參數。Model 選「舊版三態」時改用分段線性模型（Vgs < Vth 截止；Id = gm·(Vgs − Vth)；歐姆區 Ron）。
+   - vth="2" V Threshold Voltage Vth 臨界電壓 閘源臨界電壓。
+   - gm="1" A/V Transconductance gm 轉導 主動區 Id = gm·(Vgs − Vth)。
+   - ron="10m" Ω On Resistance 導通電阻 歐姆區通道電阻。
+   - vd="0" V Diode Voltage Drop 二極體壓降 本體二極體壓降。
+   - model="GENERIC_N"  Model 模型 {GENERIC_N:通用小訊號 N-MOSFET（Vth 2.1 V，近似 2N7002）; custom:自訂（下方 SPICE 參數）; 3state:舊版三態分段線性（Vth、gm、Ron）} 選擇理想（分段線性）模型或 SPICE 物理模型。物理模型以牛頓法求解指數 / 平方律特性與接面電荷，精度與 SPICE 相同但較慢。
+   - spice=""  SPICE 模型參數（空白＝使用所選型號） 可直接貼上廠商的 .model 敘述或 KEY=VALUE 參數（SPICE 單位：M = 毫、MEG = 百萬）。有填寫時優先於上方型號。溫度固定 27 °C，溫度係數與高階效應參數會被忽略並提出警告。
+## PMOS3 | p-MOSFET (3-state) | P 通道 MOSFET（SPICE 模型） | pins: D:p@0,-2 S:p@0,2 G:p@-2,0 | bb -2,-2,1.2,2
+   P 通道 MOSFET，預設為 SPICE level-1 模型（VTO 為負值，其餘同 N 通道），含本體二極體。Model 選「舊版三態」時改用分段線性模型（Vsg > Vth 導通，Isd = gm·(Vsg − Vth)）。
+   - vth="2" V Threshold Voltage |Vth| 臨界電壓 Vsg 臨界電壓（正值）。
+   - gm="1" A/V Transconductance gm 轉導 
+   - ron="10m" Ω On Resistance 導通電阻 
+   - vd="0" V Diode Voltage Drop 二極體壓降 
+   - model="GENERIC_P"  Model 模型 {GENERIC_P:通用小訊號 P-MOSFET（Vth −2 V）; custom:自訂（下方 SPICE 參數）; 3state:舊版三態分段線性（Vth、gm、Ron）} 選擇理想（分段線性）模型或 SPICE 物理模型。物理模型以牛頓法求解指數 / 平方律特性與接面電荷，精度與 SPICE 相同但較慢。
+   - spice=""  SPICE 模型參數（空白＝使用所選型號） 可直接貼上廠商的 .model 敘述或 KEY=VALUE 參數（SPICE 單位：M = 毫、MEG = 百萬）。有填寫時優先於上方型號。溫度固定 27 °C，溫度係數與高階效應參數會被忽略並提出警告。
+## BDIODE3 | 3-ph Diode Bridge | 三相二極體橋 | pins: A:p@-3,-1 B:p@-3,0 C:p@-3,1 DC+:p@3,-1 DC-:p@3,1 | bb -3,-2,3,2
+   三相全橋二極體整流模組（6 顆二極體），上臂 D1/D3/D5 接 A/B/C 至 DC+，下臂 D4/D6/D2 由 DC− 接至 A/B/C。
+   - vf="0" V Diode Voltage Drop 二極體壓降 
+## BTHY1 | 1-ph Thyristor Bridge | 單相閘流體橋 | pins: A+:p@-3,-1 A-:p@-3,1 DC+:p@3,-1 DC-:p@3,1 Ct:g@0,3 | bb -3,-2,3,3
+   單相全橋閘流體模組。開關 1、2 同時觸發，開關 3、4 延遲 180°。閘極 Ct 只需提供開關 1 的觸發訊號，其他開關的觸發訊號依相位差自動推算，因此 Ct 必須接到 Gating Block 或 Alpha Controller（用以取得工作頻率）。
+   - vf="0" V Voltage Drop 導通壓降 
+## BTHY3 | 3-ph Thyristor Bridge | 三相閘流體橋 | pins: A:p@-3,-1 B:p@-3,0 C:p@-3,1 DC+:p@3,-1 DC-:p@3,1 Ct:g@0,3 | bb -3,-2,3,3
+   三相全橋閘流體模組（6 脈波）。開關 1~6 依序相差 60°（1:A 上、2:C 下、3:B 上、4:A 下、5:C 上、6:B 下）。閘極 Ct 只需提供開關 1 的觸發訊號，其他開關的觸發訊號依相位差自動推算，因此 Ct 必須接到 Gating Block 或 Alpha Controller（用以取得工作頻率）。
+   - vf="0" V Voltage Drop 導通壓降 
+## BTHY3H | 3-ph Thyristor Half-Bridge | 三相半波閘流體橋 | pins: A:p@-3,-1 B:p@-3,0 C:p@-3,1 N:p@3,0 Ct:g@0,3 | bb -3,-2,3,3
+   三相半波閘流體模組（3 脈波），三顆閘流體陽極分別接 A/B/C、陰極共接 N，相鄰開關觸發相差 120°。閘極 Ct 只需提供開關 1 的觸發訊號，其他開關的觸發訊號依相位差自動推算，因此 Ct 必須接到 Gating Block 或 Alpha Controller（用以取得工作頻率）。
+   - vf="0" V Voltage Drop 導通壓降 
+## BTHY6H | 6-ph Thyristor Half-Bridge | 六相半波閘流體橋 | pins: A1:p@-3,-3 A2:p@-3,-2 A3:p@-3,-1 A4:p@-3,0 A5:p@-3,1 A6:p@-3,2 N:p@3,0 Ct:g@0,4 | bb -3,-3.6,3,4
+   六相半波閘流體模組，六顆閘流體陽極接 A1~A6、陰極共接 N，相鄰開關觸發相差 60°。閘極 Ct 只需提供開關 1 的觸發訊號，其他開關的觸發訊號依相位差自動推算，因此 Ct 必須接到 Gating Block 或 Alpha Controller（用以取得工作頻率）。
+   - vf="0" V Voltage Drop 導通壓降 
+## PMOSNI | p-MOSFET (non-ideal) | P 通道 MOSFET（非理想） | pins: D:p@0,-2 S:p@0,2 G:g@-2,0 | bb -2,-2,1.2,2
+   非理想 P 通道 MOSFET：與 P 通道 MOSFET 相同，閘極訊號為低時導通（驅動器輸出 Vgs = −|驅動電壓|）。模型同非理想 N 通道 MOSFET（極性相反），本體二極體由 D 指向 S。
+   - ron="80m" Ω Rds(on) 導通電阻 
+   - vth="2.5" V |Vgs(th)| 臨界電壓 以正值輸入。
+   - ciss="1.5n" F Ciss 輸入電容 
+   - crss="40p" F Crss 回授電容 
+   - coss="200p" F Coss 輸出電容 
+   - von="10" V Gate drive on 導通驅動電壓 |Vgs| 閘極訊號為低時，驅動器輸出 Vgs = −|此值|。
+   - voff="0" V Gate drive off 關斷驅動電壓 |Vgs| 閘極訊號為高時的 |Vgs|（通常 0）。
+   - rg="5" Ω Rg 閘極迴路電阻 驅動器輸出電阻 + 外部閘極電阻 + 元件內部閘極電阻的總和，決定切換速度。
+   - qgd="15n" C Qgd 閘-汲極電荷 資料手冊的 Qgd（米勒電荷）：決定米勒平台長度 = Qgd / Ig。0 = Cgd 固定為 Crss（平台很短）。
+   - vq="100" V Vq Qgd 的測試電壓 Qg 曲線的 Vds 測試條件。
+   - vcap="25" V Vcap 電容規格的測試電壓 Ciss/Crss/Coss 的 Vds 測試條件。Cds 隨 Vds 以 1/√(1+Vds/1V) 變化（Coss 在低壓時增大）；0 = 固定值。
+   - vfd="0.85" V Diode Vf 二極體順向壓降 在下方測試電流時的順向壓降。
+   - ifd="5" A Vf 測試電流 
+   - ttd="50n" s Diode TT 渡越時間（反向恢復） SPICE 二極體 TT，儲存電荷 Q = TT·I；決定反向恢復電流與時間（trr 約為 TT 的 1~2 倍，依 di/dt 而定）。
+   - lam="0" 1/V λ 通道長度調變 
+## IGBTNI | IGBT (non-ideal) | IGBT（非理想） | pins: C:p@0,-2 E:p@0,2 G:g@-2,0 | bb -2,-2,1.3,2
+   非理想 IGBT（含反並聯二極體）：以 MOSFET 驅動寬基極 PNP 的巨集模型（IGBT 的物理結構），閘極接控制訊號，內含閘極驅動器與 Rg。可模擬 Vce(sat)（PNP 的 Veb + MOS 通道壓降）、米勒平台、有限切換時間、關斷拖尾電流與二極體反向恢復。參數由 Vce(sat)、Vth 等資料手冊值推算，溫度固定 27 °C；此巨集模型不含閂鎖效應與動態飽和，關斷損失主要來自拖尾，精度約為資料手冊等級。
+   - vth="5.5" V Vge(th) 臨界電壓 
+   - vce="1.8" V Vce(sat) 飽和壓降 在下方測試電流、閘極驅動為高準位時的 Vce。
+   - icn="20" A Vce(sat) 測試電流 
+   - beta="0.5"  PNP gain 內部 PNP 電流增益 內部寬基極 PNP 的 β，決定集極電流中雙極成分的比例（一般 0.3~1）。
+   - ttail="0.4u" s Tail time constant 拖尾電流時間常數 關斷後拖尾電流的衰減時間常數（少數載子復合）。
+   - cies="2n" F Cies 輸入電容 
+   - cres="60p" F Cres 回授電容 
+   - coes="150p" F Coes 輸出電容 
+   - von="15" V Gate drive high 驅動高準位 Vge 
+   - voff="0" V Gate drive low 驅動低準位 Vge 可設負壓，例如 −8。
+   - rg="10" Ω Rg 閘極迴路電阻 
+   - qgd="40n" C Qgd 閘-汲極電荷 資料手冊的 Qgd（米勒電荷）：決定米勒平台長度 = Qgd / Ig。0 = Cgd 固定為 Crss（平台很短）。
+   - vq="600" V Vq Qgd 的測試電壓 Qg 曲線的 Vds 測試條件。
+   - vcap="25" V Vcap 電容規格的測試電壓 Ciss/Crss/Coss 的 Vds 測試條件。Cds 隨 Vds 以 1/√(1+Vds/1V) 變化（Coss 在低壓時增大）；0 = 固定值。
+   - vfd="1.5" V Diode Vf 二極體順向壓降 在下方測試電流時的順向壓降。
+   - ifd="20" A Vf 測試電流 
+   - ttd="100n" s Diode TT 渡越時間（反向恢復） SPICE 二極體 TT，儲存電荷 Q = TT·I；決定反向恢復電流與時間（trr 約為 TT 的 1~2 倍，依 di/dt 而定）。
+## TFI | Ideal Transformer | 理想變壓器 | pins: p+:p@-3,-1 p-:p@-3,1 s+:p@3,-1 s-:p@3,1 | bb -3,-1.5,3,1.2
+   理想變壓器：無損耗、無漏磁、無激磁電流，vs/vp = Ns/Np、Np·ip + Ns·is = 0。大圓點為一次側極性端。
+   - np="1"  Np (primary) 一次側匝數 一次側匝數（可用額定電壓代替）。
+   - ns="1"  Ns (secondary) 二次側匝數 二次側匝數。
+## TF1 | 1-ph Transformer | 單相變壓器 | pins: p+:p@-3,-1 p-:p@-3,1 s+:p@3,-1 s-:p@3,1 | bb -3,-1.5,3,1.2
+   單相雙繞組變壓器，模型為：一次側 Rp、Lp 串聯 → 激磁電感 Lm 並聯 → 理想變壓器 Np:Ns → 二次側 Rs、Ls。所有電阻、電感值皆歸算至一次側。
+   - rp="0" Ω Rp (primary) 一次側電阻 一次側繞組電阻。
+   - rs="0" Ω Rs (secondary) 二次側電阻 二次側繞組電阻（歸算至一次側）。
+   - lp="0" H Lp (pri. leakage) 一次側漏感 一次側漏感。
+   - ls="0" H Ls (sec. leakage) 二次側漏感 二次側漏感（歸算至一次側）。
+   - lm="1" H Lm (magnetizing) 激磁電感 激磁電感（由一次側看入）；0 表示不考慮激磁。
+   - np="1"  Np (primary) 一次側匝數 
+   - ns="1"  Ns (secondary) 二次側匝數 
+## TF3W | 1-ph 3-winding Transformer | 單相三繞組變壓器 | pins: p+:p@-3,-1 p-:p@-3,1 s+:p@3,-2 s-:p@3,-1 t+:p@3,1 t-:p@3,2 | bb -3,-2.5,3,2.3
+   單相三繞組變壓器（1 個一次側、2 個二次側：s 與 t）。所有阻抗歸算至一次側。
+   - rp="0" Ω Rp (primary) 
+   - rs="0" Ω Rs (secondary) 
+   - rt="0" Ω Rt (tertiary) 
+   - lp="0" H Lp (pri. leakage) 
+   - ls="0" H Ls (sec. leakage) 
+   - lt="0" H Lt (ter. leakage) 
+   - lm="1" H Lm (magnetizing) 
+   - np="1"  Np 
+   - ns="1"  Ns 
+   - nt="1"  Nt 
+## TF3YY | 3-ph Y/Y Transformer | 三相 Y/Y 變壓器 | pins: A:p@-4,-2 B:p@-4,-1 C:p@-4,0 N:p@-4,1 a:p@4,-2 b:p@4,-1 c:p@4,0 n:p@4,1 | bb -4,-2.6,4,1.6
+   三相 Y/Y 變壓器，每相以單相變壓器模型表示（不含三柱鐵心的相間耦合）。N、n 為中性點。
+   - rp="0" Ω Rp (primary) 一次側電阻 一次側繞組電阻。
+   - rs="0" Ω Rs (secondary) 二次側電阻 二次側繞組電阻（歸算至一次側）。
+   - lp="0" H Lp (pri. leakage) 一次側漏感 一次側漏感。
+   - ls="0" H Ls (sec. leakage) 二次側漏感 二次側漏感（歸算至一次側）。
+   - lm="1" H Lm (magnetizing) 激磁電感 激磁電感（由一次側看入）；0 表示不考慮激磁。
+   - np="1"  Np (primary) 一次側匝數 
+   - ns="1"  Ns (secondary) 二次側匝數 
+## TF3YD | 3-ph Y/Δ Transformer | 三相 Y/Δ 變壓器 | pins: A:p@-4,-2 B:p@-4,-1 C:p@-4,0 N:p@-4,1 a:p@4,-2 b:p@4,-1 c:p@4,0 | bb -4,-2.6,4,1.6
+   三相 Y/Δ 變壓器，每相以單相變壓器模型表示。Δ 側 A 相繞組接在 a–b、B 相在 b–c、C 相在 c–a。
+   - rp="0" Ω Rp (primary) 一次側電阻 一次側繞組電阻。
+   - rs="0" Ω Rs (secondary) 二次側電阻 二次側繞組電阻（歸算至一次側）。
+   - lp="0" H Lp (pri. leakage) 一次側漏感 一次側漏感。
+   - ls="0" H Ls (sec. leakage) 二次側漏感 二次側漏感（歸算至一次側）。
+   - lm="1" H Lm (magnetizing) 激磁電感 激磁電感（由一次側看入）；0 表示不考慮激磁。
+   - np="1"  Np (primary) 一次側匝數 
+   - ns="1"  Ns (secondary) 二次側匝數 
+## MUT2 | Coupled Inductors (2) | 耦合電感（2 繞組） | pins: 1+:p@-2,-1 1-:p@2,-1 2+:p@-2,1 2-:p@2,1 | bb -2,-1.8,2,1.4
+   兩繞組耦合電感：[v1; v2] = [L11 L12; L12 L22]·d[i1; i2]/dt。以支路電流為未知數，可處理耦合係數 k = 1 的情況。圓點為各繞組極性端。
+   - l11="1m" H L11 (self) 自感 繞組 1 自感。
+   - l12="0.9m" H L12 (mutual) 互感 互感（L12 = L21）。
+   - l22="1m" H L22 (self) 自感 繞組 2 自感。
+   - i1="0" A i1 initial 
+   - i2="0" A i2 initial 
+## MUT3 | Coupled Inductors (3) | 耦合電感（3 繞組） | pins: 1+:p@-2,-2 1-:p@2,-2 2+:p@-2,0 2-:p@2,0 3+:p@-2,2 3-:p@2,2 | bb -2,-2.8,2,2.4
+   三繞組耦合電感，電感矩陣對稱（Lij = Lji）。
+   - l11="1m" H L11 
+   - l12="0.9m" H L12 
+   - l13="0.9m" H L13 
+   - l22="1m" H L22 
+   - l23="0.9m" H L23 
+   - l33="1m" H L33 
+   - i1="0" A i1 initial 
+   - i2="0" A i2 initial 
+   - i3="0" A i3 initial 
+## OPAMP | Op. Amp. | 運算放大器 | pins: V-:p@-3,-1 V+:p@-3,1 Vo:p@3,0 | bb -3,-2,3,2
+   理想運算放大器（功率電路模型）：Vo = A·(V+ − V−) 經 Ro 輸出，並箝位於 Vs− ~ Vs+。參考地為功率地。注意：運算放大器的反相輸入在上方，比較器則相反。
+   - vsp="15" V Voltage Vs+ 正電源 輸出上限。
+   - vsn="-15" V Voltage Vs- 負電源 輸出下限。
+   - A="1e5"  Open-loop Gain 開迴路增益 PSIM 預設 100,000。
+   - ro="80" Ω Output Resistance 輸出電阻 PSIM 預設 80 Ω。
+## OPAMP1 | Op. Amp. (with ground) | 運算放大器（含地端） | pins: V-:p@-3,-1 V+:p@-3,1 Vo:p@3,0 gnd:p@0,2 | bb -3,-2,3,2
+   與 Op. Amp. 相同，但模型的參考地接腳可接到任意節點（可浮接）。
+   - vsp="15" V Voltage Vs+ 正電源 輸出上限。
+   - vsn="-15" V Voltage Vs- 負電源 輸出下限。
+   - A="1e5"  Open-loop Gain 開迴路增益 PSIM 預設 100,000。
+   - ro="80" Ω Output Resistance 輸出電阻 PSIM 預設 80 Ω。
+## OPTO2 | Optocoupler (2 outputs) | 光耦合器（一對二） | pins: A:p@-3,-1 K:p@-3,1 C1:p@3,-3 E1:p@3,-1 C2:p@3,1 E2:p@3,3 | bb -3,-3.6,3,3.6
+   一個 LED 同時照射兩個光電晶體的光耦合器（兩組輸出可分別接到不同電路，例如一次側回授與保護）。兩組輸出各自的 CTR 可分別設定，其餘模型同一對一光耦合器。
+   - ctr1="100" % CTR1 輸出 1 電流轉換比 
+   - ctr2="100" % CTR2 輸出 2 電流轉換比 
+   - vf="1.2" V LED Vf 順向壓降 輸入 LED 在下方測試電流時的順向壓降（PC817 類：1.2 V @ 20 mA）。
+   - ifv="20m" A Vf 測試電流 
+   - bf="400"  Phototransistor β 光電晶體增益 輸出光電晶體的電流增益；CTR 固定時影響基極等效阻抗與頻寬。
+   - ccb="5p" F Ccb 集-基極電容 光電晶體的集-基極接面電容（大面積光二極體），經米勒效應決定光耦合器的頻寬：負載電阻越大、極點頻率越低。
+   - tf="5.5n" s TF 渡越時間 光電晶體的順向渡越時間，影響小負載電阻時的頻寬。
+   - ifn="5m" A CTR 測試電流 IF CTR 定義點的 LED 電流（PC817：IF = 5 mA、VCE = 5 V）。
+## DVDT | dv/dt Block | 微分方塊（功率） | pins: in:p@-2,0 out:p@2,0 | bb -2,-1,2,1
+   功率電路中的微分方塊，輸出為對地電壓 Vo = [Vin(t) − Vin(t−Δt)]/Δt，Δt 為該步長。
+## CONST | Constant | 常數 | pins: out:co@2,0 | bb -1.4,-1,2,1
+   常數：輸出固定數值的控制訊號，作為控制迴路的參考值、增益或偏移量（例如電壓命令、PWM 比較的直流準位）。AC 小訊號分析時視為 0。
+   - v="1"  Value 數值 輸出的常數值，可使用參數檔中的名稱或運算式（例如 Vo_ref*0.5）。
+## P | Proportional | 比例控制器 | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   比例控制器：輸出 = k·輸入。
+   - k="1"  Gain 增益 比例增益 k。
+## I | Integrator | 積分器 | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   積分器 G(s) = 1/(sT)，以梯形法離散：y(n) = y(n−1) + h/(2T)·[u(n) + u(n−1)]。建議在輸出加限制器避免過度飽和。
+   - T="1m" s Time Constant 時間常數 積分時間常數 T，G(s) = 1/(sT)。
+   - y0="0"  Initial Output Value 初始輸出 
+## RESETI | Resettable Integrator | 可重置積分器 | pins: in:ci@-2,0 out:co@2,0 reset:ci@0,2 | bb -2,-1,2,2
+   可由下方控制訊號重置的積分器。邊緣重置：控制訊號上升緣時輸出歸零；準位重置：控制訊號為高時輸出保持為零。
+   - T="1m" s Time Constant 時間常數 
+   - y0="0"  Initial Output Value 初始輸出 
+   - flag="0"  Reset Flag 重置方式 {0:0：邊緣重置（上升緣）; 1:1：準位重置（高電位期間）} 
+## DIFF | Differentiator | 微分器 | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   微分器 G(s) = sT，計算為 y = T·[u(t) − u(t−Δt)]/Δt。輸入突變會產生尖峰，建議先經過低通濾波。
+   - T="1m" s Time Constant 時間常數 G(s) = sT。
+## PI | PI Controller | PI 控制器 | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   PI 控制器 G(s) = k·(1 + sT)/(sT)。建議在輸出加限制器避免積分飽和。
+   - k="1"  Gain 增益 
+   - T="1m" s Time Constant 時間常數 
+## SUB2 | Summer (+/-) | 減法器 | pins: in+:ci@-2,0 in-:ci@0,2 out:co@2,0 | bb -2,-1,2,2
+   減法器：輸出 = in+ − in−，常用於誤差計算（參考值 − 回授值）。
+## SUM3 | Summer (3-input) | 加法器（三輸入） | pins: in1:ci@0,-2 in2:ci@-2,0 in3:ci@0,2 out:co@2,0 | bb -2,-2,2,2
+   三輸入加法器：輸出 = k1·in1 + k2·in2 + k3·in3，有圓點者（上方）為輸入 1。
+   - k1="1"  Gain_1 
+   - k2="1"  Gain_2 
+   - k3="1"  Gain_3 
+## LIM | Limiter | 限制器 | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   限制器：輸入超出上下限時輸出被箝位在上限或下限，否則輸出等於輸入。
+   - lo="-1"  Lower Limit 下限 
+   - hi="1"  Upper Limit 上限 
+## LP1 | Low-pass Filter (1st order) | 一階低通濾波器 | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   一階低通濾波器 G(s) = k·ωc/(s + ωc)，ωc = 2π·fc。
+   - k="1"  Gain 增益 
+   - fc="1k" Hz Cut-off Frequency 截止頻率 
+## HP1 | High-pass Filter (1st order) | 一階高通濾波器 | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   一階高通濾波器 G(s) = k·s/(s + ωc)。
+   - k="1"  Gain 增益 
+   - fc="1k" Hz Cut-off Frequency 截止頻率 
+## LP2 | Low-pass Filter (2nd order) | 二階低通濾波器 | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   二階低通濾波器 G(s) = k·ωc²/(s² + 2ξωc·s + ωc²)。
+   - k="1"  Gain 增益 
+   - z="0.7071"  Damping Ratio 阻尼比 ξ
+   - fc="1k" Hz Cut-off Frequency 截止頻率 
+## HP2 | High-pass Filter (2nd order) | 二階高通濾波器 | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   二階高通濾波器 G(s) = k·s²/(s² + 2ξωc·s + ωc²)。
+   - k="1"  Gain 增益 
+   - z="0.7071"  Damping Ratio 阻尼比 
+   - fc="1k" Hz Cut-off Frequency 截止頻率 
+## BP2 | Band-pass Filter | 帶通濾波器 | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   二階帶通濾波器 G(s) = k·B·s/(s² + B·s + ωo²)，B = 2π·fb。
+   - k="1"  Gain 增益 
+   - fo="1k" Hz Center Frequency 中心頻率 
+   - fb="100" Hz Passing Band 通帶寬度 
+## BS2 | Band-stop Filter | 帶拒濾波器 | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   二階帶拒濾波器 G(s) = k·(s² + ωo²)/(s² + B·s + ωo²)。
+   - k="1"  Gain 增益 
+   - fo="1k" Hz Center Frequency 中心頻率 
+   - fb="100" Hz Stopping Band 拒帶寬度 
+## MULT | Multiplier | 乘法器 | pins: in1:ci@-2,0 in2:ci@0,2 out:co@2,0 | bb -2,-1,2,2
+   乘法器：輸出 = in1 × in2。
+## DIVD | Divider | 除法器 | pins: num:ci@-2,-1 den:ci@-2,1 out:co@2,0 | bb -2,-1.6,2,1.6
+   除法器：輸出 = 被除數 / 除數。有圓點的上方輸入為被除數（分子）。除數為 0 時輸出以極大值表示。
+## SQRT | Square-root | 平方根 | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   平方根：輸出 = √輸入（輸入小於 0 時以 0 計算）。
+## SIN | Sine | 正弦（度） | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   正弦函數，輸入單位為度：輸出 = sin(輸入·π/180)。
+## SINR | Sine (in rad.) | 正弦（弧度） | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   正弦函數，輸入單位為弧度。
+## ASIN | Arcsine | 反正弦 | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   反正弦函數，輸出單位為度。
+## COS | Cosine | 餘弦（度） | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   餘弦函數，輸入單位為度。
+## COSR | Cosine (in rad.) | 餘弦（弧度） | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   餘弦函數，輸入單位為弧度。
+## ACOS | Arccosine | 反餘弦 | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   反餘弦函數，輸出單位為度。
+## TAN | Tangent | 正切 | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   正切函數，輸入單位為度。
+## ATAN | Arctangent | 反正切 | pins: real:ci@-2,-1 imag:ci@-2,1 out:co@2,0 | bb -2,-1.6,2,1.6
+   反正切：輸出 = tan⁻¹(虛部/實部)，單位為度。有圓點的上方輸入為實部、下方為虛部。
+## ATAN2 | Arctangent 2 | 四象限反正切 | pins: y:ci@-2,-1 x:ci@-2,1 out:co@2,0 | bb -2,-1.6,2,1.6
+   四象限反正切：輸出 = atan2(y, x)，單位為度（−180° ~ 180°）。上方為 y、下方為 x。
+## EXP | Exponential (a^x) | 指數函數 | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   指數函數：輸出 = k1·k2^輸入。k2 = e 時即自然指數。
+   - k1="1"  Coefficient k1 係數 
+   - k2="2.718281828"  Coefficient k2 底數 
+## POW | Power (x^a) | 冪次函數 | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   冪次函數：輸出 = k1·輸入^k2。
+   - k1="1"  Coefficient k1 係數 
+   - k2="2"  Coefficient k2 次方 
+## LOG | LOG (base e) | 自然對數 | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   自然對數（以 e 為底）。
+## LOG10 | LOG10 (base 10) | 常用對數 | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   常用對數（以 10 為底）。
+## RMS | RMS | 均方根 | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   均方根值：Vrms = √[(1/T)∫v²dt]，T = 1/fb。輸出只在每個週期開始時更新（週期邊界會設為模擬斷點）。
+   - fb="60" Hz Base Frequency 基本頻率 計算區間 T = 1/fb。
+## ABS | Absolute Value | 絕對值 | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   絕對值：輸出 = |輸入|。
+## SIGN | Sign Block | 符號函數 | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   符號函數：輸入為正輸出 1、負輸出 −1、0 時輸出 0。
+## MAXMIN | Maximum/Minimum Block | 最大/最小值 | pins: in1:ci@-2,-1 in2:ci@-2,1 out:co@2,0 | bb -2,-1.6,2,1.6
+   兩輸入取最大值（Flag=0）或最小值（Flag=1）。
+   - flag="0"  Flag 功能 {0:0：最大值; 1:1：最小值} 
+## SAMP | Sample-and-hold | 取樣保持 | pins: in:ci@-2,0 ctrl:ci@0,2 out:co@2,0 | bb -2,-1,2,2
+   取樣保持：控制訊號（下方）由低轉高時取樣輸入，並保持到下一次取樣。取樣瞬間由控制訊號交越 0.5 的時間內插求得，取樣值為該瞬間的內插輸入值。
+## LKUP | Lookup Table | 查表 | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   一維查表：兩點之間線性內插，輸入小於第一點或大於最後一點時輸出箝位於端點值。
+   - tab="0 0 1 10 2 15 3 17"  Table (x1 y1 x2 y2 ...) 表格 輸入與輸出成對列出，輸入值必須遞增（取代 PSIM 的表格檔案）。
+## LKUPTZ | Lookup Table (trapezoid) | 梯形波查表 | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   梯形波查表：輸入為角度（−360°~360°），輸出為具半波及四分之一波對稱的梯形波，上升角 θ、峰值 Vpk。
+   - th="30" deg Rising Angle theta 上升角 
+   - vpk="1"  Peak Value 峰值 
+## LKUPSQ | Lookup Table (square) | 方波查表 | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   方波查表：輸入為角度，輸出為 ±1 的方波，在每半週期中央寬 θ 度，具半波及四分之一波對稱。
+   - th="120" deg Pulse Width (deg.) 脈寬 半週期內的脈寬。
+## FFT | FFT | 快速傅立葉轉換 | pins: in:ci@-2,0 amp:co@2,-1 phase:co@2,1 | bb -2,-1.6,2,1.6
+   計算輸入的基本波成分：上方（圓點）輸出為峰值振幅，下方輸出為相位角（度），Vm·sin(ωt) 的相位為 0。取樣時刻精確對齊 k/(N·fb)。
+   - N="64"  No. of Sampling Points 取樣點數 每個基本週期的取樣點數，須為 2 的次方（≤ 1024）。
+   - fb="60" Hz Fundamental Frequency 基本頻率 
+## TFS | s-domain Transfer Function | s 域轉移函數 | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   G(s) = k·(Bn·sⁿ + … + B0)/(An·sⁿ + … + A0)。轉成可觀測標準型狀態方程式並以梯形法離散，與功率電路的積分法一致。例：1.5·400e3/(s² + 1200s + 400e3) 輸入 k=1.5、分子 "0 0 400e3"、分母 "1 1200 400e3"。
+   - k="1"  Gain 增益 
+   - num="0 1"  Coeff. Bn...B0 分子係數 由最高次方排到常數項。
+   - den="1e-3 1"  Coeff. An...A0 分母係數 由最高次方排到常數項。
+## TFS1 | s-domain Transfer Function (initial value) | s 域轉移函數（含初值） | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   與 s 域轉移函數相同，但可設定狀態變數初始值（PSIM TFCTN1）。
+   - k="1"  Gain 增益 
+   - num="0 1"  Coeff. Bn...B0 分子係數 
+   - den="1e-3 1"  Coeff. An...A0 分母係數 
+   - x0="0"  Initial Values xn..x1 初始狀態 狀態變數初始值，由 xn 排到 x1。
+## TDELAY | Time Delay | 時間延遲 | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   連續時間延遲：將輸入波形延遲指定時間。輸入中的跳變（例如數位訊號邊緣）會被精確記錄並在延遲後的時刻準確重現（設為模擬斷點）。
+   - Td="1m" s Time Delay 延遲時間 
+## UTD | Unit Time Delay | 單位時間延遲 | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   延遲一個模擬時間步：輸出 = 上一個計算點的輸入。可用來打斷控制電路中的代數迴路。
+## THD | THD | 總諧波失真 | pins: in:ci@-2,0 THD:co@2,-1 v1:co@2,1 | bb -2,-1.6,2,1.6
+   總諧波失真 THD = √(Vrms² − V1²)/V1。以二階帶通濾波器擷取基本波 v1(t)（下方輸出），上方輸出為 THD。【啟動不準】帶通濾波器與一週期移動均方根需要時間收斂：輸出在訊號出現後約 3/fb 秒才可信（誤差 < 1%；fb = 20 Hz → 0.15 s，fb = 10 Hz → 0.33 s，fb = 5 Hz → 0.66 s），約 2.8/fb 秒內誤差 < 5%；在此之前的讀值沒有意義（已限幅於 1000%）。訊號幅度改變（負載步階、市電驟降）後同樣要再等 3/fb 秒。fb 越小
+   - f="60" Hz Fundamental Frequency 基本頻率 
+   - fb="20" Hz Passing Band 通帶寬度 擷取基本波用的帶通濾波器頻寬。收斂時間 ≈ 3/fb 秒；fb ≤ f/5 時穩態誤差 < 1%。
+## ROUND | Roundoff | 四捨五入 | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   捨入方塊：輸入先乘以 10^N，再四捨五入（或截斷），最後除以 10^N。例：34.5678、N=1、截斷 → 34.5。
+   - N="0"  No. of Digits 小數位數 小數點後位數，可為負值。
+   - flag="0"  Truncation Flag 截斷 {0:0：四捨五入; 1:1：無條件捨去} 
+## LIMDVDT | dv/dt Limiter | 變化率限制器 | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   限制輸入的變化率，若變化率在範圍內則輸出等於輸入。
+   - L="1000" 1/s dv/dt Limit 變化率上限 
+## MUX2 | Multiplexer (2-input) | 2 輸入多工器 | pins: d0:ci@-2,-1 d1:ci@-2,0 s0:ci@0,2 Y:co@2,0 | bb -2,-1.8,2,2
+   2 輸入多工器：依選擇訊號 s0（> 0.5 為 1）輸出 d0~d1 其中之一，資料可為類比或數位訊號。
+## MUX4 | Multiplexer (4-input) | 4 輸入多工器 | pins: d0:ci@-2,-2 d1:ci@-2,-1 d2:ci@-2,0 d3:ci@-2,1 s0:ci@1,3 s1:ci@-1,3 Y:co@2,0 | bb -2,-2.8000000000000003,2,3
+   4 輸入多工器：依選擇訊號 s1、s0（> 0.5 為 1）輸出 d0~d3 其中之一，資料可為類比或數位訊號。
+## MUX8 | Multiplexer (8-input) | 8 輸入多工器 | pins: d0:ci@-2,-4 d1:ci@-2,-3 d2:ci@-2,-2 d3:ci@-2,-1 d4:ci@-2,0 d5:ci@-2,1 d6:ci@-2,2 d7:ci@-2,3 s0:ci@2,5 s1:ci@0,5 s2:ci@-2,5 Y:co@2,0 | bb -2,-4.8,2,5
+   8 輸入多工器：依選擇訊號 s2、s1、s0（> 0.5 為 1）輸出 d0~d7 其中之一，資料可為類比或數位訊號。
+## ABC2DQO | abc-dqo Transformation | abc→dqo 轉換 | pins: a:ci@-3,-2 b:ci@-3,-1 c:ci@-3,0 θ:ci@-3,1 d:co@3,-1 q:co@3,0 o:co@3,1 | bb -3,-2.6,3,1.6
+   abc → dqo 轉換：vd = 2/3·[va·cosθ + vb·cos(θ−2π/3) + vc·cos(θ+2π/3)]，vq 以 sin 計算，vo = (va+vb+vc)/3。θ 單位為弧度。
+## DQO2ABC | dqo-abc Transformation | dqo→abc 轉換 | pins: d:ci@-3,-2 q:ci@-3,-1 o:ci@-3,0 θ:ci@-3,1 a:co@3,-1 b:co@3,0 c:co@3,1 | bb -3,-2.6,3,1.6
+   dqo → abc 反轉換：va = vd·cosθ + vq·sinθ + vo，vb、vc 相角分別減、加 2π/3。θ 單位為弧度。
+## AND | AND Gate | 及閘 | pins: in1:ci@-3,-1 in2:ci@-3,1 out:co@3,0 | bb -3,-1.3,3,1.3
+   及閘：輸入大於 0.5 視為邏輯 1，輸出為 0 或 1。輸出變化時會沿用造成變化之輸入的精確事件時間（例如比較器的交越時刻）。
+## AND3 | AND Gate (3-input) | 三輸入及閘 | pins: in1:ci@-3,-1 in2:ci@-3,0 in3:ci@-3,1 out:co@3,0 | bb -3,-1.3,3,1.3
+   三輸入及閘：輸入大於 0.5 視為邏輯 1，輸出為 0 或 1。輸出變化時會沿用造成變化之輸入的精確事件時間（例如比較器的交越時刻）。
+## OR | OR Gate | 或閘 | pins: in1:ci@-3,-1 in2:ci@-3,1 out:co@3,0 | bb -3,-1.3,3,1.3
+   或閘：輸入大於 0.5 視為邏輯 1，輸出為 0 或 1。輸出變化時會沿用造成變化之輸入的精確事件時間（例如比較器的交越時刻）。
+## OR3 | OR Gate (3-input) | 三輸入或閘 | pins: in1:ci@-3,-1 in2:ci@-3,0 in3:ci@-3,1 out:co@3,0 | bb -3,-1.3,3,1.3
+   三輸入或閘：輸入大於 0.5 視為邏輯 1，輸出為 0 或 1。輸出變化時會沿用造成變化之輸入的精確事件時間（例如比較器的交越時刻）。
+## XOR | XOR Gate | 互斥或閘 | pins: in1:ci@-3,-1 in2:ci@-3,1 out:co@3,0 | bb -3,-1.3,3,1.3
+   互斥或閘：輸入大於 0.5 視為邏輯 1，輸出為 0 或 1。輸出變化時會沿用造成變化之輸入的精確事件時間（例如比較器的交越時刻）。
+## NOT | NOT Gate | 反閘 | pins: in1:ci@-2,0 out:co@2,0 | bb -2,-0.8,2,0.8
+   反閘：輸入大於 0.5 視為邏輯 1，輸出為 0 或 1。輸出變化時會沿用造成變化之輸入的精確事件時間（例如比較器的交越時刻）。
+## NAND | NAND Gate | 反及閘 | pins: in1:ci@-3,-1 in2:ci@-3,1 out:co@3,0 | bb -3,-1.3,3,1.3
+   反及閘：輸入大於 0.5 視為邏輯 1，輸出為 0 或 1。輸出變化時會沿用造成變化之輸入的精確事件時間（例如比較器的交越時刻）。
+## NOR | NOR Gate | 反或閘 | pins: in1:ci@-3,-1 in2:ci@-3,1 out:co@3,0 | bb -3,-1.3,3,1.3
+   反或閘：輸入大於 0.5 視為邏輯 1，輸出為 0 或 1。輸出變化時會沿用造成變化之輸入的精確事件時間（例如比較器的交越時刻）。
+## SRFF | Set-Reset Flip-Flop | SR 正反器 | pins: S:ci@-3,-1 R:ci@-3,1 Q:co@3,-1 Qn:co@3,1 | bb -3,-2,3,2
+   SR 正反器。邊緣觸發：S 上升緣輸出 Q=1，R 上升緣輸出 Q=0；準位觸發：S=1、R=0 時 Q=1，S=0、R=1 時 Q=0，皆為 0 時保持。S、R 同時有效為禁止狀態（保持）。
+   - flag="0"  Trigger Flag 觸發方式 {0:0：邊緣觸發; 1:1：準位觸發} 
+## JKFF | J-K Flip-Flop | JK 正反器 | pins: J:ci@-3,-1 CLK:ci@-3,0 K:ci@-3,1 Q:co@3,-1 Qn:co@3,1 | bb -3,-2,3,2
+   JK 正反器，時脈上升緣觸發：J=K=0 保持、J=0/K=1 清除、J=1/K=0 設定、J=K=1 反轉。J、K 取時脈邊緣前一刻的值。
+## JKFFSR | J-K Flip-Flop with Set-Reset | JK 正反器（含設定/重置） | pins: S:ci@0,-3 J:ci@-3,-1 CLK:ci@-3,0 K:ci@-3,1 R:ci@0,3 Q:co@3,-1 Qn:co@3,1 | bb -3,-3,3,3
+   含非同步設定 (S) 與重置 (R) 的 JK 正反器：S=1 立即令 Q=1，R=1 立即令 Q=0（高電位有效），否則依時脈上升緣運作。
+## DFF | D Flip-Flop | D 正反器 | pins: D:ci@-3,-1 CLK:ci@-3,1 Q:co@3,-1 Qn:co@3,1 | bb -3,-2,3,2
+   D 正反器，時脈上升緣將 D 的值鎖入 Q。
+## DFFSR | D Flip-Flop with Set-Reset | D 正反器（含設定/重置） | pins: S:ci@0,-3 D:ci@-3,-1 CLK:ci@-3,1 R:ci@0,3 Q:co@3,-1 Qn:co@3,1 | bb -3,-3,3,3
+   含非同步設定/重置的 D 正反器。
+## MONO | Monostable | 單擊多諧振盪器 | pins: in:ci@-3,0 Q:co@3,-1 Qn:co@3,1 | bb -3,-2,3,2
+   單擊電路：輸入上升緣觸發，輸出產生指定寬度的脈波（脈波期間不再重新觸發）。脈波結束時刻精確設為模擬斷點。
+   - W="1m" s Pulse Width 脈寬 輸出高電位的時間。
+## MONOC | Controlled Monostable | 可控單擊電路 | pins: in:ci@-3,0 W:ci@0,3 Q:co@3,-1 Qn:co@3,1 | bb -3,-2,3,3
+   可控單擊電路：脈寬（秒）由下方輸入在觸發瞬間決定。
+## PWCT | Pulse Width Counter | 脈寬計數器 | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   脈寬計數器：輸入上升緣開始計時，下降緣時輸出該脈波寬度（秒），並保持到下一個下降緣。邊緣時刻以內插精確求得。
+## UPDN | Up/Down Counter | 上/下數計數器 | pins: U:ci@-3,-1 D:ci@-3,0 R:ci@-3,1 out:co@3,0 | bb -3,-2,3,2
+   上/下數計數器：UP 上升緣加 1、DN 上升緣減 1，R 為高時清除為 0。輸出為整數計數值。
+   - bits="8"  No. of Bits 位元數 計數範圍 0 ~ 2^N − 1，超出時環繞。
+## ADC | A/D Converter | A/D 轉換器 | pins: Vin:ci@-3,-1 Vref:ci@0,-3 CLK:ci@-3,1 out:co@3,0 | bb -3,-3,3,2
+   A/D 轉換器：時脈上升緣取樣，輸出 = floor(2^N/Vref·Vin)，限制在 0 ~ 2^N−1。例：Vref=5、Vin=3.2、N=8 → 163。
+   - bits="8"  No. of Bits 位元數 8 或 10 位元（任意整數皆可）。
+## DAC | D/A Converter | D/A 轉換器 | pins: Vin:ci@-3,0 Vref:ci@0,-3 out:co@3,0 | bb -3,-3,3,2
+   D/A 轉換器：輸出 = Vref/2^N·Vin。例：Vref=5、Vin=163、N=8 → 3.1836。
+   - bits="8"  No. of Bits 位元數 
+## ZOH | Zero-Order Hold | 零階保持 | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   零階保持：在取樣時刻取樣輸入，並保持到下一個取樣時刻。
+   - fs="10k" Hz Sampling Frequency 取樣頻率 取樣時刻為 k/fs，與模擬起點同步；取樣時刻會被設為模擬斷點以精確對齊。
+## UDELAY | Unit Delay | 單位延遲 1/z | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   單位延遲：輸出 = 前一個取樣時刻的輸入（延遲一個取樣週期）。
+   - fs="10k" Hz Sampling Frequency 取樣頻率 取樣時刻為 k/fs，與模擬起點同步；取樣時刻會被設為模擬斷點以精確對齊。
+## ID | Integrator | 離散積分器 | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   離散積分器（T = 1/fs）：梯形法 y(n) = y(n−1) + T/2·[u(n)+u(n−1)]；後向尤拉 y(n) = y(n−1) + T·u(n)；前向尤拉 y(n) = y(n−1) + T·u(n−1)。
+   - alg="0"  Algorithm Flag 積分法 {0:0：梯形法; 1:1：後向尤拉; 2:2：前向尤拉} 
+   - y0="0"  Initial Output Value 初始輸出 
+   - fs="10k" Hz Sampling Frequency 取樣頻率 取樣時刻為 k/fs，與模擬起點同步；取樣時刻會被設為模擬斷點以精確對齊。
+## IRSTD | External Resettable Integrator | 外部重置積分器 | pins: in:ci@-2,0 reset:ci@0,2 out:co@2,0 | bb -2,-1,2,2
+   可由外部訊號（下方）重置的離散積分器；邊緣重置於取樣時偵測到上升緣即歸零，準位重置在訊號為高時歸零。
+   - alg="0"  Algorithm Flag 積分法 {0:0：梯形法; 1:1：後向尤拉; 2:2：前向尤拉} 
+   - y0="0"  Initial Output Value 初始輸出 
+   - flag="0"  Reset Flag 重置方式 {0:0：邊緣重置; 1:1：準位重置} 
+   - fs="10k" Hz Sampling Frequency 取樣頻率 取樣時刻為 k/fs，與模擬起點同步；取樣時刻會被設為模擬斷點以精確對齊。
+## IRSTI | Internal Resettable Integrator | 內部重置積分器 | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   內部重置積分器：輸出超過上限時減去 (上限 − 下限)，低於下限時加上 (上限 − 下限)，形成環繞，常用於產生 0~360° 或 0~2π 的角度。
+   - alg="0"  Algorithm Flag 積分法 {0:0：梯形法; 1:1：後向尤拉; 2:2：前向尤拉} 
+   - y0="0"  Initial Output Value 初始輸出 
+   - lo="0"  Lower Limit 下限 
+   - hi="360"  Upper Limit 上限 
+   - fs="10k" Hz Sampling Frequency 取樣頻率 取樣時刻為 k/fs，與模擬起點同步；取樣時刻會被設為模擬斷點以精確對齊。
+## DD | Differentiator | 離散微分器 | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   離散微分器 H(z) = (1/T)·(z − 1)/z，y(n) = [u(n) − u(n−1)]/T。
+   - fs="10k" Hz Sampling Frequency 取樣頻率 取樣時刻為 k/fs，與模擬起點同步；取樣時刻會被設為模擬斷點以精確對齊。
+## FIR | FIR Filter | FIR 濾波器 | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   有限脈衝響應濾波器 H(z) = b0 + b1·z⁻¹ + … + bN·z⁻ᴺ。
+   - b="0.25 0.25 0.25 0.25"  Coeff. b0...bN 係數 
+   - fs="10k" Hz Sampling Frequency 取樣頻率 取樣時刻為 k/fs，與模擬起點同步；取樣時刻會被設為模擬斷點以精確對齊。
+## FILTD | Digital Filter | 數位濾波器 (IIR) | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   一般數位濾波器 H(z) = (b0 + b1·z⁻¹ + … + bN·z⁻ᴺ)/(a0 + a1·z⁻¹ + … + aN·z⁻ᴺ)。例：fc=1kHz、fs=10kHz 二階 Butterworth：b = 0.0201 0.0402 0.0201、a = 1 −1.561 0.6414。
+   - b="0.0201 0.0402 0.0201"  Coeff. b0...bN 分子係數 
+   - a="1 -1.561 0.6414"  Coeff. a0...aN 分母係數 
+   - fs="10k" Hz Sampling Frequency 取樣頻率 取樣時刻為 k/fs，與模擬起點同步；取樣時刻會被設為模擬斷點以精確對齊。
+## TFZ | z-domain Transfer Function | z 域轉移函數 | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   z 域轉移函數 H(z) = (b0·zᴺ + … + bN)/(a0·zᴺ + … + aN)，等效差分方程式 y(n) = [Σbi·u(n−i) − Σai·y(n−i)]/a0。
+   - b="0.0201 0.0402 0.0201"  Coeff. b0...bN 分子係數 
+   - a="1 -1.561 0.6414"  Coeff. a0...aN 分母係數 
+   - fs="10k" Hz Sampling Frequency 取樣頻率 取樣時刻為 k/fs，與模擬起點同步；取樣時刻會被設為模擬斷點以精確對齊。
+## DIGIT | Quantization Block | 量化方塊 | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   量化方塊（模擬 A/D 量化誤差）：先將輸入由 [Vin_min, Vin_max] 線性映射到 [Vo_min, Vo_max]，再依解析度 ΔV = (Vo_max − Vo_min)/(2^N − 1) 向下截斷。
+   - N="8"  No. of Bits 位元數 
+   - vimin="0"  Vin_min 
+   - vimax="5"  Vin_max 
+   - vomin="0"  Vo_min 
+   - vomax="255"  Vo_max 
+   - fs="10k" Hz Sampling Frequency 取樣頻率 取樣時刻為 k/fs，與模擬起點同步；取樣時刻會被設為模擬斷點以精確對齊。
+## DIGIT2 | Quantization Block (with offset) | 量化方塊（含偏移） | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   量化方塊（含 ½ LSB 偏移）：與量化方塊相同，但量化採四捨五入至最接近的階層，而非向下截斷。
+   - N="8"  No. of Bits 位元數 
+   - vimin="0"  Vin_min 
+   - vimax="5"  Vin_max 
+   - vomin="0"  Vo_min 
+   - vomax="255"  Vo_max 
+   - fs="10k" Hz Sampling Frequency 取樣頻率 取樣時刻為 k/fs，與模擬起點同步；取樣時刻會被設為模擬斷點以精確對齊。
+## CBUF | Circular Buffer | 環形緩衝區 | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   環形緩衝區：每個取樣時刻依序寫入，到達尾端後從頭覆寫。輸出為向量，需搭配 Memory Read 讀取個別位置。
+   - L="4"  Buffer Length 長度 
+   - fs="10k" Hz Sampling Frequency 取樣頻率 取樣時刻為 k/fs，與模擬起點同步；取樣時刻會被設為模擬斷點以精確對齊。
+## ARRAY | Array | 資料陣列 | pins: out:co@2,0 | bb -1.4,-1,2,1
+   一維資料陣列（向量常數）。
+   - L="4"  Array Length 長度 
+   - vals="2 4 6 8"  Values 數值 
+## CONV | Convolution | 摺積 | pins: A:ci@-2,0 B:ci@0,2 out:co@2,0 | bb -2,-1,2,2
+   兩向量的摺積，輸出向量長度 m+n−1。例：[1 2 3] ⊗ [4 5] = [4 13 22 15]。
+## MEMREAD | Memory Read | 記憶體讀取 | pins: in:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   讀取向量（陣列、環形緩衝區、摺積輸出）中指定位置的值。例：A = [2 4 6 8]，偏移 2 → 輸出 6。
+   - off="0"  Memory Index Offset 位址偏移 由起始位置算起的偏移量。
+## STACK | Stack | 堆疊 | pins: Vin:ci@-3,-1 push:ci@-3,0 pop:ci@-3,1 out:co@3,0 | bb -3,-2,3,2
+   先進後出暫存器：push 上升緣存入、pop 上升緣取出；堆疊滿時最底層資料被擠出，空堆疊 pop 時輸出不變。
+   - depth="8"  Stack Depth 深度 
+## PSWEEP | Parameter Sweep | 參數掃描（多核心平行） | pins:  | bb -2,-1.2,2,1.2
+   參數掃描：對參數檔中的一個變數逐一代入多個數值，各自執行完整暫態模擬，並以所有 CPU 核心平行運算；波形視窗會把同一探棒的各次結果疊在同一個畫面。僅適用於暫態分析，不影響 Simulation Control。
+   - var="Lf"  Variable 掃描變數 參數檔（Parameter File）中的名稱；元件參數欄位寫這個名稱即會被掃描（例如電感值填 Lf）。參數檔中沒有定義時會自動加入。
+   - mode="0"  Values 數值方式 {0:0：數值清單; 1:1：線性均勻（起始～結束，N 點）; 2:2：對數均勻（起始～結束，N 點）} 
+   - vals="50u 100u 200u"  Value list 數值清單 以空白或逗號分隔，支援 k、m、u、n、p 字尾與參數運算式。
+   - v0="50u"  Start 起始值 數值方式 1、2 使用。
+   - v1="200u"  End 結束值 數值方式 1、2 使用。
+   - n="4"  No. of points 點數 數值方式 1、2 使用，最多 1000。
+## PARAMS | Parameter File | 參數檔 | pins:  | bb -2,-1,2,1
+   參數定義：在此定義的名稱可用於任何元件的參數欄位（例如電阻值輸入 R1*0.5+(Vo+0.7)/Io）。支援 k、M、m、u、n、p 等字尾與數學函數。
+   - text="Vin = 100\nfsw = 50k\nL1 = 100u"  Parameters 參數定義 每行一個「名稱 = 數值或運算式」，% 之後為註解。其他元件的參數可直接引用這些名稱。
+## ACTRL | Alpha Controller | 觸發角控制器 | pins: alpha:ci@-3,-1 sync:ci@-3,0 enable:ci@-3,1 gate:co@3,0 | bb -3,-2,3,2
+   閘流體觸發角控制器：同步訊號由低轉高的瞬間代表 α = 0，延遲 α 度後輸出指定寬度的觸發脈波；enable 為低時停止輸出。α 輸入單位為度，可即時變化。脈波起訖時刻精確設為模擬斷點。
+   - f="60" Hz Frequency 頻率 被控開關的工作頻率。
+   - pw="90" deg Pulse Width 脈寬 觸發脈波寬度（度）。
+## VSEN | Voltage Sensor | 電壓感測器 | pins: +:p@-2,-1 -:p@-2,1 out:co@2,0 | bb -2,-1.4,2,1.4
+   電壓感測器：量測功率電路兩點電壓並乘以增益送到控制電路（理想、無負載效應）。
+   - k="1"  Gain 增益 
+## ISEN | Current Sensor | 電流感測器 | pins: in:p@-2,0 out:p@2,0 o:co@0,-2 | bb -2,-2,2,0.9
+   電流感測器：串接於功率支路中，量測由 in 流向 out 的電流並乘以增益送到控制電路。內部以 0 V 理想電流計實現（不引入電阻）。
+   - k="1"  Gain 增益 
+## VDCM | DC Voltmeter | 直流電壓表 | pins: +:p@0,-2 -:p@0,2 | bb -0.9,-2,0.9,2
+   直流電壓表：以一階低通濾波器取電壓平均值；讀值需達穩態才有意義。
+   - fc="10" Hz Cut-off Frequency 截止頻率 低通濾波器截止頻率，決定讀值的反應速度。
+## VACM | AC Voltmeter | 交流電壓表 | pins: +:p@0,-2 -:p@0,2 | bb -0.9,-2,0.9,2
+   交流電壓表：先以高通濾波器去除直流成分，再計算一個工作週期的移動均方根值。
+   - f="60" Hz Operating Frequency 工作頻率 
+   - fc="10" Hz Cut-off Frequency 截止頻率 濾除直流的高通濾波器截止頻率。
+## ADCM | DC Ammeter | 直流電流表 | pins: in:p@-2,0 out:p@2,0 | bb -2,-0.9,2,0.9
+   直流電流表：串接於支路中，以低通濾波器取電流平均值。
+   - fc="10" Hz Cut-off Frequency 截止頻率 
+## AACM | AC Ammeter | 交流電流表 | pins: in:p@-2,0 out:p@2,0 | bb -2,-0.9,2,0.9
+   交流電流表：高通濾波去除直流後計算移動均方根值。
+   - f="60" Hz Operating Frequency 工作頻率 
+   - fc="10" Hz Cut-off Frequency 截止頻率 
+## WATT | Wattmeter | 瓦特計 | pins: I+:p@-2,0 I-:p@2,0 V-:p@0,2 | bb -2,-0.9,2,2
+   瓦特計：電流由 I+ 流向 I−，電壓取 I+ 相對 V− 的電壓，讀值為 v·i 經低通濾波後的平均功率。
+   - fc="10" Hz Cut-off Frequency 截止頻率 
+## ACP2 | AC Sweep Probe (loop) | AC 掃頻探棒（迴路） | pins: dot:a@-2,0 x:a@2,0 | bb -2,-1,2,1
+   迴路增益探棒：圓點端接在激勵源注入「之後」的節點，另一端接注入之前的節點，直接量測閉迴路系統的迴路增益，波德圖會標示穿越頻率與相位裕度。
+   - neg="1"  Polarity 極性 {1:1：T = −V(x)/V(•)（迴路增益，相位裕度 = 180° + ∠T）; 0:0：H = V(x)/V(•)} 
+## CTOP | Control-Power Interface | 控制-功率介面 | pins: in:ci@-2,0 out:p@2,0 | bb -2,-1,2,1
+   將控制電路的數值傳到功率電路，輸出端視為對地的電壓源（求解功率電路時使用前一步的控制值）。
+## MATH1 | Math Function (1-input) | 1 輸入數學函數 | pins: x1:ci@-2,0 out:co@2,0 | bb -2,-1,2,1
+   1 輸入數學函數方塊：輸出為輸入的任意數學運算式，可處理複雜的非線性關係。
+   - expr="x*x"  Expression f(x1..xn) 運算式 可用變數：t（時間）、x、x1。支援 + − * / ^、sqrt sin cos tan asin acos atan atan2 exp log(ln) log10 abs sign min max pow、比較運算
+## MATH2 | Math Function (2-input) | 2 輸入數學函數 | pins: x1:ci@-2,0 x2:ci@-2,1 out:co@2,0 | bb -2,-1.1,2,1.1
+   2 輸入數學函數方塊：輸出為輸入的任意數學運算式，可處理複雜的非線性關係。
+   - expr="x1*x2"  Expression f(x1..xn) 運算式 可用變數：t（時間）、x1~x2。支援 + − * / ^、sqrt sin cos tan asin acos atan atan2 exp log(ln) log10 abs sign min max pow、比較運
+## MATH3 | Math Function (3-input) | 3 輸入數學函數 | pins: x1:ci@-2,-1 x2:ci@-2,0 x3:ci@-2,1 out:co@2,0 | bb -2,-1.6,2,1.6
+   3 輸入數學函數方塊：輸出為輸入的任意數學運算式，可處理複雜的非線性關係。
+   - expr="x1+x2+x3"  Expression f(x1..xn) 運算式 可用變數：t（時間）、x1~x3。支援 + − * / ^、sqrt sin cos tan asin acos atan atan2 exp log(ln) log10 abs sign min max pow、比較運
+## MATH5 | Math Function (5-input) | 5 輸入數學函數 | pins: x1:ci@-2,-2 x2:ci@-2,-1 x3:ci@-2,0 x4:ci@-2,1 x5:ci@-2,2 out:co@2,0 | bb -2,-2.6,2,2.6
+   5 輸入數學函數方塊：輸出為輸入的任意數學運算式，可處理複雜的非線性關係。
+   - expr="x1+x2+x3"  Expression f(x1..xn) 運算式 可用變數：t（時間）、x1~x5。支援 + − * / ^、sqrt sin cos tan asin acos atan atan2 exp log(ln) log10 abs sign min max pow、比較運
+## MATH10 | Math Function (10-input) | 10 輸入數學函數 | pins: x1:ci@-2,-4 x2:ci@-2,-3 x3:ci@-2,-2 x4:ci@-2,-1 x5:ci@-2,0 x6:ci@-2,1 x7:ci@-2,2 x8:ci@-2,3 x9:ci@-2,4 x10:ci@-2,5 out:co@2,0 | bb -2,-5.1,2,5.1
+   10 輸入數學函數方塊：輸出為輸入的任意數學運算式，可處理複雜的非線性關係。
+   - expr="x1+x2+x3"  Expression f(x1..xn) 運算式 可用變數：t（時間）、x1~x10。支援 + − * / ^、sqrt sin cos tan asin acos atan atan2 exp log(ln) log10 abs sign min max pow、比較
+## CBLOCK | Simplified C Block | 簡化 C 程式方塊 | pins:  | bb -2,-1.6,2,1.6
+   簡化 C 程式方塊：以 C 語法撰寫控制演算法（會轉譯為 JavaScript 執行）。注意：整數除法依浮點數計算；需要取整請用 (int) 轉型或 floor()。程式在每個計算點執行，若需固定取樣率請自行以 t 判斷。
+   - nin="1"  No. of Inputs 輸入數 0~10
+   - nout="1"  No. of Outputs 輸出數 1~10
+   - glob="static double acc = 0;"  Variable definitions 全域變數 程式開始時執行一次；在此宣告的變數會在每一步之間保留（相當於 static）。
+   - code="acc = acc + x1*delt;\ny1 = 2*x1 + 100*acc;"  Step code 每步執行的程式 每個計算點執行。輸入為 x1..xn、輸出為 y1..ym，t 為時間、delt 為步長。支援 C 的運算子、if/for/while、math.h 函數與一維陣列。
+## VSAW | Sawtooth | 鋸齒波電壓源 | pins: +:a@0,-2 -:a@0,2 | bb -1,-2,1,2
+   鋸齒波源：在一個週期內由 Voffset 線性上升到 Voffset + Vpeak 後瞬間歸零。 可用於功率電路或控制電路；用於控制電路時負端必須接地。
+   - Vpk="1" V V peak 峰值 
+   - f="10k" Hz Frequency 頻率 
+   - off="0" V DC Offset 直流偏移 
+   - ph="0" deg Phase Delay 相位延遲 
+## VSQU | Square | 方波電壓源 | pins: +:a@0,-2 -:a@0,2 | bb -1,-2,1,2
+   方波源：週期開始時為高電位 Voffset + Vpp，持續 D·T 後變為低電位 Voffset。邊緣時刻精確設為模擬斷點。 可用於功率電路或控制電路；用於控制電路時負端必須接地。
+   - Vpp="1" V Vpeak-peak 峰對峰值 
+   - f="10k" Hz Frequency 頻率 
+   - D="0.5"  Duty Cycle 占空比 高電位區間占週期的比例。
+   - off="0" V DC Offset 直流偏移 低電位值。
+   - ph="0" deg Phase Delay 相位延遲 
+## VSTEP | Step | 步階電壓源 | pins: +:a@0,-2 -:a@0,2 | bb -1,-2,1,2
+   步階源：t < Tstep 時為 0，之後為 Vstep。 可用於功率電路或控制電路；用於控制電路時負端必須接地。
+   - V="1" V Vstep 步階值 步階後的值（之前為 0）。
+   - ts="1m" s Tstep 步階時間 
+## VSTEP2 | Step (2-level) | 雙準位步階電壓源 | pins: +:a@0,-2 -:a@0,2 | bb -1,-2,1,2
+   雙準位步階源：由 Vstep1 在 Tstep 時以 T_transition 線性轉換到 Vstep2。 可用於功率電路或控制電路；用於控制電路時負端必須接地。
+   - V1="0" V Vstep1 步階前 
+   - V2="1" V Vstep2 步階後 
+   - ts="1m" s Tstep 步階時間 
+   - tr="0" s T_transition 轉換時間 由 V1 線性變化到 V2 的時間。
+## VPWL2 | Piecewise Linear (in pair) | 分段線性（成對）電壓源 | pins: +:a@0,-2 -:a@0,2 | bb -1,-2,1,2
+   分段線性源（成對輸入）：以 (t, v) 成對的格式輸入。 可用於功率電路或控制電路；用於控制電路時負端必須接地。
+   - f="0" Hz Frequency 頻率 0 表示不重複。
+   - pairs="(0,0) (1m,1) (2m,1) (3m,0)"  Times, Values (t1,v1)... 每組以括號包住 (時間, 數值)。
+## VBAT | DC (battery) | 直流電池 | pins: +:a@0,-2 -:a@0,2 | bb -1,-2,1,2
+   直流電池（理想直流電壓源，符號不同）。
+   - V="10" V Amplitude 振幅 
+## VSIN3 | 3-ph Sine | 三相正弦電壓源 | pins: n:p@-2,0 a:p@2,-1 b:p@2,0 c:p@2,1 | bb -2,-1.6,2,1.6
+   對稱三相 Y 接正弦電壓源，n 為中性點，有圓點者為 A 相。相電壓峰值 = V·√2/√3，B、C 相分別落後、超前 120°。
+   - V="380" V V (line-line-rms) 線電壓有效值 
+   - f="60" Hz Frequency 頻率 
+   - ph="0" deg Init. Angle (phase A) A 相初始角 
+## VCCVS | Current-controlled | 電流控制電壓源 | pins: +:p@0,-2 -:p@0,2 c+:p@-2,-1 c-:p@-2,1 | bb -2,-2,1,2
+   電流控制電壓源：輸出 = k × 控制電流。兩個控制端必須跨接在一個 R/L/C 支路的兩端（相同節點），控制電流即為該支路由 c+ 流向 c− 的電流。
+   - k="1"  Gain 增益 
+## VCCVS1 | Current-controlled (flowing through) | 電流控制電壓源（串接） | pins: +:p@0,-2 -:p@0,2 in:p@-2,-1 out:p@-2,1 | bb -2,-2,1,2
+   電流控制電壓源（串接式）：控制電流由 in 流入、out 流出（內部以 0 V 理想電流計量測），輸出 = k × 控制電流。
+   - k="1"  Gain 增益 
+## VVCVS | Voltage-controlled | 電壓控制電壓源 | pins: +:p@0,-2 -:p@0,2 in+:a@-2,-1 in-:a@-2,1 | bb -2,-2,1,2
+   電壓控制電壓源：輸出 = k × (v(in+) − v(in−))。控制端可接功率電路或控制電路（控制電路時使用前一步的控制值）。
+   - k="1"  Gain 增益 
+## VVCVSV | Variable-gain voltage-controlled | 可變增益電壓控制電壓源 | pins: +:p@0,-2 -:p@0,2 vin1:a@-2,-1 vin2:a@-2,1 | bb -2,-2,1,2
+   可變增益電壓控制電壓源：輸出 = (k·vin2)·vin1，vin2 取前一步的值（假設 vin2 變化緩慢），收斂性比非線性源好。輸入為對地電壓。
+   - k="1"  Gain 增益 
+## VNONM | Nonlinear (multiplication) | 非線性電壓源（乘法） | pins: +:p@0,-2 -:p@0,2 vin1:a@-2,-1 vin2:a@-2,1 | bb -2,-2,1,2
+   非線性電壓源：輸出 = k·vin1·vin2，若輸入為功率節點則以牛頓法於當步求解。
+   - k="1"  Gain 增益 
+## VNOND | Nonlinear (division) | 非線性電壓源（除法） | pins: +:p@0,-2 -:p@0,2 vin1:a@-2,-1 vin2:a@-2,1 | bb -2,-2,1,2
+   非線性電壓源：輸出 = k·vin1/vin2（上方 vin1 為被除數）。
+   - k="1"  Gain 增益 
+## VNONSQ | Nonlinear (square-root) | 非線性電壓源（平方根） | pins: +:p@0,-2 -:p@0,2 vin1:a@-2,0 | bb -2,-2,1,2
+   非線性電壓源：輸出 = k·√vin1。
+   - k="1"  Gain 增益 
+## VPOWERS | Power | 冪次電壓源 | pins: +:p@0,-2 -:p@0,2 vin:a@-2,0 | bb -2,-2,1,2
+   冪次電壓源：vo = sign(vin)·k·(k1·|vin|)^k2。
+   - k="1"  Gain 增益 
+   - k1="1"  Coefficient k1 
+   - k2="2"  Coefficient k2 
+## VGDC | Grounded DC (circle) | 接地直流源（圓形） | pins: n:a@0,1 | bb -0.6,-1,0.6,1
+   單端直流電壓源，參考點為地；可用於功率電路或控制電路（例如控制參考值）。
+   - V="10" V Amplitude 振幅 
+## VGDCT | Grounded DC (T) | 接地直流源（T 形） | pins: n:a@0,1 | bb -0.7,-0.8,0.7,1
+   單端直流電壓源（T 形符號），參考點為地。
+   - V="10" V Amplitude 振幅 
+## VRAND | Random | 亂數電壓源 | pins: +:a@0,-2 -:a@0,2 | bb -1,-2,1,2
+   亂數源：每個時間步產生 Vpp·n + Voffset，n 為 0~1 的亂數。 可用於功率或控制電路。
+   - Vpp="1" V Peak-Peak Amplitude 峰對峰值 
+   - off="0" V DC Offset 直流偏移 
+   - seed="1"  Seed 亂數種子 相同種子可重現相同結果。
+## VMATH | Math Function | 數學函數電壓源 | pins: +:a@0,-2 -:a@0,2 | bb -1,-2,1,2
+   數學函數源：以 t 的運算式定義輸出，例如 sin(2*pi*60*t+2.09)。 可用於功率或控制電路。
+   - expr="sin(2*pi*60*t)"  Expression 運算式 以 t 表示時間。
+   - ts="0" s Tstart 起始時間 
+## IDC | DC | 直流電流源 | pins: +:p@0,-2 -:p@0,2 | bb -1,-2,1,2
+   直流源：固定振幅。 電流方向：電流由 + 端流出到外部電路，再由 − 端流回。電流源只能用於功率電路。
+   - V="10" A Amplitude 振幅 
+## ISIN | Sine | 正弦電流源 | pins: +:p@0,-2 -:p@0,2 | bb -1,-2,1,2
+   正弦波源：v = Vm·sin(2π·f·t + θ) + Voffset，t < Tstart 時為 0。也可當作 AC 掃頻的激勵源（以元件名稱指定）。 電流方向：電流由 + 端流出到外部電路，再由 − 端流回。電流源只能用於功率電路。
+   - Vm="10" A Peak Amplitude 峰值 
+   - f="60" Hz Frequency 頻率 
+   - ph="0" deg Phase Angle 相位 
+   - off="0" A DC Offset 直流偏移 
+   - ts="0" s Tstart 起始時間 此時間之前輸出為 0。
+## ITRI | Triangular | 三角波電流源 | pins: +:p@0,-2 -:p@0,2 | bb -1,-2,1,2
+   三角波源：由 Voffset 開始以上升時間比 D 上升到 Voffset + Vpp 再下降，常作為 PWM 載波。轉折點會被設為模擬斷點，與比較器交越內插搭配可得到精確 PWM。 電流方向：電流由 + 端流出到外部電路，再由 − 端流回。電流源只能用於功率電路。
+   - Vpp="1" A Ipeak-peak 峰對峰值 
+   - f="10k" Hz Frequency 頻率 
+   - D="0.5"  Duty Cycle 上升時間比 上升斜率區間占週期的比例。
+   - off="0" A DC Offset 直流偏移 波形最低點。
+   - ph="0" deg Phase Delay 相位延遲 正值表示往右平移。
+## ISQU | Square | 方波電流源 | pins: +:p@0,-2 -:p@0,2 | bb -1,-2,1,2
+   方波源：週期開始時為高電位 Voffset + Vpp，持續 D·T 後變為低電位 Voffset。邊緣時刻精確設為模擬斷點。 電流方向：電流由 + 端流出到外部電路，再由 − 端流回。電流源只能用於功率電路。
+   - Vpp="1" A Ipeak-peak 峰對峰值 
+   - f="10k" Hz Frequency 頻率 
+   - D="0.5"  Duty Cycle 占空比 高電位區間占週期的比例。
+   - off="0" A DC Offset 直流偏移 低電位值。
+   - ph="0" deg Phase Delay 相位延遲 
+## ISTEP | Step | 步階電流源 | pins: +:p@0,-2 -:p@0,2 | bb -1,-2,1,2
+   步階源：t < Tstep 時為 0，之後為 Vstep。 電流方向：電流由 + 端流出到外部電路，再由 − 端流回。電流源只能用於功率電路。
+   - V="1" A Istep 步階值 步階後的值（之前為 0）。
+   - ts="1m" s Tstep 步階時間 
+## ISTEP2 | Step (2-level) | 雙準位步階電流源 | pins: +:p@0,-2 -:p@0,2 | bb -1,-2,1,2
+   雙準位步階源：由 Vstep1 在 Tstep 時以 T_transition 線性轉換到 Vstep2。 電流方向：電流由 + 端流出到外部電路，再由 − 端流回。電流源只能用於功率電路。
+   - V1="0" A Istep1 步階前 
+   - V2="1" A Istep2 步階後 
+   - ts="1m" s Tstep 步階時間 
+   - tr="0" s T_transition 轉換時間 由 V1 線性變化到 V2 的時間。
+## IPWL | Piecewise Linear | 分段線性電流源 | pins: +:p@0,-2 -:p@0,2 | bb -1,-2,1,2
+   分段線性源：由 (Ti, Vi) 點連成的折線，可設定頻率使其週期性重複。 電流方向：電流由 + 端流出到外部電路，再由 − 端流回。電流源只能用於功率電路。
+   - f="0" Hz Frequency 頻率 0 表示不重複。
+   - vals="0 1 1 0" A Values V1...Vn 數值 
+   - times="0 1m 2m 3m" s Times T1...Tn 時間 必須遞增；兩點時間相同表示跳變。
+## IPWL2 | Piecewise Linear (in pair) | 分段線性（成對）電流源 | pins: +:p@0,-2 -:p@0,2 | bb -1,-2,1,2
+   分段線性源（成對輸入）：以 (t, v) 成對的格式輸入。 電流方向：電流由 + 端流出到外部電路，再由 − 端流回。電流源只能用於功率電路。
+   - f="0" Hz Frequency 頻率 0 表示不重複。
+   - pairs="(0,0) (1m,1) (2m,1) (3m,0)"  Times, Values (t1,v1)... 每組以括號包住 (時間, 數值)。
+## ICCCS | Current-controlled | 電流控制電流源 | pins: +:p@0,-2 -:p@0,2 c+:p@-2,-1 c-:p@-2,1 | bb -2,-2,1,2
+   電流控制電流源：輸出 = k × 控制電流。兩個控制端必須跨接在一個 R/L/C 支路的兩端（相同節點），控制電流即為該支路由 c+ 流向 c− 的電流。
+   - k="1"  Gain 增益 
+## ICCCS1 | Current-controlled (flowing through) | 電流控制電流源（串接） | pins: +:p@0,-2 -:p@0,2 in:p@-2,-1 out:p@-2,1 | bb -2,-2,1,2
+   電流控制電流源（串接式）：控制電流由 in 流入、out 流出（內部以 0 V 理想電流計量測），輸出 = k × 控制電流。
+   - k="1"  Gain 增益 
+## IVCCS | Voltage-controlled | 電壓控制電流源 | pins: +:p@0,-2 -:p@0,2 in+:a@-2,-1 in-:a@-2,1 | bb -2,-2,1,2
+   電壓控制電流源：輸出 = k × (v(in+) − v(in−))。控制端可接功率電路或控制電路（控制電路時使用前一步的控制值）。
+   - k="1"  Gain 增益 
+## IVCCSV | Variable-gain voltage-controlled | 可變增益電壓控制電流源 | pins: +:p@0,-2 -:p@0,2 vin1:a@-2,-1 vin2:a@-2,1 | bb -2,-2,1,2
+   可變增益電壓控制電流源：輸出 = (k·vin2)·vin1，vin2 取前一步的值（假設 vin2 變化緩慢），收斂性比非線性源好。輸入為對地電壓。
+   - k="1"  Gain 增益 
+## INONM | Nonlinear (multiplication) | 非線性電流源（乘法） | pins: +:p@0,-2 -:p@0,2 vin1:a@-2,-1 vin2:a@-2,1 | bb -2,-2,1,2
+   非線性電流源：輸出 = k·vin1·vin2，若輸入為功率節點則以牛頓法於當步求解。
+   - k="1"  Gain 增益 
+## INOND | Nonlinear (division) | 非線性電流源（除法） | pins: +:p@0,-2 -:p@0,2 vin1:a@-2,-1 vin2:a@-2,1 | bb -2,-2,1,2
+   非線性電流源：輸出 = k·vin1/vin2（上方 vin1 為被除數）。
+   - k="1"  Gain 增益 
+## INONSQ | Nonlinear (square-root) | 非線性電流源（平方根） | pins: +:p@0,-2 -:p@0,2 vin1:a@-2,0 | bb -2,-2,1,2
+   非線性電流源：輸出 = k·√vin1。
+   - k="1"  Gain 增益 
+## IRAND | Random | 亂數電流源 | pins: +:p@0,-2 -:p@0,2 | bb -1,-2,1,2
+   亂數源：每個時間步產生 Vpp·n + Voffset，n 為 0~1 的亂數。 電流由 + 端流出。
+   - Vpp="1" A Peak-Peak Amplitude 峰對峰值 
+   - off="0" A DC Offset 直流偏移 
+   - seed="1"  Seed 亂數種子 相同種子可重現相同結果。
+## IMATH | Math Function | 數學函數電流源 | pins: +:p@0,-2 -:p@0,2 | bb -1,-2,1,2
+   數學函數源：以 t 的運算式定義輸出，例如 sin(2*pi*60*t+2.09)。 電流由 + 端流出。
+   - expr="sin(2*pi*60*t)"  Expression 運算式 以 t 表示時間。
+   - ts="0" s Tstart 起始時間 

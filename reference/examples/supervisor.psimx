@@ -1,0 +1,915 @@
+{
+ "app": "psimweb",
+ "version": "V3.2.1",
+ "doc": {
+  "elements": [
+   {
+    "id": 1,
+    "type": "VPWL",
+    "x": -12,
+    "y": -4,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "P12V",
+    "params": {
+     "f": "0",
+     "vals": "0 12 12 0",
+     "times": "0 1m 70m 80m"
+    }
+   },
+   {
+    "id": 2,
+    "type": "GND",
+    "x": -12,
+    "y": -2,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 4,
+    "type": "LABEL",
+    "x": -12,
+    "y": -8,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "VCC"
+    }
+   },
+   {
+    "id": 6,
+    "type": "VP",
+    "x": -6,
+    "y": -9,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vcc",
+    "params": {}
+   },
+   {
+    "id": 7,
+    "type": "VDC",
+    "x": -12,
+    "y": 6,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "P3V3M",
+    "params": {
+     "V": "3.3"
+    }
+   },
+   {
+    "id": 8,
+    "type": "GND",
+    "x": -12,
+    "y": 8,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 10,
+    "type": "LABEL",
+    "x": -12,
+    "y": 2,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "3V3M"
+    }
+   },
+   {
+    "id": 11,
+    "type": "VPWL",
+    "x": -12,
+    "y": 18,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "MCU_SRC",
+    "params": {
+     "f": "0",
+     "vals": "0 0 0 3.3 3.3 0 0 3.3 3.3 0 0 3.3 3.3 0 0 3.3 3.3 0 0 3.3 3.3 0 0 3.3 3.3 0 0 3.3 3.3 0 0 3.3 3.3 0 0 3.3 3.3 0 0 3.3 3.3 0 0 3.3 3.3 0 0 3.3 3.3 0 0 3.3 3.3 0 0 3.3 3.3 0 0 3.3 3.3 0 0 3.3 3.3 0 0 3.3 3.3 0 0 3.3 3.3 0",
+     "times": "0 5m 5m 5.001m 6m 6.001m 7m 7.001m 8m 8.001m 9m 9.001m 10m 10.001m 11m 11.001m 12m 12.001m 13m 13.001m 14m 14.001m 15m 15.001m 16m 16.001m 17m 17.001m 18m 18.001m 19m 19.001m 20m 20.001m 21m 21.001m 22m 22.001m 23m 23.001m 24m 24.001m 25m 25.001m 26m 26.001m 27m 27.001m 28m 28.001m 29m 29.001m 30m 30.001m 31m 31.001m 32m 32.001m 33m 33.001m 34m 34.001m 35m 35.001m 36m 36.001m 37m 37.001m 38m 38.001m 39m 39.001m 40m 40.001m"
+    }
+   },
+   {
+    "id": 12,
+    "type": "GND",
+    "x": -12,
+    "y": 20,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 14,
+    "type": "LABEL",
+    "x": -12,
+    "y": 14,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "MCU_RDY"
+    }
+   },
+   {
+    "id": 16,
+    "type": "VP",
+    "x": -4,
+    "y": 13,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "MCU_RDY",
+    "params": {}
+   },
+   {
+    "id": 17,
+    "type": "LABEL",
+    "x": 8,
+    "y": -8,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "VCC"
+    }
+   },
+   {
+    "id": 19,
+    "type": "DIODE",
+    "x": 12,
+    "y": -6,
+    "rot": 2,
+    "mir": false,
+    "dis": false,
+    "name": "DM30",
+    "params": {
+     "vf": "0",
+     "init": "0",
+     "ron": "10u",
+     "roff": "1M",
+     "model": "1N4148",
+     "vfd": "0.85",
+     "ifd": "5",
+     "rd": "20m",
+     "trr": "0",
+     "qrr": "0",
+     "irr": "0",
+     "cjd": "0",
+     "vcj": "0",
+     "bvd": "0",
+     "spice": ""
+    }
+   },
+   {
+    "id": 21,
+    "type": "R",
+    "x": 12,
+    "y": 0,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "RM318",
+    "params": {
+     "R": "100k"
+    }
+   },
+   {
+    "id": 27,
+    "type": "R",
+    "x": 20,
+    "y": 4,
+    "rot": 1,
+    "mir": false,
+    "dis": false,
+    "name": "RM315",
+    "params": {
+     "R": "31.6k"
+    }
+   },
+   {
+    "id": 28,
+    "type": "GND",
+    "x": 20,
+    "y": 6,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 29,
+    "type": "C",
+    "x": 26,
+    "y": 4,
+    "rot": 1,
+    "mir": false,
+    "dis": false,
+    "name": "CM312",
+    "params": {
+     "C": "0.1u",
+     "v0": "0"
+    }
+   },
+   {
+    "id": 30,
+    "type": "GND",
+    "x": 26,
+    "y": 6,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 31,
+    "type": "R",
+    "x": 24,
+    "y": -10,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "RM316",
+    "params": {
+     "R": "100k"
+    }
+   },
+   {
+    "id": 34,
+    "type": "VP",
+    "x": 19,
+    "y": -12,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vpos",
+    "params": {}
+   },
+   {
+    "id": 35,
+    "type": "LABEL",
+    "x": 8,
+    "y": 10,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "VCC"
+    }
+   },
+   {
+    "id": 37,
+    "type": "R",
+    "x": 12,
+    "y": 14,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "RM321",
+    "params": {
+     "R": "100k"
+    }
+   },
+   {
+    "id": 42,
+    "type": "C",
+    "x": 21,
+    "y": 22,
+    "rot": 1,
+    "mir": false,
+    "dis": false,
+    "name": "CM320",
+    "params": {
+     "C": "0.1u",
+     "v0": "0"
+    }
+   },
+   {
+    "id": 43,
+    "type": "GND",
+    "x": 21,
+    "y": 24,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 44,
+    "type": "R",
+    "x": 26,
+    "y": 22,
+    "rot": 1,
+    "mir": false,
+    "dis": false,
+    "name": "RM_301k",
+    "params": {
+     "R": "301k"
+    }
+   },
+   {
+    "id": 45,
+    "type": "GND",
+    "x": 26,
+    "y": 24,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 46,
+    "type": "VP",
+    "x": 19,
+    "y": 14,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vneg",
+    "params": {}
+   },
+   {
+    "id": 47,
+    "type": "R",
+    "x": 16,
+    "y": 24,
+    "rot": 1,
+    "mir": false,
+    "dis": false,
+    "name": "RM322",
+    "params": {
+     "R": "49.9"
+    }
+   },
+   {
+    "id": 49,
+    "type": "NPN3",
+    "x": 16,
+    "y": 30,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "QM31",
+    "params": {
+     "beta": "100",
+     "vr": "0.7",
+     "vsat": "0.2",
+     "roff": "1M",
+     "model": "2N4401",
+     "spice": ""
+    }
+   },
+   {
+    "id": 50,
+    "type": "GND",
+    "x": 16,
+    "y": 32,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 52,
+    "type": "R",
+    "x": 12,
+    "y": 34,
+    "rot": 1,
+    "mir": false,
+    "dis": false,
+    "name": "RM327",
+    "params": {
+     "R": "10k"
+    }
+   },
+   {
+    "id": 54,
+    "type": "GND",
+    "x": 12,
+    "y": 36,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 55,
+    "type": "DIODE",
+    "x": 8,
+    "y": 34,
+    "rot": 3,
+    "mir": false,
+    "dis": false,
+    "name": "DM31",
+    "params": {
+     "vf": "0",
+     "init": "0",
+     "ron": "10u",
+     "roff": "1M",
+     "model": "1N4148",
+     "vfd": "0.85",
+     "ifd": "5",
+     "rd": "20m",
+     "trr": "0",
+     "qrr": "0",
+     "irr": "0",
+     "cjd": "0",
+     "vcj": "0",
+     "bvd": "0",
+     "spice": ""
+    }
+   },
+   {
+    "id": 57,
+    "type": "GND",
+    "x": 8,
+    "y": 36,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 58,
+    "type": "C",
+    "x": 4,
+    "y": 30,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "CM319",
+    "params": {
+     "C": "0.1u",
+     "v0": "0"
+    }
+   },
+   {
+    "id": 59,
+    "type": "R",
+    "x": -2,
+    "y": 30,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "RM324",
+    "params": {
+     "R": "1k"
+    }
+   },
+   {
+    "id": 63,
+    "type": "LABEL",
+    "x": -8,
+    "y": 26,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "MCU_RDY"
+    }
+   },
+   {
+    "id": 64,
+    "type": "COMPOC",
+    "x": 38,
+    "y": 4,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "UM52A",
+    "params": {
+     "tpd": "1.3u",
+     "isc": "16m",
+     "vol": "0.15",
+     "iol": "4m",
+     "vos": "0",
+     "ib": "25n",
+     "vcmr": "1.5",
+     "vsmin": "2",
+     "iq": "0.2m"
+    }
+   },
+   {
+    "id": 72,
+    "type": "LABEL",
+    "x": 38,
+    "y": -1,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "VCC"
+    }
+   },
+   {
+    "id": 73,
+    "type": "GND",
+    "x": 38,
+    "y": 6,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 76,
+    "type": "VP",
+    "x": 44,
+    "y": -12,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "MCU_OK",
+    "params": {}
+   },
+   {
+    "id": 77,
+    "type": "R",
+    "x": 54,
+    "y": -4,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "RM319",
+    "params": {
+     "R": "301"
+    }
+   },
+   {
+    "id": 80,
+    "type": "LED",
+    "x": 60,
+    "y": -4,
+    "rot": 2,
+    "mir": false,
+    "dis": false,
+    "name": "LEDM2",
+    "params": {
+     "vf": "2",
+     "ron": "10u",
+     "roff": "1M",
+     "model": "LEDRED",
+     "spice": ""
+    }
+   },
+   {
+    "id": 82,
+    "type": "LABEL",
+    "x": 62,
+    "y": -6,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "3V3M"
+    }
+   },
+   {
+    "id": 83,
+    "type": "SIMCTRL",
+    "x": 70,
+    "y": -12,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "dt": "1u",
+     "tt": "0.1",
+     "tp": "0",
+     "ps": "1",
+     "lte": "1",
+     "ltetol": "1e-3",
+     "interp": "1",
+     "damp": "1"
+    }
+   },
+   {
+    "id": 84,
+    "type": "TEXT",
+    "x": -12,
+    "y": -20,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "Supervisor 看門狗：MCU_RDY 每 2 ms 一個上升沿，經 CM319 觸發 QM31 放掉 CM320；39 ms 後停止 toggle，V− 充電超過 V+ → UM52A 拉低 *MCU_OK。70 ms 起 12 V 下電。"
+    }
+   },
+   {
+    "id": 85,
+    "type": "TEXT",
+    "x": -12,
+    "y": -18,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "元件皆為 SPICE 物理模型（1N4148/BAS316、MMST4401、紅光 LED、開集極 AS393）。比較改前/改後：選取 RM_301k 按 D 停用後再按 F5；結束後的警告會列出比較器輸入超出共模範圍的累計時間。"
+    }
+   }
+  ],
+  "wires": [
+   {
+    "id": 3,
+    "x1": -12,
+    "y1": -6,
+    "x2": -12,
+    "y2": -8
+   },
+   {
+    "id": 5,
+    "x1": -12,
+    "y1": -7,
+    "x2": -6,
+    "y2": -7
+   },
+   {
+    "id": 9,
+    "x1": -12,
+    "y1": 4,
+    "x2": -12,
+    "y2": 2
+   },
+   {
+    "id": 13,
+    "x1": -12,
+    "y1": 16,
+    "x2": -12,
+    "y2": 14
+   },
+   {
+    "id": 15,
+    "x1": -12,
+    "y1": 15,
+    "x2": -4,
+    "y2": 15
+   },
+   {
+    "id": 18,
+    "x1": 8,
+    "y1": -8,
+    "x2": 8,
+    "y2": 0
+   },
+   {
+    "id": 20,
+    "x1": 8,
+    "y1": -6,
+    "x2": 10,
+    "y2": -6
+   },
+   {
+    "id": 22,
+    "x1": 8,
+    "y1": 0,
+    "x2": 10,
+    "y2": 0
+   },
+   {
+    "id": 23,
+    "x1": 14,
+    "y1": -6,
+    "x2": 16,
+    "y2": -6
+   },
+   {
+    "id": 24,
+    "x1": 14,
+    "y1": 0,
+    "x2": 16,
+    "y2": 0
+   },
+   {
+    "id": 25,
+    "x1": 16,
+    "y1": -10,
+    "x2": 16,
+    "y2": 2
+   },
+   {
+    "id": 26,
+    "x1": 16,
+    "y1": 2,
+    "x2": 26,
+    "y2": 2
+   },
+   {
+    "id": 32,
+    "x1": 16,
+    "y1": -10,
+    "x2": 22,
+    "y2": -10
+   },
+   {
+    "id": 33,
+    "x1": 26,
+    "y1": -10,
+    "x2": 50,
+    "y2": -10
+   },
+   {
+    "id": 36,
+    "x1": 8,
+    "y1": 10,
+    "x2": 8,
+    "y2": 14
+   },
+   {
+    "id": 38,
+    "x1": 8,
+    "y1": 14,
+    "x2": 10,
+    "y2": 14
+   },
+   {
+    "id": 39,
+    "x1": 14,
+    "y1": 14,
+    "x2": 16,
+    "y2": 14
+   },
+   {
+    "id": 40,
+    "x1": 16,
+    "y1": 14,
+    "x2": 16,
+    "y2": 22
+   },
+   {
+    "id": 41,
+    "x1": 16,
+    "y1": 20,
+    "x2": 26,
+    "y2": 20
+   },
+   {
+    "id": 48,
+    "x1": 16,
+    "y1": 26,
+    "x2": 16,
+    "y2": 28
+   },
+   {
+    "id": 51,
+    "x1": 14,
+    "y1": 30,
+    "x2": 6,
+    "y2": 30
+   },
+   {
+    "id": 53,
+    "x1": 12,
+    "y1": 30,
+    "x2": 12,
+    "y2": 32
+   },
+   {
+    "id": 56,
+    "x1": 8,
+    "y1": 30,
+    "x2": 8,
+    "y2": 32
+   },
+   {
+    "id": 60,
+    "x1": 0,
+    "y1": 30,
+    "x2": 2,
+    "y2": 30
+   },
+   {
+    "id": 61,
+    "x1": -4,
+    "y1": 30,
+    "x2": -8,
+    "y2": 30
+   },
+   {
+    "id": 62,
+    "x1": -8,
+    "y1": 30,
+    "x2": -8,
+    "y2": 26
+   },
+   {
+    "id": 65,
+    "x1": 16,
+    "y1": -2,
+    "x2": 30,
+    "y2": -2
+   },
+   {
+    "id": 66,
+    "x1": 30,
+    "y1": -2,
+    "x2": 30,
+    "y2": 3
+   },
+   {
+    "id": 67,
+    "x1": 30,
+    "y1": 3,
+    "x2": 35,
+    "y2": 3
+   },
+   {
+    "id": 68,
+    "x1": 16,
+    "y1": 16,
+    "x2": 28,
+    "y2": 16
+   },
+   {
+    "id": 69,
+    "x1": 28,
+    "y1": 16,
+    "x2": 28,
+    "y2": 5
+   },
+   {
+    "id": 70,
+    "x1": 28,
+    "y1": 5,
+    "x2": 35,
+    "y2": 5
+   },
+   {
+    "id": 71,
+    "x1": 38,
+    "y1": 2,
+    "x2": 38,
+    "y2": -1
+   },
+   {
+    "id": 74,
+    "x1": 41,
+    "y1": 4,
+    "x2": 50,
+    "y2": 4
+   },
+   {
+    "id": 75,
+    "x1": 50,
+    "y1": -10,
+    "x2": 50,
+    "y2": 4
+   },
+   {
+    "id": 78,
+    "x1": 50,
+    "y1": -4,
+    "x2": 52,
+    "y2": -4
+   },
+   {
+    "id": 79,
+    "x1": 56,
+    "y1": -4,
+    "x2": 58,
+    "y2": -4
+   },
+   {
+    "id": 81,
+    "x1": 62,
+    "y1": -4,
+    "x2": 62,
+    "y2": -6
+   }
+  ],
+  "nid": 86
+ }
+}

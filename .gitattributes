@@ -1,0 +1,5 @@
+# keep LF everywhere (shell scripts, embedded example files); binaries untouched
+* text=auto eol=lf
+*.png binary
+*.ico binary
+*.exe binary

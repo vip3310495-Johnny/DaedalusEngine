@@ -1,0 +1,1151 @@
+{
+ "app": "psimweb",
+ "version": "V1.1.0",
+ "doc": {
+  "elements": [
+   {
+    "id": 1,
+    "type": "TEXT",
+    "x": -20,
+    "y": -8,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "各電流源注入 10 Ω，量到的電壓 = 10·i：\n正弦 1 A 1 kHz 30° + 0.5 A、三角 2 Ap-p 1 kHz（上升比 0.3、偏移 −1 A）、方波 1 A 2 kHz（D = 0.25）、\n步階 2 A @1 ms、雙準位 1 → −1 A（1 ms 起 0.5 ms 斜坡）、成對 PWL、亂數 0 ~ 1 A、數學式 2·e^(−t/1ms)。"
+    }
+   },
+   {
+    "id": 2,
+    "type": "SIMCTRL",
+    "x": -20,
+    "y": -4,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "dt": "1u",
+     "tt": "4m",
+     "tp": "0",
+     "ps": "1",
+     "lte": "1",
+     "ltetol": "1e-3",
+     "interp": "1",
+     "damp": "1",
+     "acc": "0",
+     "etol": "1e-6",
+     "maxlv": "8"
+    }
+   },
+   {
+    "id": 3,
+    "type": "ISIN",
+    "x": -13,
+    "y": 14,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "isin",
+    "params": {
+     "Vm": "1",
+     "f": "1k",
+     "ph": "30",
+     "off": "0.5",
+     "ts": "0"
+    }
+   },
+   {
+    "id": 5,
+    "type": "LABEL",
+    "x": -13,
+    "y": 10,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "n1"
+    }
+   },
+   {
+    "id": 7,
+    "type": "GND",
+    "x": -13,
+    "y": 18,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 8,
+    "type": "R",
+    "x": 2,
+    "y": 13,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "R1",
+    "params": {
+     "R": "10"
+    }
+   },
+   {
+    "id": 10,
+    "type": "LABEL",
+    "x": -2,
+    "y": 13,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "n1"
+    }
+   },
+   {
+    "id": 12,
+    "type": "GND",
+    "x": 6,
+    "y": 13,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 13,
+    "type": "VP",
+    "x": 17,
+    "y": 13,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "V_isin",
+    "params": {}
+   },
+   {
+    "id": 15,
+    "type": "LABEL",
+    "x": 17,
+    "y": 17,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "n1"
+    }
+   },
+   {
+    "id": 16,
+    "type": "ITRI",
+    "x": 31,
+    "y": 14,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "itri",
+    "params": {
+     "Vpp": "2",
+     "f": "1k",
+     "D": "0.3",
+     "off": "-1",
+     "ph": "0"
+    }
+   },
+   {
+    "id": 18,
+    "type": "LABEL",
+    "x": 31,
+    "y": 10,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "n2"
+    }
+   },
+   {
+    "id": 20,
+    "type": "GND",
+    "x": 31,
+    "y": 18,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 21,
+    "type": "R",
+    "x": -12,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "R2",
+    "params": {
+     "R": "10"
+    }
+   },
+   {
+    "id": 23,
+    "type": "LABEL",
+    "x": -16,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "n2"
+    }
+   },
+   {
+    "id": 25,
+    "type": "GND",
+    "x": -8,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 26,
+    "type": "VP",
+    "x": 3,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "V_itri",
+    "params": {}
+   },
+   {
+    "id": 28,
+    "type": "LABEL",
+    "x": 3,
+    "y": 31,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "n2"
+    }
+   },
+   {
+    "id": 29,
+    "type": "ISQU",
+    "x": 17,
+    "y": 28,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "isqu",
+    "params": {
+     "Vpp": "1",
+     "f": "2k",
+     "D": "0.25",
+     "off": "0",
+     "ph": "0"
+    }
+   },
+   {
+    "id": 31,
+    "type": "LABEL",
+    "x": 17,
+    "y": 24,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "n3"
+    }
+   },
+   {
+    "id": 33,
+    "type": "GND",
+    "x": 17,
+    "y": 32,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 34,
+    "type": "R",
+    "x": 32,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "R3",
+    "params": {
+     "R": "10"
+    }
+   },
+   {
+    "id": 36,
+    "type": "LABEL",
+    "x": 28,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "n3"
+    }
+   },
+   {
+    "id": 38,
+    "type": "GND",
+    "x": 36,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 39,
+    "type": "VP",
+    "x": -13,
+    "y": 41,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "V_isqu",
+    "params": {}
+   },
+   {
+    "id": 41,
+    "type": "LABEL",
+    "x": -13,
+    "y": 45,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "n3"
+    }
+   },
+   {
+    "id": 42,
+    "type": "ISTEP",
+    "x": 1,
+    "y": 42,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "istep",
+    "params": {
+     "V": "2",
+     "ts": "1m"
+    }
+   },
+   {
+    "id": 44,
+    "type": "LABEL",
+    "x": 1,
+    "y": 38,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "n4"
+    }
+   },
+   {
+    "id": 46,
+    "type": "GND",
+    "x": 1,
+    "y": 46,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 47,
+    "type": "R",
+    "x": 16,
+    "y": 41,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "R4",
+    "params": {
+     "R": "10"
+    }
+   },
+   {
+    "id": 49,
+    "type": "LABEL",
+    "x": 12,
+    "y": 41,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "n4"
+    }
+   },
+   {
+    "id": 51,
+    "type": "GND",
+    "x": 20,
+    "y": 41,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 52,
+    "type": "VP",
+    "x": 31,
+    "y": 41,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "V_istep",
+    "params": {}
+   },
+   {
+    "id": 54,
+    "type": "LABEL",
+    "x": 31,
+    "y": 45,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "n4"
+    }
+   },
+   {
+    "id": 55,
+    "type": "ISTEP2",
+    "x": -13,
+    "y": 56,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "istep2",
+    "params": {
+     "V1": "1",
+     "V2": "-1",
+     "ts": "1m",
+     "tr": "0.5m"
+    }
+   },
+   {
+    "id": 57,
+    "type": "LABEL",
+    "x": -13,
+    "y": 52,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "n5"
+    }
+   },
+   {
+    "id": 59,
+    "type": "GND",
+    "x": -13,
+    "y": 60,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 60,
+    "type": "R",
+    "x": 2,
+    "y": 55,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "R5",
+    "params": {
+     "R": "10"
+    }
+   },
+   {
+    "id": 62,
+    "type": "LABEL",
+    "x": -2,
+    "y": 55,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "n5"
+    }
+   },
+   {
+    "id": 64,
+    "type": "GND",
+    "x": 6,
+    "y": 55,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 65,
+    "type": "VP",
+    "x": 17,
+    "y": 55,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "V_istep2",
+    "params": {}
+   },
+   {
+    "id": 67,
+    "type": "LABEL",
+    "x": 17,
+    "y": 59,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "n5"
+    }
+   },
+   {
+    "id": 68,
+    "type": "IPWL2",
+    "x": 31,
+    "y": 56,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "ipwl2",
+    "params": {
+     "f": "0",
+     "pairs": "(0,0) (1m,2) (2m,2) (2.5m,0)"
+    }
+   },
+   {
+    "id": 70,
+    "type": "LABEL",
+    "x": 31,
+    "y": 52,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "n6"
+    }
+   },
+   {
+    "id": 72,
+    "type": "GND",
+    "x": 31,
+    "y": 60,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 73,
+    "type": "R",
+    "x": -12,
+    "y": 69,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "R6",
+    "params": {
+     "R": "10"
+    }
+   },
+   {
+    "id": 75,
+    "type": "LABEL",
+    "x": -16,
+    "y": 69,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "n6"
+    }
+   },
+   {
+    "id": 77,
+    "type": "GND",
+    "x": -8,
+    "y": 69,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 78,
+    "type": "VP",
+    "x": 3,
+    "y": 69,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "V_ipwl2",
+    "params": {}
+   },
+   {
+    "id": 80,
+    "type": "LABEL",
+    "x": 3,
+    "y": 73,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "n6"
+    }
+   },
+   {
+    "id": 81,
+    "type": "IRAND",
+    "x": 17,
+    "y": 70,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "irand",
+    "params": {
+     "Vpp": "1",
+     "off": "0",
+     "seed": "5"
+    }
+   },
+   {
+    "id": 83,
+    "type": "LABEL",
+    "x": 17,
+    "y": 66,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "n7"
+    }
+   },
+   {
+    "id": 85,
+    "type": "GND",
+    "x": 17,
+    "y": 74,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 86,
+    "type": "R",
+    "x": 32,
+    "y": 69,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "R7",
+    "params": {
+     "R": "10"
+    }
+   },
+   {
+    "id": 88,
+    "type": "LABEL",
+    "x": 28,
+    "y": 69,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "n7"
+    }
+   },
+   {
+    "id": 90,
+    "type": "GND",
+    "x": 36,
+    "y": 69,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 91,
+    "type": "VP",
+    "x": -13,
+    "y": 83,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "V_irand",
+    "params": {}
+   },
+   {
+    "id": 93,
+    "type": "LABEL",
+    "x": -13,
+    "y": 87,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "n7"
+    }
+   },
+   {
+    "id": 94,
+    "type": "IMATH",
+    "x": 1,
+    "y": 84,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "imath",
+    "params": {
+     "expr": "2*exp(-t/1e-3)",
+     "ts": "0"
+    }
+   },
+   {
+    "id": 96,
+    "type": "LABEL",
+    "x": 1,
+    "y": 80,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "n8"
+    }
+   },
+   {
+    "id": 98,
+    "type": "GND",
+    "x": 1,
+    "y": 88,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 99,
+    "type": "R",
+    "x": 16,
+    "y": 83,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "R8",
+    "params": {
+     "R": "10"
+    }
+   },
+   {
+    "id": 101,
+    "type": "LABEL",
+    "x": 12,
+    "y": 83,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "n8"
+    }
+   },
+   {
+    "id": 103,
+    "type": "GND",
+    "x": 20,
+    "y": 83,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 104,
+    "type": "VP",
+    "x": 31,
+    "y": 83,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "V_imath",
+    "params": {}
+   },
+   {
+    "id": 106,
+    "type": "LABEL",
+    "x": 31,
+    "y": 87,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "n8"
+    }
+   }
+  ],
+  "wires": [
+   {
+    "id": 4,
+    "x1": -13,
+    "y1": 12,
+    "x2": -13,
+    "y2": 10
+   },
+   {
+    "id": 6,
+    "x1": -13,
+    "y1": 16,
+    "x2": -13,
+    "y2": 18
+   },
+   {
+    "id": 9,
+    "x1": 0,
+    "y1": 13,
+    "x2": -2,
+    "y2": 13
+   },
+   {
+    "id": 11,
+    "x1": 4,
+    "y1": 13,
+    "x2": 6,
+    "y2": 13
+   },
+   {
+    "id": 14,
+    "x1": 17,
+    "y1": 15,
+    "x2": 17,
+    "y2": 17
+   },
+   {
+    "id": 17,
+    "x1": 31,
+    "y1": 12,
+    "x2": 31,
+    "y2": 10
+   },
+   {
+    "id": 19,
+    "x1": 31,
+    "y1": 16,
+    "x2": 31,
+    "y2": 18
+   },
+   {
+    "id": 22,
+    "x1": -14,
+    "y1": 27,
+    "x2": -16,
+    "y2": 27
+   },
+   {
+    "id": 24,
+    "x1": -10,
+    "y1": 27,
+    "x2": -8,
+    "y2": 27
+   },
+   {
+    "id": 27,
+    "x1": 3,
+    "y1": 29,
+    "x2": 3,
+    "y2": 31
+   },
+   {
+    "id": 30,
+    "x1": 17,
+    "y1": 26,
+    "x2": 17,
+    "y2": 24
+   },
+   {
+    "id": 32,
+    "x1": 17,
+    "y1": 30,
+    "x2": 17,
+    "y2": 32
+   },
+   {
+    "id": 35,
+    "x1": 30,
+    "y1": 27,
+    "x2": 28,
+    "y2": 27
+   },
+   {
+    "id": 37,
+    "x1": 34,
+    "y1": 27,
+    "x2": 36,
+    "y2": 27
+   },
+   {
+    "id": 40,
+    "x1": -13,
+    "y1": 43,
+    "x2": -13,
+    "y2": 45
+   },
+   {
+    "id": 43,
+    "x1": 1,
+    "y1": 40,
+    "x2": 1,
+    "y2": 38
+   },
+   {
+    "id": 45,
+    "x1": 1,
+    "y1": 44,
+    "x2": 1,
+    "y2": 46
+   },
+   {
+    "id": 48,
+    "x1": 14,
+    "y1": 41,
+    "x2": 12,
+    "y2": 41
+   },
+   {
+    "id": 50,
+    "x1": 18,
+    "y1": 41,
+    "x2": 20,
+    "y2": 41
+   },
+   {
+    "id": 53,
+    "x1": 31,
+    "y1": 43,
+    "x2": 31,
+    "y2": 45
+   },
+   {
+    "id": 56,
+    "x1": -13,
+    "y1": 54,
+    "x2": -13,
+    "y2": 52
+   },
+   {
+    "id": 58,
+    "x1": -13,
+    "y1": 58,
+    "x2": -13,
+    "y2": 60
+   },
+   {
+    "id": 61,
+    "x1": 0,
+    "y1": 55,
+    "x2": -2,
+    "y2": 55
+   },
+   {
+    "id": 63,
+    "x1": 4,
+    "y1": 55,
+    "x2": 6,
+    "y2": 55
+   },
+   {
+    "id": 66,
+    "x1": 17,
+    "y1": 57,
+    "x2": 17,
+    "y2": 59
+   },
+   {
+    "id": 69,
+    "x1": 31,
+    "y1": 54,
+    "x2": 31,
+    "y2": 52
+   },
+   {
+    "id": 71,
+    "x1": 31,
+    "y1": 58,
+    "x2": 31,
+    "y2": 60
+   },
+   {
+    "id": 74,
+    "x1": -14,
+    "y1": 69,
+    "x2": -16,
+    "y2": 69
+   },
+   {
+    "id": 76,
+    "x1": -10,
+    "y1": 69,
+    "x2": -8,
+    "y2": 69
+   },
+   {
+    "id": 79,
+    "x1": 3,
+    "y1": 71,
+    "x2": 3,
+    "y2": 73
+   },
+   {
+    "id": 82,
+    "x1": 17,
+    "y1": 68,
+    "x2": 17,
+    "y2": 66
+   },
+   {
+    "id": 84,
+    "x1": 17,
+    "y1": 72,
+    "x2": 17,
+    "y2": 74
+   },
+   {
+    "id": 87,
+    "x1": 30,
+    "y1": 69,
+    "x2": 28,
+    "y2": 69
+   },
+   {
+    "id": 89,
+    "x1": 34,
+    "y1": 69,
+    "x2": 36,
+    "y2": 69
+   },
+   {
+    "id": 92,
+    "x1": -13,
+    "y1": 85,
+    "x2": -13,
+    "y2": 87
+   },
+   {
+    "id": 95,
+    "x1": 1,
+    "y1": 82,
+    "x2": 1,
+    "y2": 80
+   },
+   {
+    "id": 97,
+    "x1": 1,
+    "y1": 86,
+    "x2": 1,
+    "y2": 88
+   },
+   {
+    "id": 100,
+    "x1": 14,
+    "y1": 83,
+    "x2": 12,
+    "y2": 83
+   },
+   {
+    "id": 102,
+    "x1": 18,
+    "y1": 83,
+    "x2": 20,
+    "y2": 83
+   },
+   {
+    "id": 105,
+    "x1": 31,
+    "y1": 85,
+    "x2": 31,
+    "y2": 87
+   }
+  ],
+  "nid": 107
+ },
+ "screens": [
+  [
+   "V_isin"
+  ],
+  [
+   "V_itri",
+   "V_isqu"
+  ],
+  [
+   "V_istep",
+   "V_istep2",
+   "V_ipwl2"
+  ],
+  [
+   "V_irand"
+  ],
+  [
+   "V_imath"
+  ]
+ ]
+}

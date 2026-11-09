@@ -1,0 +1,862 @@
+{
+ "app": "psimweb",
+ "version": "V1.1.0",
+ "doc": {
+  "elements": [
+   {
+    "id": 1,
+    "type": "TEXT",
+    "x": -20,
+    "y": -8,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "1 kHz、1 V 正弦輸入（帶拒用 1.5 kHz），穩態振幅與相位對照 |H(jω)|、∠H(jω)：\n一階低通／高通（fc = 1 kHz）、二階低通／高通（ζ = 0.7071）、帶通（fo = 1 kHz、頻寬 100 Hz）、帶拒、\ns 域轉移函數 4·10⁶/(s² + 2000s + 4·10⁶)、含初值的轉移函數 1/(10⁻³s + 1)（初值 2）。"
+    }
+   },
+   {
+    "id": 2,
+    "type": "SIMCTRL",
+    "x": -20,
+    "y": -4,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "dt": "1u",
+     "tt": "40m",
+     "tp": "0",
+     "ps": "1",
+     "lte": "1",
+     "ltetol": "1e-3",
+     "interp": "1",
+     "damp": "1",
+     "acc": "0",
+     "etol": "1e-6",
+     "maxlv": "8"
+    }
+   },
+   {
+    "id": 3,
+    "type": "VSIN",
+    "x": -13,
+    "y": 14,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vin",
+    "params": {
+     "Vm": "1",
+     "f": "1k",
+     "ph": "0",
+     "off": "0",
+     "ts": "0"
+    }
+   },
+   {
+    "id": 5,
+    "type": "LABEL",
+    "x": -13,
+    "y": 10,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "u"
+    }
+   },
+   {
+    "id": 7,
+    "type": "GND",
+    "x": -13,
+    "y": 18,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 8,
+    "type": "VSIN",
+    "x": 1,
+    "y": 14,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vin15",
+    "params": {
+     "Vm": "1",
+     "f": "1.5k",
+     "ph": "0",
+     "off": "0",
+     "ts": "0"
+    }
+   },
+   {
+    "id": 10,
+    "type": "LABEL",
+    "x": 1,
+    "y": 10,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "u15"
+    }
+   },
+   {
+    "id": 12,
+    "type": "GND",
+    "x": 1,
+    "y": 18,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 13,
+    "type": "LP1",
+    "x": 16,
+    "y": 13,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Lp1",
+    "params": {
+     "k": "1",
+     "fc": "1k"
+    }
+   },
+   {
+    "id": 15,
+    "type": "LABEL",
+    "x": 12,
+    "y": 13,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "u"
+    }
+   },
+   {
+    "id": 17,
+    "type": "LABEL",
+    "x": 20,
+    "y": 13,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y1"
+    }
+   },
+   {
+    "id": 18,
+    "type": "VP",
+    "x": 31,
+    "y": 13,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_lp1",
+    "params": {}
+   },
+   {
+    "id": 20,
+    "type": "LABEL",
+    "x": 31,
+    "y": 17,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y1"
+    }
+   },
+   {
+    "id": 21,
+    "type": "HP1",
+    "x": -12,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Hp1",
+    "params": {
+     "k": "1",
+     "fc": "1k"
+    }
+   },
+   {
+    "id": 23,
+    "type": "LABEL",
+    "x": -16,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "u"
+    }
+   },
+   {
+    "id": 25,
+    "type": "LABEL",
+    "x": -8,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y2"
+    }
+   },
+   {
+    "id": 26,
+    "type": "VP",
+    "x": 3,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_hp1",
+    "params": {}
+   },
+   {
+    "id": 28,
+    "type": "LABEL",
+    "x": 3,
+    "y": 31,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y2"
+    }
+   },
+   {
+    "id": 29,
+    "type": "LP2",
+    "x": 18,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Lp2",
+    "params": {
+     "k": "1",
+     "z": "0.7071",
+     "fc": "1k"
+    }
+   },
+   {
+    "id": 31,
+    "type": "LABEL",
+    "x": 14,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "u"
+    }
+   },
+   {
+    "id": 33,
+    "type": "LABEL",
+    "x": 22,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y3"
+    }
+   },
+   {
+    "id": 34,
+    "type": "VP",
+    "x": 33,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_lp2",
+    "params": {}
+   },
+   {
+    "id": 36,
+    "type": "LABEL",
+    "x": 33,
+    "y": 31,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y3"
+    }
+   },
+   {
+    "id": 37,
+    "type": "HP2",
+    "x": -12,
+    "y": 40,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Hp2",
+    "params": {
+     "k": "1",
+     "z": "0.7071",
+     "fc": "1k"
+    }
+   },
+   {
+    "id": 39,
+    "type": "LABEL",
+    "x": -16,
+    "y": 40,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "u"
+    }
+   },
+   {
+    "id": 41,
+    "type": "LABEL",
+    "x": -8,
+    "y": 40,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y4"
+    }
+   },
+   {
+    "id": 42,
+    "type": "VP",
+    "x": 3,
+    "y": 40,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_hp2",
+    "params": {}
+   },
+   {
+    "id": 44,
+    "type": "LABEL",
+    "x": 3,
+    "y": 44,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y4"
+    }
+   },
+   {
+    "id": 45,
+    "type": "BP2",
+    "x": 18,
+    "y": 40,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Bp",
+    "params": {
+     "k": "1",
+     "fo": "1k",
+     "fb": "100"
+    }
+   },
+   {
+    "id": 47,
+    "type": "LABEL",
+    "x": 14,
+    "y": 40,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "u"
+    }
+   },
+   {
+    "id": 49,
+    "type": "LABEL",
+    "x": 22,
+    "y": 40,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y5"
+    }
+   },
+   {
+    "id": 50,
+    "type": "VP",
+    "x": 33,
+    "y": 40,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_bp",
+    "params": {}
+   },
+   {
+    "id": 52,
+    "type": "LABEL",
+    "x": 33,
+    "y": 44,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y5"
+    }
+   },
+   {
+    "id": 53,
+    "type": "BS2",
+    "x": -12,
+    "y": 53,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Bs",
+    "params": {
+     "k": "1",
+     "fo": "1k",
+     "fb": "100"
+    }
+   },
+   {
+    "id": 55,
+    "type": "LABEL",
+    "x": -16,
+    "y": 53,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "u15"
+    }
+   },
+   {
+    "id": 57,
+    "type": "LABEL",
+    "x": -8,
+    "y": 53,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y6"
+    }
+   },
+   {
+    "id": 58,
+    "type": "VP",
+    "x": 3,
+    "y": 52,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_bs",
+    "params": {}
+   },
+   {
+    "id": 60,
+    "type": "LABEL",
+    "x": 3,
+    "y": 56,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y6"
+    }
+   },
+   {
+    "id": 61,
+    "type": "TFS",
+    "x": 18,
+    "y": 53,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Tf",
+    "params": {
+     "k": "1",
+     "num": "0 0 4e6",
+     "den": "1 2000 4e6"
+    }
+   },
+   {
+    "id": 63,
+    "type": "LABEL",
+    "x": 14,
+    "y": 53,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "u"
+    }
+   },
+   {
+    "id": 65,
+    "type": "LABEL",
+    "x": 22,
+    "y": 53,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y7"
+    }
+   },
+   {
+    "id": 66,
+    "type": "VP",
+    "x": 33,
+    "y": 52,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_tfs",
+    "params": {}
+   },
+   {
+    "id": 68,
+    "type": "LABEL",
+    "x": 33,
+    "y": 56,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y7"
+    }
+   },
+   {
+    "id": 69,
+    "type": "TFS1",
+    "x": -12,
+    "y": 65,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Tf1",
+    "params": {
+     "k": "1",
+     "num": "0 1",
+     "den": "1e-3 1",
+     "x0": "2"
+    }
+   },
+   {
+    "id": 71,
+    "type": "LABEL",
+    "x": -16,
+    "y": 65,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "u"
+    }
+   },
+   {
+    "id": 73,
+    "type": "LABEL",
+    "x": -8,
+    "y": 65,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y8"
+    }
+   },
+   {
+    "id": 74,
+    "type": "VP",
+    "x": 3,
+    "y": 65,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_tfs1",
+    "params": {}
+   },
+   {
+    "id": 76,
+    "type": "LABEL",
+    "x": 3,
+    "y": 69,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y8"
+    }
+   }
+  ],
+  "wires": [
+   {
+    "id": 4,
+    "x1": -13,
+    "y1": 12,
+    "x2": -13,
+    "y2": 10
+   },
+   {
+    "id": 6,
+    "x1": -13,
+    "y1": 16,
+    "x2": -13,
+    "y2": 18
+   },
+   {
+    "id": 9,
+    "x1": 1,
+    "y1": 12,
+    "x2": 1,
+    "y2": 10
+   },
+   {
+    "id": 11,
+    "x1": 1,
+    "y1": 16,
+    "x2": 1,
+    "y2": 18
+   },
+   {
+    "id": 14,
+    "x1": 14,
+    "y1": 13,
+    "x2": 12,
+    "y2": 13
+   },
+   {
+    "id": 16,
+    "x1": 18,
+    "y1": 13,
+    "x2": 20,
+    "y2": 13
+   },
+   {
+    "id": 19,
+    "x1": 31,
+    "y1": 15,
+    "x2": 31,
+    "y2": 17
+   },
+   {
+    "id": 22,
+    "x1": -14,
+    "y1": 27,
+    "x2": -16,
+    "y2": 27
+   },
+   {
+    "id": 24,
+    "x1": -10,
+    "y1": 27,
+    "x2": -8,
+    "y2": 27
+   },
+   {
+    "id": 27,
+    "x1": 3,
+    "y1": 29,
+    "x2": 3,
+    "y2": 31
+   },
+   {
+    "id": 30,
+    "x1": 16,
+    "y1": 27,
+    "x2": 14,
+    "y2": 27
+   },
+   {
+    "id": 32,
+    "x1": 20,
+    "y1": 27,
+    "x2": 22,
+    "y2": 27
+   },
+   {
+    "id": 35,
+    "x1": 33,
+    "y1": 29,
+    "x2": 33,
+    "y2": 31
+   },
+   {
+    "id": 38,
+    "x1": -14,
+    "y1": 40,
+    "x2": -16,
+    "y2": 40
+   },
+   {
+    "id": 40,
+    "x1": -10,
+    "y1": 40,
+    "x2": -8,
+    "y2": 40
+   },
+   {
+    "id": 43,
+    "x1": 3,
+    "y1": 42,
+    "x2": 3,
+    "y2": 44
+   },
+   {
+    "id": 46,
+    "x1": 16,
+    "y1": 40,
+    "x2": 14,
+    "y2": 40
+   },
+   {
+    "id": 48,
+    "x1": 20,
+    "y1": 40,
+    "x2": 22,
+    "y2": 40
+   },
+   {
+    "id": 51,
+    "x1": 33,
+    "y1": 42,
+    "x2": 33,
+    "y2": 44
+   },
+   {
+    "id": 54,
+    "x1": -14,
+    "y1": 53,
+    "x2": -16,
+    "y2": 53
+   },
+   {
+    "id": 56,
+    "x1": -10,
+    "y1": 53,
+    "x2": -8,
+    "y2": 53
+   },
+   {
+    "id": 59,
+    "x1": 3,
+    "y1": 54,
+    "x2": 3,
+    "y2": 56
+   },
+   {
+    "id": 62,
+    "x1": 16,
+    "y1": 53,
+    "x2": 14,
+    "y2": 53
+   },
+   {
+    "id": 64,
+    "x1": 20,
+    "y1": 53,
+    "x2": 22,
+    "y2": 53
+   },
+   {
+    "id": 67,
+    "x1": 33,
+    "y1": 54,
+    "x2": 33,
+    "y2": 56
+   },
+   {
+    "id": 70,
+    "x1": -14,
+    "y1": 65,
+    "x2": -16,
+    "y2": 65
+   },
+   {
+    "id": 72,
+    "x1": -10,
+    "y1": 65,
+    "x2": -8,
+    "y2": 65
+   },
+   {
+    "id": 75,
+    "x1": 3,
+    "y1": 67,
+    "x2": 3,
+    "y2": 69
+   }
+  ],
+  "nid": 77
+ },
+ "screens": [
+  [
+   "Y_lp1",
+   "Y_hp1"
+  ],
+  [
+   "Y_lp2",
+   "Y_hp2"
+  ],
+  [
+   "Y_bp",
+   "Y_bs"
+  ],
+  [
+   "Y_tfs",
+   "Y_tfs1"
+  ]
+ ]
+}

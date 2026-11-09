@@ -1,0 +1,326 @@
+{
+ "app": "psimweb",
+ "version": "V3.2.1",
+ "doc": {
+  "elements": [
+   {
+    "id": 1,
+    "type": "VDC",
+    "x": 0,
+    "y": 6,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vdc",
+    "params": {
+     "V": "400"
+    }
+   },
+   {
+    "id": 2,
+    "type": "GND",
+    "x": 0,
+    "y": 8,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 5,
+    "type": "RL",
+    "x": 4,
+    "y": 2,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Lσ",
+    "params": {
+     "R": "0.5",
+     "L": "30n",
+     "i0": "0"
+    }
+   },
+   {
+    "id": 8,
+    "type": "DIODE",
+    "x": 8,
+    "y": 4,
+    "rot": 3,
+    "mir": false,
+    "dis": false,
+    "name": "D1",
+    "params": {
+     "vf": "0",
+     "init": "0",
+     "ron": "10u",
+     "roff": "1M",
+     "model": "ds",
+     "vfd": "1.5",
+     "ifd": "20",
+     "rd": "15m",
+     "trr": "0",
+     "qrr": "400n",
+     "irr": "20",
+     "cjd": "60p",
+     "vcj": "100",
+     "bvd": "650",
+     "spice": ""
+    }
+   },
+   {
+    "id": 9,
+    "type": "L",
+    "x": 12,
+    "y": 4,
+    "rot": 1,
+    "mir": false,
+    "dis": false,
+    "name": "L1",
+    "params": {
+     "L": "200u",
+     "i0": "0"
+    }
+   },
+   {
+    "id": 13,
+    "type": "VP2",
+    "x": 14,
+    "y": 8,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vds",
+    "params": {}
+   },
+   {
+    "id": 16,
+    "type": "IP",
+    "x": 10,
+    "y": 8,
+    "rot": 1,
+    "mir": false,
+    "dis": false,
+    "name": "Id",
+    "params": {}
+   },
+   {
+    "id": 17,
+    "type": "MOSNI",
+    "x": 10,
+    "y": 12,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Q1",
+    "params": {
+     "ron": "50m",
+     "vth": "3",
+     "ciss": "1.5n",
+     "crss": "30p",
+     "coss": "150p",
+     "von": "12",
+     "voff": "0",
+     "rg": "5",
+     "qgd": "15n",
+     "vq": "400",
+     "vcap": "25",
+     "vfd": "0.85",
+     "ifd": "5",
+     "ttd": "50n",
+     "lam": "0"
+    }
+   },
+   {
+    "id": 18,
+    "type": "RL",
+    "x": 10,
+    "y": 17,
+    "rot": 1,
+    "mir": false,
+    "dis": false,
+    "name": "Ls",
+    "params": {
+     "R": "0.02",
+     "L": "5n",
+     "i0": "0"
+    }
+   },
+   {
+    "id": 19,
+    "type": "GND",
+    "x": 10,
+    "y": 20,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 20,
+    "type": "GATING",
+    "x": 3,
+    "y": 12,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "G1",
+    "params": {
+     "f": "0",
+     "n": "4",
+     "pts": "2u 12u 17u 20u"
+    }
+   },
+   {
+    "id": 22,
+    "type": "DEVP",
+    "x": 20,
+    "y": 8,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vgs",
+    "params": {
+     "el": "Q1",
+     "q": "vg"
+    }
+   },
+   {
+    "id": 23,
+    "type": "DEVP",
+    "x": 20,
+    "y": 11,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Pq1",
+    "params": {
+     "el": "Q1",
+     "q": "p"
+    }
+   },
+   {
+    "id": 24,
+    "type": "DEVP",
+    "x": 20,
+    "y": 14,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Eq1",
+    "params": {
+     "el": "Q1",
+     "q": "e"
+    }
+   },
+   {
+    "id": 25,
+    "type": "SIMCTRL",
+    "x": 20,
+    "y": 2,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "dt": "0.5n",
+     "tt": "24u",
+     "tp": "0",
+     "ps": "2",
+     "lte": "1",
+     "ltetol": "1e-3",
+     "interp": "1",
+     "damp": "1"
+    }
+   },
+   {
+    "id": 26,
+    "type": "TEXT",
+    "x": 0,
+    "y": -3,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "雙脈衝測試：第一個脈衝把電感電流充到約 20 A，第二次導通時可看到二極體反向恢復電流尖峰與米勒平台（Vgs）。\n功率迴路雜散電感 Lσ = 30 nH（含 0.5 Ω 迴路等效電阻）與 Coss / 二極體接面電容造成關斷時的 Vds 過衝與振鈴；共源極電感 Ls = 5 nH 拖慢開通。\nQ1 用資料手冊參數：Qgd = 15 nC @ 400 V（米勒平台長度 = Qgd/Ig）、Ciss/Crss/Coss @ 25 V（Cds 隨 Vds 變化）；D1 用資料手冊參數：Vf 1.5 V @ 20 A、Qrr 400 nC、Cj 60 pF @ 100 V。\nVds 以兩點探棒量 D–S（不含 Ls 的壓降）。Pq1 = Vds·Id 瞬時功率，Eq1 = ∫Pq1 dt；用游標夾住一次開通或關斷，Eq1 的 Δ（或 Pq1 的 ∫dt）就是 Eon / Eoff。"
+    }
+   }
+  ],
+  "wires": [
+   {
+    "id": 3,
+    "x1": 0,
+    "y1": 4,
+    "x2": 0,
+    "y2": 2
+   },
+   {
+    "id": 4,
+    "x1": 0,
+    "y1": 2,
+    "x2": 1,
+    "y2": 2
+   },
+   {
+    "id": 6,
+    "x1": 7,
+    "y1": 2,
+    "x2": 8,
+    "y2": 2
+   },
+   {
+    "id": 7,
+    "x1": 8,
+    "y1": 2,
+    "x2": 12,
+    "y2": 2
+   },
+   {
+    "id": 10,
+    "x1": 8,
+    "y1": 6,
+    "x2": 10,
+    "y2": 6
+   },
+   {
+    "id": 11,
+    "x1": 10,
+    "y1": 6,
+    "x2": 12,
+    "y2": 6
+   },
+   {
+    "id": 12,
+    "x1": 12,
+    "y1": 6,
+    "x2": 14,
+    "y2": 6
+   },
+   {
+    "id": 14,
+    "x1": 14,
+    "y1": 10,
+    "x2": 14,
+    "y2": 14
+   },
+   {
+    "id": 15,
+    "x1": 14,
+    "y1": 14,
+    "x2": 10,
+    "y2": 14
+   },
+   {
+    "id": 21,
+    "x1": 5,
+    "y1": 12,
+    "x2": 8,
+    "y2": 12
+   }
+  ],
+  "nid": 27
+ }
+}

@@ -1,0 +1,318 @@
+{
+ "app": "psimweb",
+ "version": "V1.1.0",
+ "doc": {
+  "elements": [
+   {
+    "id": 1,
+    "type": "TEXT",
+    "x": -20,
+    "y": -8,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "10 V 經 R1 對 R2 ∥ C1 充電：Vo(∞) = 10·R2/(R1 + R2)、τ = (R1 ∥ R2)·C1。\n蒙地卡羅 200 次（#0 為標稱值），R1、R2 為常態分佈（容差 5 % = 3σ），C1 為 ±10 % 均勻分佈，種子 7。\n逐次驗證每一次模擬：Vo(1 ms) = Vo(∞)·(1 − e^(−1ms/τ))、Vo(10 ms) = Vo(∞)；統計：σ(Vo)/Vo ≈ 0.5·√2·(5 %/3) = 1.18 %。"
+    }
+   },
+   {
+    "id": 2,
+    "type": "SIMCTRL",
+    "x": -20,
+    "y": -4,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "dt": "2u",
+     "tt": "10m",
+     "tp": "0",
+     "ps": "1",
+     "lte": "1",
+     "ltetol": "1e-3",
+     "interp": "1",
+     "damp": "1",
+     "acc": "0",
+     "etol": "1e-6",
+     "maxlv": "8"
+    }
+   },
+   {
+    "id": 3,
+    "type": "MONTECARLO",
+    "x": -12,
+    "y": -4,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "n": "200",
+     "seed": "7",
+     "vars": "R1 5% gauss\nR2 5% gauss\nC1 10% uniform"
+    }
+   },
+   {
+    "id": 4,
+    "type": "PARAMS",
+    "x": -4,
+    "y": -4,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "R1 = 1k\nR2 = 1k\nC1 = 1u"
+    }
+   },
+   {
+    "id": 5,
+    "type": "VDC",
+    "x": -13,
+    "y": 14,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vin",
+    "params": {
+     "V": "10"
+    }
+   },
+   {
+    "id": 7,
+    "type": "LABEL",
+    "x": -13,
+    "y": 10,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "in"
+    }
+   },
+   {
+    "id": 9,
+    "type": "GND",
+    "x": -13,
+    "y": 18,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 10,
+    "type": "R",
+    "x": 2,
+    "y": 13,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Ra",
+    "params": {
+     "R": "R1"
+    }
+   },
+   {
+    "id": 12,
+    "type": "LABEL",
+    "x": -2,
+    "y": 13,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "in"
+    }
+   },
+   {
+    "id": 14,
+    "type": "LABEL",
+    "x": 6,
+    "y": 13,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o"
+    }
+   },
+   {
+    "id": 15,
+    "type": "R",
+    "x": 18,
+    "y": 13,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Rb",
+    "params": {
+     "R": "R2"
+    }
+   },
+   {
+    "id": 17,
+    "type": "LABEL",
+    "x": 14,
+    "y": 13,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o"
+    }
+   },
+   {
+    "id": 19,
+    "type": "GND",
+    "x": 22,
+    "y": 13,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 20,
+    "type": "C",
+    "x": 34,
+    "y": 13,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Cf",
+    "params": {
+     "C": "C1",
+     "v0": "0"
+    }
+   },
+   {
+    "id": 22,
+    "type": "LABEL",
+    "x": 30,
+    "y": 13,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o"
+    }
+   },
+   {
+    "id": 24,
+    "type": "GND",
+    "x": 38,
+    "y": 13,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 25,
+    "type": "VP",
+    "x": -13,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vo",
+    "params": {}
+   },
+   {
+    "id": 27,
+    "type": "LABEL",
+    "x": -13,
+    "y": 31,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o"
+    }
+   }
+  ],
+  "wires": [
+   {
+    "id": 6,
+    "x1": -13,
+    "y1": 12,
+    "x2": -13,
+    "y2": 10
+   },
+   {
+    "id": 8,
+    "x1": -13,
+    "y1": 16,
+    "x2": -13,
+    "y2": 18
+   },
+   {
+    "id": 11,
+    "x1": 0,
+    "y1": 13,
+    "x2": -2,
+    "y2": 13
+   },
+   {
+    "id": 13,
+    "x1": 4,
+    "y1": 13,
+    "x2": 6,
+    "y2": 13
+   },
+   {
+    "id": 16,
+    "x1": 16,
+    "y1": 13,
+    "x2": 14,
+    "y2": 13
+   },
+   {
+    "id": 18,
+    "x1": 20,
+    "y1": 13,
+    "x2": 22,
+    "y2": 13
+   },
+   {
+    "id": 21,
+    "x1": 32,
+    "y1": 13,
+    "x2": 30,
+    "y2": 13
+   },
+   {
+    "id": 23,
+    "x1": 36,
+    "y1": 13,
+    "x2": 38,
+    "y2": 13
+   },
+   {
+    "id": 26,
+    "x1": -13,
+    "y1": 29,
+    "x2": -13,
+    "y2": 31
+   }
+  ],
+  "nid": 28
+ },
+ "screens": [
+  [
+   "Vo"
+  ]
+ ]
+}

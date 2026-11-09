@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <!-- 5 電路之翼：三條走線像羽毛般展開，末端是焊點，最上方焊點即太陽 -->
+  <rect x="8" y="8" width="240" height="240" rx="56" fill="#111827"/>
+  <g fill="none" stroke="#2DD4BF" stroke-width="13" stroke-linecap="round">
+    <path d="M66 192 C96 150 140 104 186 76"/>
+    <path d="M66 192 C110 168 158 146 204 132"/>
+    <path d="M66 192 C114 188 160 186 196 188"/>
+  </g>
+  <circle cx="66" cy="192" r="16" fill="#2DD4BF"/>
+  <circle cx="190" cy="74" r="17" fill="#FFC23D"/>
+  <circle cx="206" cy="132" r="12" fill="#111827" stroke="#2DD4BF" stroke-width="8"/>
+  <circle cx="198" cy="188" r="12" fill="#111827" stroke="#2DD4BF" stroke-width="8"/>
+</svg>

@@ -1,0 +1,131 @@
+# Builds, tests and (once SignPath is set up) signs DaedalusEngine.
+#
+# Signing happens in two stages because the installer embeds the programs:
+#   1. build DaedalusEngine.exe + daedalus-cli.exe → SignPath signs them
+#   2. build the installer around the signed programs → SignPath signs the installer
+# Signing runs only when the repository secret SIGNPATH_API_TOKEN and the variable SIGNPATH_ORGANIZATION_ID exist
+# (see docs/signpath-setup.md); without them the workflow still builds and tests, with unsigned files.
+# Pushing a tag "v<version>" (e.g. v1.1.0) also publishes a GitHub Release with the installer and its SHA-256.
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    env:
+      # sign only release tags (every signing request needs the approver's OK in SignPath)
+      SIGN: ${{ startsWith(github.ref, 'refs/tags/v') && secrets.SIGNPATH_API_TOKEN != '' && vars.SIGNPATH_ORGANIZATION_ID != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+
+      - name: Unit tests
+        run: cargo test --release -p daedalus-core
+
+      - name: Build programs
+        run: cargo build --release -p daedalus-app -p daedalus-cli
+
+      - name: Verify all examples against theory
+        run: |
+          node tools/examples/verify.js
+          node tools/examples/coverage.js -m
+
+      - name: Collect programs
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force out/programs | Out-Null
+          Copy-Item target/release/DaedalusEngine.exe, target/release/daedalus-cli.exe out/programs/
+
+      - name: Upload programs (unsigned)
+        id: programs
+        uses: actions/upload-artifact@v4
+        with:
+          name: programs-unsigned
+          path: out/programs/
+
+      - name: Sign programs
+        if: env.SIGN == 'true'
+        uses: signpath/github-action-submit-signing-request@v1
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: DaedalusEngine
+          signing-policy-slug: release-signing
+          artifact-configuration-slug: programs
+          github-artifact-id: ${{ steps.programs.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: out/programs-signed
+
+      - name: Build installer
+        shell: pwsh
+        run: |
+          $dir = if ("${{ env.SIGN }}" -eq "true") { "out/programs-signed" } else { "out/programs" }
+          $env:DAEDALUS_APP_EXE = (Resolve-Path "$dir/DaedalusEngine.exe").Path
+          cargo build --release -p daedalus-installer
+          $ver = (Select-String -Path Cargo.toml -Pattern '^version = "(.+)"').Matches[0].Groups[1].Value
+          New-Item -ItemType Directory -Force out/installer | Out-Null
+          Copy-Item target/release/DaedalusEngine-Setup.exe "out/installer/DaedalusEngine-Setup-V$ver.exe"
+
+      - name: Upload installer (unsigned)
+        id: installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-unsigned
+          path: out/installer/
+
+      - name: Sign installer
+        if: env.SIGN == 'true'
+        uses: signpath/github-action-submit-signing-request@v1
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: DaedalusEngine
+          signing-policy-slug: release-signing
+          artifact-configuration-slug: installer
+          github-artifact-id: ${{ steps.installer.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: out/installer-signed
+
+      - name: Final files and checksum
+        shell: pwsh
+        run: |
+          $dir = if ("${{ env.SIGN }}" -eq "true") { "out/installer-signed" } else { "out/installer" }
+          New-Item -ItemType Directory -Force out/release | Out-Null
+          Copy-Item "$dir/*.exe" out/release/
+          Get-ChildItem out/release/*.exe | ForEach-Object { "{0}  {1}" -f (Get-FileHash $_ -Algorithm SHA256).Hash.ToLower(), $_.Name } | Set-Content out/release/SHA256SUMS.txt -Encoding ascii
+          Get-Content out/release/SHA256SUMS.txt
+
+      - name: Upload release files
+        uses: actions/upload-artifact@v4
+        with:
+          name: DaedalusEngine-release
+          path: out/release/
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: DaedalusEngine-release
+          path: release
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${{ github.ref_name }}" release/* --repo "${{ github.repository }}" --title "DaedalusEngine ${{ github.ref_name }}" --notes "見 README「與網頁版的差異」中的版本說明。Free code signing provided by SignPath.io, certificate by SignPath Foundation."

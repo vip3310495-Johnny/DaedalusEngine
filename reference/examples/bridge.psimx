@@ -1,0 +1,218 @@
+{
+ "app": "psimweb",
+ "version": "V3.2.1",
+ "doc": {
+  "elements": [
+   {
+    "id": 1,
+    "type": "VSIN",
+    "x": 0,
+    "y": 5,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vs",
+    "params": {
+     "Vm": "311",
+     "f": "50",
+     "ph": "0",
+     "off": "0",
+     "ts": "0"
+    }
+   },
+   {
+    "id": 2,
+    "type": "GND",
+    "x": 0,
+    "y": 7,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 3,
+    "type": "IP",
+    "x": 2,
+    "y": 3,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Is",
+    "params": {}
+   },
+   {
+    "id": 4,
+    "type": "L",
+    "x": 6,
+    "y": 3,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Ls",
+    "params": {
+     "L": "1m",
+     "i0": "0"
+    }
+   },
+   {
+    "id": 5,
+    "type": "BDIODE1",
+    "x": 12,
+    "y": 4,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "BD1",
+    "params": {
+     "vf": "0.8"
+    }
+   },
+   {
+    "id": 9,
+    "type": "C",
+    "x": 17,
+    "y": 5,
+    "rot": 1,
+    "mir": false,
+    "dis": false,
+    "name": "Cf",
+    "params": {
+     "C": "470u",
+     "v0": "0"
+    }
+   },
+   {
+    "id": 13,
+    "type": "R",
+    "x": 20,
+    "y": 5,
+    "rot": 1,
+    "mir": false,
+    "dis": false,
+    "name": "RL",
+    "params": {
+     "R": "100"
+    }
+   },
+   {
+    "id": 16,
+    "type": "VP2",
+    "x": 22,
+    "y": 5,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vdc",
+    "params": {}
+   },
+   {
+    "id": 19,
+    "type": "SIMCTRL",
+    "x": 27,
+    "y": 1,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "dt": "10u",
+     "tt": "0.1",
+     "tp": "0",
+     "ps": "1",
+     "lte": "1",
+     "ltetol": "1e-3",
+     "interp": "1",
+     "damp": "1"
+    }
+   },
+   {
+    "id": 20,
+    "type": "TEXT",
+    "x": 0,
+    "y": -2,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "單相橋式整流：220 Vrms / 50 Hz，470 µF 濾波電容，100 Ω 負載。"
+    }
+   }
+  ],
+  "wires": [
+   {
+    "id": 6,
+    "x1": 8,
+    "y1": 3,
+    "x2": 9,
+    "y2": 3
+   },
+   {
+    "id": 7,
+    "x1": 0,
+    "y1": 7,
+    "x2": 9,
+    "y2": 7
+   },
+   {
+    "id": 8,
+    "x1": 9,
+    "y1": 7,
+    "x2": 9,
+    "y2": 5
+   },
+   {
+    "id": 10,
+    "x1": 15,
+    "y1": 3,
+    "x2": 17,
+    "y2": 3
+   },
+   {
+    "id": 11,
+    "x1": 15,
+    "y1": 5,
+    "x2": 15,
+    "y2": 7
+   },
+   {
+    "id": 12,
+    "x1": 15,
+    "y1": 7,
+    "x2": 17,
+    "y2": 7
+   },
+   {
+    "id": 14,
+    "x1": 17,
+    "y1": 3,
+    "x2": 20,
+    "y2": 3
+   },
+   {
+    "id": 15,
+    "x1": 17,
+    "y1": 7,
+    "x2": 20,
+    "y2": 7
+   },
+   {
+    "id": 17,
+    "x1": 20,
+    "y1": 3,
+    "x2": 22,
+    "y2": 3
+   },
+   {
+    "id": 18,
+    "x1": 20,
+    "y1": 7,
+    "x2": 22,
+    "y2": 7
+   }
+  ],
+  "nid": 21
+ }
+}

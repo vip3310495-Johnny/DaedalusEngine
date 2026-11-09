@@ -1,0 +1,373 @@
+{
+ "app": "psimweb",
+ "version": "V3.2.1",
+ "doc": {
+  "elements": [
+   {
+    "id": 1,
+    "type": "VPWL",
+    "x": 0,
+    "y": 4,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vs",
+    "params": {
+     "f": "0",
+     "vals": "4.8 4.8 5.2 5.2",
+     "times": "0 1m 19m 20m"
+    }
+   },
+   {
+    "id": 2,
+    "type": "GND",
+    "x": 0,
+    "y": 6,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 6,
+    "type": "VP",
+    "x": 2,
+    "y": 0,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vout",
+    "params": {}
+   },
+   {
+    "id": 7,
+    "type": "IP",
+    "x": 8,
+    "y": 2,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Iled",
+    "params": {}
+   },
+   {
+    "id": 8,
+    "type": "R",
+    "x": 12,
+    "y": 2,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Rled",
+    "params": {
+     "R": "1k"
+    }
+   },
+   {
+    "id": 10,
+    "type": "OPTO1",
+    "x": 17,
+    "y": 4,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "PC1",
+    "params": {
+     "ctr": "100",
+     "vf": "1.2",
+     "ifv": "20m",
+     "bf": "400",
+     "ccb": "5p",
+     "tf": "5.5n",
+     "ifn": "5m"
+    }
+   },
+   {
+    "id": 11,
+    "type": "TL431",
+    "x": 14,
+    "y": 9,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "U1",
+    "params": {
+     "vref": "2.495",
+     "iref": "2u",
+     "imin": "0.4m",
+     "zka": "0.2",
+     "kvk": "-1.4m",
+     "fp": "4.5k",
+     "zhf": "10"
+    }
+   },
+   {
+    "id": 13,
+    "type": "GND",
+    "x": 14,
+    "y": 11,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 14,
+    "type": "R",
+    "x": 4,
+    "y": 5,
+    "rot": 1,
+    "mir": false,
+    "dis": false,
+    "name": "Rup",
+    "params": {
+     "R": "10k"
+    }
+   },
+   {
+    "id": 16,
+    "type": "R",
+    "x": 4,
+    "y": 11,
+    "rot": 1,
+    "mir": false,
+    "dis": false,
+    "name": "Rdn",
+    "params": {
+     "R": "10k"
+    }
+   },
+   {
+    "id": 19,
+    "type": "GND",
+    "x": 4,
+    "y": 13,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 23,
+    "type": "VP",
+    "x": 8,
+    "y": 6,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vref",
+    "params": {}
+   },
+   {
+    "id": 24,
+    "type": "VDC",
+    "x": 28,
+    "y": 6,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vcc",
+    "params": {
+     "V": "5"
+    }
+   },
+   {
+    "id": 25,
+    "type": "GND",
+    "x": 28,
+    "y": 8,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 26,
+    "type": "R",
+    "x": 25,
+    "y": 1,
+    "rot": 1,
+    "mir": false,
+    "dis": false,
+    "name": "Rpu",
+    "params": {
+     "R": "10k"
+    }
+   },
+   {
+    "id": 32,
+    "type": "GND",
+    "x": 20,
+    "y": 7,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 33,
+    "type": "VP",
+    "x": 21,
+    "y": 1,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vfb",
+    "params": {}
+   },
+   {
+    "id": 34,
+    "type": "SIMCTRL",
+    "x": 34,
+    "y": 1,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "dt": "1u",
+     "tt": "20m",
+     "tp": "0",
+     "ps": "5",
+     "lte": "1",
+     "ltetol": "1e-3",
+     "interp": "1",
+     "damp": "1"
+    }
+   },
+   {
+    "id": 35,
+    "type": "TEXT",
+    "x": 0,
+    "y": -6,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "TL431 + PC817 類光耦合器：Vout 由 4.8 V 慢慢升到 5.2 V，分壓 10k/10k → 約 5.0 V 時 TL431 開始吸電流，\nLED 電流經 CTR 轉到光電晶體，Vfb 由 5 V 拉低。可觀察 Imin 低轉導區與 CTR 對回授增益的影響。"
+    }
+   }
+  ],
+  "wires": [
+   {
+    "id": 3,
+    "x1": 0,
+    "y1": 2,
+    "x2": 2,
+    "y2": 2
+   },
+   {
+    "id": 4,
+    "x1": 2,
+    "y1": 2,
+    "x2": 4,
+    "y2": 2
+   },
+   {
+    "id": 5,
+    "x1": 4,
+    "y1": 2,
+    "x2": 6,
+    "y2": 2
+   },
+   {
+    "id": 9,
+    "x1": 14,
+    "y1": 2,
+    "x2": 14,
+    "y2": 3
+   },
+   {
+    "id": 12,
+    "x1": 14,
+    "y1": 5,
+    "x2": 14,
+    "y2": 7
+   },
+   {
+    "id": 15,
+    "x1": 4,
+    "y1": 2,
+    "x2": 4,
+    "y2": 3
+   },
+   {
+    "id": 17,
+    "x1": 4,
+    "y1": 7,
+    "x2": 4,
+    "y2": 8
+   },
+   {
+    "id": 18,
+    "x1": 4,
+    "y1": 8,
+    "x2": 4,
+    "y2": 9
+   },
+   {
+    "id": 20,
+    "x1": 4,
+    "y1": 8,
+    "x2": 8,
+    "y2": 8
+   },
+   {
+    "id": 21,
+    "x1": 8,
+    "y1": 8,
+    "x2": 12,
+    "y2": 8
+   },
+   {
+    "id": 22,
+    "x1": 12,
+    "y1": 8,
+    "x2": 12,
+    "y2": 9
+   },
+   {
+    "id": 27,
+    "x1": 20,
+    "y1": 3,
+    "x2": 21,
+    "y2": 3
+   },
+   {
+    "id": 28,
+    "x1": 21,
+    "y1": 3,
+    "x2": 25,
+    "y2": 3
+   },
+   {
+    "id": 29,
+    "x1": 25,
+    "y1": -1,
+    "x2": 28,
+    "y2": -1
+   },
+   {
+    "id": 30,
+    "x1": 28,
+    "y1": -1,
+    "x2": 28,
+    "y2": 4
+   },
+   {
+    "id": 31,
+    "x1": 20,
+    "y1": 5,
+    "x2": 20,
+    "y2": 7
+   }
+  ],
+  "nid": 36
+ }
+}

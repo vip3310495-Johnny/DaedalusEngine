@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <!-- 1 單翼：四根羽毛自肩部展開成單翼，迎向右上的太陽 -->
+  <defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3442C0"/><stop offset="1" stop-color="#1C2475"/></linearGradient></defs>
+  <rect x="8" y="8" width="240" height="240" rx="56" fill="url(#bg)"/>
+  <circle cx="196" cy="66" r="20" fill="#FFC23D"/>
+  <g>
+    <path transform="translate(64 190) rotate(-58)" d="M0 -13 L122.4 -10.92 Q164 0 122.4 10.92 L0 13 A13 13 0 0 1 0 -13 Z" fill="#FFFFFF" opacity="1"/>
+    <path transform="translate(64 190) rotate(-40)" d="M0 -13 L108.4 -10.92 Q150 0 108.4 10.92 L0 13 A13 13 0 0 1 0 -13 Z" fill="#FFFFFF" opacity="0.86"/>
+    <path transform="translate(64 190) rotate(-22)" d="M0 -13 L86.4 -10.92 Q128 0 86.4 10.92 L0 13 A13 13 0 0 1 0 -13 Z" fill="#FFFFFF" opacity="0.72"/>
+    <path transform="translate(64 190) rotate(-4)" d="M0 -13 L62.4 -10.92 Q104 0 62.4 10.92 L0 13 A13 13 0 0 1 0 -13 Z" fill="#FFFFFF" opacity="0.58"/>
+  </g>
+</svg>

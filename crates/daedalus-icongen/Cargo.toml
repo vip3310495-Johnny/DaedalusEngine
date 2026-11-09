@@ -1,0 +1,11 @@
+[package]
+name = "daedalus-icongen"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+description = "Renders assets/icon*.svg into assets/icon.ico and PNGs"
+
+[dependencies]
+resvg = "0.49"
+ico = "0.6"

@@ -1,0 +1,1110 @@
+{
+ "app": "psimweb",
+ "version": "V1.1.0",
+ "doc": {
+  "elements": [
+   {
+    "id": 1,
+    "type": "TEXT",
+    "x": -20,
+    "y": -8,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "400 V／50 Hz 經 Y/Y 變壓器（1:0.5）與三相二極體橋供電給 10 Ω：\n理想六脈波平均 Vdc = (3√2/π)·200 = 270.1 V、Idc = 27.01 A（直流電壓表、直流電流表）。\nY/Δ 變壓器（1:1）Δ 側 A 相繞組接在 a–b：Vab 與 Van 同相、峰值 326.6 V。"
+    }
+   },
+   {
+    "id": 2,
+    "type": "SIMCTRL",
+    "x": -20,
+    "y": -4,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "dt": "10u",
+     "tt": "0.3",
+     "tp": "0",
+     "ps": "1",
+     "lte": "1",
+     "ltetol": "1e-3",
+     "interp": "1",
+     "damp": "1",
+     "acc": "0",
+     "etol": "1e-6",
+     "maxlv": "8"
+    }
+   },
+   {
+    "id": 3,
+    "type": "VSIN3",
+    "x": -12,
+    "y": 14,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "V1",
+    "params": {
+     "V": "400",
+     "f": "50",
+     "ph": "0"
+    }
+   },
+   {
+    "id": 5,
+    "type": "GND",
+    "x": -16,
+    "y": 14,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 7,
+    "type": "LABEL",
+    "x": -8,
+    "y": 13,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "a"
+    }
+   },
+   {
+    "id": 9,
+    "type": "LABEL",
+    "x": -8,
+    "y": 14,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "b"
+    }
+   },
+   {
+    "id": 11,
+    "type": "LABEL",
+    "x": -8,
+    "y": 15,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "c"
+    }
+   },
+   {
+    "id": 12,
+    "type": "TF3YY",
+    "x": 6,
+    "y": 15,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "T1",
+    "params": {
+     "rp": "0",
+     "rs": "0",
+     "lp": "0",
+     "ls": "0",
+     "lm": "10",
+     "np": "1",
+     "ns": "0.5"
+    }
+   },
+   {
+    "id": 14,
+    "type": "LABEL",
+    "x": 0,
+    "y": 13,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "a"
+    }
+   },
+   {
+    "id": 16,
+    "type": "LABEL",
+    "x": 0,
+    "y": 14,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "b"
+    }
+   },
+   {
+    "id": 18,
+    "type": "LABEL",
+    "x": 0,
+    "y": 15,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "c"
+    }
+   },
+   {
+    "id": 20,
+    "type": "GND",
+    "x": 0,
+    "y": 16,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 22,
+    "type": "LABEL",
+    "x": 12,
+    "y": 13,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "x"
+    }
+   },
+   {
+    "id": 24,
+    "type": "LABEL",
+    "x": 12,
+    "y": 14,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y"
+    }
+   },
+   {
+    "id": 26,
+    "type": "LABEL",
+    "x": 12,
+    "y": 15,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "z"
+    }
+   },
+   {
+    "id": 28,
+    "type": "GND",
+    "x": 12,
+    "y": 16,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 29,
+    "type": "BDIODE3",
+    "x": 25,
+    "y": 14,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "B1",
+    "params": {
+     "vf": "0"
+    }
+   },
+   {
+    "id": 31,
+    "type": "LABEL",
+    "x": 20,
+    "y": 13,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "x"
+    }
+   },
+   {
+    "id": 33,
+    "type": "LABEL",
+    "x": 20,
+    "y": 14,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y"
+    }
+   },
+   {
+    "id": 35,
+    "type": "LABEL",
+    "x": 20,
+    "y": 15,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "z"
+    }
+   },
+   {
+    "id": 37,
+    "type": "LABEL",
+    "x": 30,
+    "y": 13,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "p"
+    }
+   },
+   {
+    "id": 39,
+    "type": "LABEL",
+    "x": 30,
+    "y": 15,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "q"
+    }
+   },
+   {
+    "id": 40,
+    "type": "ADCM",
+    "x": -12,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Idc",
+    "params": {
+     "fc": "10"
+    }
+   },
+   {
+    "id": 42,
+    "type": "LABEL",
+    "x": -16,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "p"
+    }
+   },
+   {
+    "id": 44,
+    "type": "LABEL",
+    "x": -8,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "p2"
+    }
+   },
+   {
+    "id": 45,
+    "type": "R",
+    "x": 4,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Rl",
+    "params": {
+     "R": "10"
+    }
+   },
+   {
+    "id": 47,
+    "type": "LABEL",
+    "x": 0,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "p2"
+    }
+   },
+   {
+    "id": 49,
+    "type": "LABEL",
+    "x": 8,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "q"
+    }
+   },
+   {
+    "id": 50,
+    "type": "VDCM",
+    "x": 19,
+    "y": 28,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vdc_avg",
+    "params": {
+     "fc": "10"
+    }
+   },
+   {
+    "id": 52,
+    "type": "LABEL",
+    "x": 19,
+    "y": 24,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "p2"
+    }
+   },
+   {
+    "id": 54,
+    "type": "LABEL",
+    "x": 19,
+    "y": 32,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "q"
+    }
+   },
+   {
+    "id": 55,
+    "type": "VP2",
+    "x": 33,
+    "y": 28,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vdc",
+    "params": {}
+   },
+   {
+    "id": 57,
+    "type": "LABEL",
+    "x": 33,
+    "y": 24,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "p2"
+    }
+   },
+   {
+    "id": 59,
+    "type": "LABEL",
+    "x": 33,
+    "y": 32,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "q"
+    }
+   },
+   {
+    "id": 60,
+    "type": "VSIN3",
+    "x": -12,
+    "y": 42,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "V2",
+    "params": {
+     "V": "400",
+     "f": "50",
+     "ph": "0"
+    }
+   },
+   {
+    "id": 62,
+    "type": "GND",
+    "x": -16,
+    "y": 42,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 64,
+    "type": "LABEL",
+    "x": -8,
+    "y": 41,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "a2"
+    }
+   },
+   {
+    "id": 66,
+    "type": "LABEL",
+    "x": -8,
+    "y": 42,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "b2"
+    }
+   },
+   {
+    "id": 68,
+    "type": "LABEL",
+    "x": -8,
+    "y": 43,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "c2"
+    }
+   },
+   {
+    "id": 69,
+    "type": "TF3YD",
+    "x": 6,
+    "y": 43,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "T2",
+    "params": {
+     "rp": "0",
+     "rs": "1m",
+     "lp": "0",
+     "ls": "0",
+     "lm": "10",
+     "np": "1",
+     "ns": "1"
+    }
+   },
+   {
+    "id": 71,
+    "type": "LABEL",
+    "x": 0,
+    "y": 41,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "a2"
+    }
+   },
+   {
+    "id": 73,
+    "type": "LABEL",
+    "x": 0,
+    "y": 42,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "b2"
+    }
+   },
+   {
+    "id": 75,
+    "type": "LABEL",
+    "x": 0,
+    "y": 43,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "c2"
+    }
+   },
+   {
+    "id": 77,
+    "type": "GND",
+    "x": 0,
+    "y": 44,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 79,
+    "type": "LABEL",
+    "x": 12,
+    "y": 41,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "ya"
+    }
+   },
+   {
+    "id": 81,
+    "type": "LABEL",
+    "x": 12,
+    "y": 42,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "yb"
+    }
+   },
+   {
+    "id": 83,
+    "type": "LABEL",
+    "x": 12,
+    "y": 43,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "yc"
+    }
+   },
+   {
+    "id": 84,
+    "type": "R3",
+    "x": 24,
+    "y": 42,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Rl3",
+    "params": {
+     "R": "50"
+    }
+   },
+   {
+    "id": 86,
+    "type": "LABEL",
+    "x": 20,
+    "y": 41,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "ya"
+    }
+   },
+   {
+    "id": 88,
+    "type": "LABEL",
+    "x": 20,
+    "y": 42,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "yb"
+    }
+   },
+   {
+    "id": 90,
+    "type": "LABEL",
+    "x": 20,
+    "y": 43,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "yc"
+    }
+   },
+   {
+    "id": 92,
+    "type": "GND",
+    "x": 28,
+    "y": 41,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 94,
+    "type": "GND",
+    "x": 28,
+    "y": 42,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 96,
+    "type": "GND",
+    "x": 28,
+    "y": 43,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 97,
+    "type": "VP2",
+    "x": -13,
+    "y": 56,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vab",
+    "params": {}
+   },
+   {
+    "id": 99,
+    "type": "LABEL",
+    "x": -13,
+    "y": 52,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "ya"
+    }
+   },
+   {
+    "id": 101,
+    "type": "LABEL",
+    "x": -13,
+    "y": 60,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "yb"
+    }
+   },
+   {
+    "id": 102,
+    "type": "VP",
+    "x": 1,
+    "y": 55,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Van",
+    "params": {}
+   },
+   {
+    "id": 104,
+    "type": "LABEL",
+    "x": 1,
+    "y": 59,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "a2"
+    }
+   }
+  ],
+  "wires": [
+   {
+    "id": 4,
+    "x1": -14,
+    "y1": 14,
+    "x2": -16,
+    "y2": 14
+   },
+   {
+    "id": 6,
+    "x1": -10,
+    "y1": 13,
+    "x2": -8,
+    "y2": 13
+   },
+   {
+    "id": 8,
+    "x1": -10,
+    "y1": 14,
+    "x2": -8,
+    "y2": 14
+   },
+   {
+    "id": 10,
+    "x1": -10,
+    "y1": 15,
+    "x2": -8,
+    "y2": 15
+   },
+   {
+    "id": 13,
+    "x1": 2,
+    "y1": 13,
+    "x2": 0,
+    "y2": 13
+   },
+   {
+    "id": 15,
+    "x1": 2,
+    "y1": 14,
+    "x2": 0,
+    "y2": 14
+   },
+   {
+    "id": 17,
+    "x1": 2,
+    "y1": 15,
+    "x2": 0,
+    "y2": 15
+   },
+   {
+    "id": 19,
+    "x1": 2,
+    "y1": 16,
+    "x2": 0,
+    "y2": 16
+   },
+   {
+    "id": 21,
+    "x1": 10,
+    "y1": 13,
+    "x2": 12,
+    "y2": 13
+   },
+   {
+    "id": 23,
+    "x1": 10,
+    "y1": 14,
+    "x2": 12,
+    "y2": 14
+   },
+   {
+    "id": 25,
+    "x1": 10,
+    "y1": 15,
+    "x2": 12,
+    "y2": 15
+   },
+   {
+    "id": 27,
+    "x1": 10,
+    "y1": 16,
+    "x2": 12,
+    "y2": 16
+   },
+   {
+    "id": 30,
+    "x1": 22,
+    "y1": 13,
+    "x2": 20,
+    "y2": 13
+   },
+   {
+    "id": 32,
+    "x1": 22,
+    "y1": 14,
+    "x2": 20,
+    "y2": 14
+   },
+   {
+    "id": 34,
+    "x1": 22,
+    "y1": 15,
+    "x2": 20,
+    "y2": 15
+   },
+   {
+    "id": 36,
+    "x1": 28,
+    "y1": 13,
+    "x2": 30,
+    "y2": 13
+   },
+   {
+    "id": 38,
+    "x1": 28,
+    "y1": 15,
+    "x2": 30,
+    "y2": 15
+   },
+   {
+    "id": 41,
+    "x1": -14,
+    "y1": 27,
+    "x2": -16,
+    "y2": 27
+   },
+   {
+    "id": 43,
+    "x1": -10,
+    "y1": 27,
+    "x2": -8,
+    "y2": 27
+   },
+   {
+    "id": 46,
+    "x1": 2,
+    "y1": 27,
+    "x2": 0,
+    "y2": 27
+   },
+   {
+    "id": 48,
+    "x1": 6,
+    "y1": 27,
+    "x2": 8,
+    "y2": 27
+   },
+   {
+    "id": 51,
+    "x1": 19,
+    "y1": 26,
+    "x2": 19,
+    "y2": 24
+   },
+   {
+    "id": 53,
+    "x1": 19,
+    "y1": 30,
+    "x2": 19,
+    "y2": 32
+   },
+   {
+    "id": 56,
+    "x1": 33,
+    "y1": 26,
+    "x2": 33,
+    "y2": 24
+   },
+   {
+    "id": 58,
+    "x1": 33,
+    "y1": 30,
+    "x2": 33,
+    "y2": 32
+   },
+   {
+    "id": 61,
+    "x1": -14,
+    "y1": 42,
+    "x2": -16,
+    "y2": 42
+   },
+   {
+    "id": 63,
+    "x1": -10,
+    "y1": 41,
+    "x2": -8,
+    "y2": 41
+   },
+   {
+    "id": 65,
+    "x1": -10,
+    "y1": 42,
+    "x2": -8,
+    "y2": 42
+   },
+   {
+    "id": 67,
+    "x1": -10,
+    "y1": 43,
+    "x2": -8,
+    "y2": 43
+   },
+   {
+    "id": 70,
+    "x1": 2,
+    "y1": 41,
+    "x2": 0,
+    "y2": 41
+   },
+   {
+    "id": 72,
+    "x1": 2,
+    "y1": 42,
+    "x2": 0,
+    "y2": 42
+   },
+   {
+    "id": 74,
+    "x1": 2,
+    "y1": 43,
+    "x2": 0,
+    "y2": 43
+   },
+   {
+    "id": 76,
+    "x1": 2,
+    "y1": 44,
+    "x2": 0,
+    "y2": 44
+   },
+   {
+    "id": 78,
+    "x1": 10,
+    "y1": 41,
+    "x2": 12,
+    "y2": 41
+   },
+   {
+    "id": 80,
+    "x1": 10,
+    "y1": 42,
+    "x2": 12,
+    "y2": 42
+   },
+   {
+    "id": 82,
+    "x1": 10,
+    "y1": 43,
+    "x2": 12,
+    "y2": 43
+   },
+   {
+    "id": 85,
+    "x1": 22,
+    "y1": 41,
+    "x2": 20,
+    "y2": 41
+   },
+   {
+    "id": 87,
+    "x1": 22,
+    "y1": 42,
+    "x2": 20,
+    "y2": 42
+   },
+   {
+    "id": 89,
+    "x1": 22,
+    "y1": 43,
+    "x2": 20,
+    "y2": 43
+   },
+   {
+    "id": 91,
+    "x1": 26,
+    "y1": 41,
+    "x2": 28,
+    "y2": 41
+   },
+   {
+    "id": 93,
+    "x1": 26,
+    "y1": 42,
+    "x2": 28,
+    "y2": 42
+   },
+   {
+    "id": 95,
+    "x1": 26,
+    "y1": 43,
+    "x2": 28,
+    "y2": 43
+   },
+   {
+    "id": 98,
+    "x1": -13,
+    "y1": 54,
+    "x2": -13,
+    "y2": 52
+   },
+   {
+    "id": 100,
+    "x1": -13,
+    "y1": 58,
+    "x2": -13,
+    "y2": 60
+   },
+   {
+    "id": 103,
+    "x1": 1,
+    "y1": 57,
+    "x2": 1,
+    "y2": 59
+   }
+  ],
+  "nid": 105
+ },
+ "screens": [
+  [
+   "Vdc",
+   "Vdc_avg"
+  ],
+  [
+   "Idc"
+  ],
+  [
+   "Vab",
+   "Van"
+  ]
+ ]
+}

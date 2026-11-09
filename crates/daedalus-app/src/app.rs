@@ -1,0 +1,1532 @@
+//! Main window: menus, toolbar, library, schematic, status bar, messages, viewers.
+
+use crate::bode::BodeView;
+use crate::canvas::{Canvas, CanvasEvent, Mode};
+use crate::dialogs::{help_ui, DlgResult, InlineEdit, PropsDlg, QaResult, QuickAdd, SimCtrlDlg};
+use crate::editor::{Editor, Sel};
+use crate::libpanel::{draw_icon, LibPanel};
+use crate::simrun::{fmt_dur, Done, Running};
+use crate::symbols::SymCache;
+use crate::theme::{pal, Pal};
+use crate::wave::WaveView;
+use daedalus_core::doc::Doc;
+use daedalus_core::library::lib;
+use daedalus_core::netlist::build_netlist;
+use daedalus_core::runner::{eval_ac, eval_sim_ctrl, AcResult, TranResult};
+use egui::{vec2, Color32, Key, Modifiers, RichText, Ui};
+use std::path::PathBuf;
+use std::sync::Arc;
+use std::time::Instant;
+
+pub const APP_NAME: &str = "DaedalusEngine";
+pub const APP_TITLE_ZH: &str = "電力電子電路模擬器";
+
+pub struct Example {
+    pub key: &'static str,
+    pub name: &'static str,
+    /// menu category (submenu of 檔案 › 範例)
+    pub cat: &'static str,
+    pub json: &'static str,
+}
+// the bundled examples (tools/examples/gen.js writes this list together with the .psimx files)
+include!("examples_list.rs");
+
+/// example categories in first-appearance order
+fn example_cats() -> Vec<&'static str> {
+    let mut v: Vec<&'static str> = Vec::new();
+    for e in EXAMPLES {
+        if !v.contains(&e.cat) {
+            v.push(e.cat);
+        }
+    }
+    v
+}
+
+#[derive(Clone)]
+struct Msg {
+    err: bool,
+    text: String,
+    els: Vec<i64>,
+}
+
+enum Pending {
+    New,
+    Open(Option<PathBuf>),
+    Example(usize),
+    Exit,
+}
+
+pub struct App {
+    pub ed: Editor,
+    canvas: Canvas,
+    syms: SymCache,
+    lib: LibPanel,
+    file: Option<PathBuf>,
+    file_name: String,
+    props: Option<PropsDlg>,
+    simctrl: Option<SimCtrlDlg>,
+    quick: Option<QuickAdd>,
+    inline: Option<InlineEdit>,
+    run: Option<Running>,
+    wave: WaveView,
+    bode: BodeView,
+    msgs: Vec<Msg>,
+    msgs_title: String,
+    pill: Option<(Color32, String)>,
+    toast: Option<(String, Instant)>,
+    pub dark: bool,
+    pub recent: Vec<PathBuf>,
+    show_help: bool,
+    show_about: bool,
+    find: Option<(String, usize)>,
+    doc_layout: Option<Vec<Vec<String>>>,
+    pending: Option<Pending>,
+    ctx_menu: Option<egui::Pos2>,
+    icon: Option<egui::TextureHandle>,
+    allow_close: bool,
+    /// worker threads for AC / parameter sweeps (0 = all logical processors)
+    threads: usize,
+    /// OpenGL renderer (GPU) used for drawing, read once from the GL context
+    gpu: Option<String>,
+    /// Monte Carlo statistics window (data, open)
+    mc_view: Option<(Arc<daedalus_core::montecarlo::McInfo>, bool)>,
+    lib_open: bool,
+    pub autorun: bool,
+    pub shot: Option<String>,
+    shot_stage: u8,
+    shot_frame: u32,
+}
+
+impl App {
+    pub fn new(cc: &eframe::CreationContext<'_>, open: Option<PathBuf>) -> Self {
+        let mut app = App {
+            ed: Editor::new(),
+            canvas: Canvas::new(),
+            syms: SymCache::default(),
+            lib: LibPanel::new(),
+            file: None,
+            file_name: "未命名電路".into(),
+            props: None,
+            simctrl: None,
+            quick: None,
+            inline: None,
+            run: None,
+            wave: WaveView::new(),
+            bode: BodeView::new(),
+            msgs: vec![],
+            msgs_title: String::new(),
+            pill: None,
+            toast: None,
+            dark: false,
+            recent: vec![],
+            show_help: false,
+            show_about: false,
+            find: None,
+            doc_layout: None,
+            pending: None,
+            ctx_menu: None,
+            icon: None,
+            allow_close: false,
+            threads: 0,
+            gpu: None,
+            mc_view: None,
+            lib_open: true,
+            autorun: false,
+            shot: None,
+            shot_stage: 0,
+            shot_frame: 0,
+        };
+        if let Some(st) = cc.storage {
+            app.dark = st.get_string("dark").map(|s| s == "1").unwrap_or(false);
+            app.canvas.pin_marks = st.get_string("pin_marks").map(|s| s != "0").unwrap_or(true);
+            app.threads = st.get_string("threads").and_then(|s| s.parse().ok()).unwrap_or(0);
+            app.recent = st.get_string("recent").and_then(|s| serde_json::from_str::<Vec<String>>(&s).ok()).unwrap_or_default().into_iter().map(PathBuf::from).filter(|p| p.exists()).collect();
+        }
+        if let Ok(img) = image::load_from_memory(include_bytes!("../assets/icon_256.png")) {
+            let rgba = img.to_rgba8();
+            let ci = egui::ColorImage::from_rgba_unmultiplied([rgba.width() as usize, rgba.height() as usize], rgba.as_raw());
+            app.icon = Some(cc.egui_ctx.load_texture("app_icon", ci, Default::default()));
+        }
+        app.apply_theme(&cc.egui_ctx);
+        match open {
+            Some(p) => app.open_path(p),
+            None => app.new_doc(),
+        }
+        app
+    }
+    fn apply_theme(&self, ctx: &egui::Context) {
+        ctx.set_theme(if self.dark { egui::Theme::Dark } else { egui::Theme::Light });
+    }
+    fn pal(&self) -> &'static Pal {
+        pal(self.dark)
+    }
+    fn toast(&mut self, s: impl Into<String>) {
+        self.toast = Some((s.into(), Instant::now()));
+    }
+    fn title(&self) -> String {
+        format!("{}{} — {} {}", self.file_name, if self.ed.dirty { " *" } else { "" }, APP_NAME, daedalus_core::VERSION)
+    }
+
+    /* ---------------------------------------------------------------- documents */
+    fn new_doc(&mut self) {
+        let mut d = Doc { elements: vec![], wires: vec![], nid: 1 };
+        let mut tmp = Editor::new();
+        tmp.doc = std::mem::take(&mut d);
+        let el = tmp.new_element("SIMCTRL", 22.0, -10.0, 0, false);
+        tmp.doc.elements.push(el);
+        self.ed.set_doc(tmp.doc);
+        self.file = None;
+        self.file_name = "未命名電路".into();
+        self.doc_layout = None;
+        self.wave = WaveView::new();
+        self.bode = BodeView::new();
+        self.msgs.clear();
+        self.canvas.err_els.clear();
+        self.canvas.want_fit = true;
+        self.canvas.scale = 20.0;
+    }
+    fn load_text(&mut self, txt: &str, name: String, path: Option<PathBuf>) -> Result<(), String> {
+        let (doc, screens) = Doc::from_json(txt)?;
+        self.ed.set_doc(doc);
+        self.file = path;
+        self.file_name = name;
+        self.doc_layout = screens;
+        self.wave = WaveView::new();
+        self.bode = BodeView::new();
+        self.msgs.clear();
+        self.canvas.err_els.clear();
+        self.canvas.want_fit = true;
+        Ok(())
+    }
+    pub fn open_path(&mut self, p: PathBuf) {
+        let ext = p.extension().map(|e| e.to_string_lossy().to_lowercase()).unwrap_or_default();
+        if ext == "psimsch" || ext == "sch" {
+            self.show_msgs("無法開啟檔案", vec![Msg { err: true, text: format!("無法直接開啟 PSIM 原生電路檔（{}）：.psimsch 是 PSIM 的專有格式，沒有公開規格。請在 PSIM 以「Simulate → Generate Netlist File (XML)」匯出 XML 網表。", p.display()), els: vec![] }]);
+            return;
+        }
+        match std::fs::read_to_string(&p) {
+            Ok(txt) => {
+                let name = p.file_stem().map(|s| s.to_string_lossy().to_string()).unwrap_or_else(|| "電路".into());
+                match self.load_text(&txt, name, Some(p.clone())) {
+                    Ok(()) => self.add_recent(p),
+                    Err(e) => self.show_msgs("無法開啟檔案", vec![Msg { err: true, text: format!("無法開啟檔案：{}", e), els: vec![] }]),
+                }
+            }
+            Err(e) => self.show_msgs("無法開啟檔案", vec![Msg { err: true, text: format!("無法讀取 {}：{}", p.display(), e), els: vec![] }]),
+        }
+    }
+    fn add_recent(&mut self, p: PathBuf) {
+        self.recent.retain(|q| q != &p);
+        self.recent.insert(0, p);
+        self.recent.truncate(10);
+    }
+    fn save(&mut self, save_as: bool) -> bool {
+        let path = if save_as || self.file.is_none() {
+            match rfd::FileDialog::new().add_filter("電路檔", &["psimx"]).set_file_name(format!("{}.psimx", self.file_name)).save_file() {
+                Some(p) => p,
+                None => return false,
+            }
+        } else {
+            self.file.clone().unwrap()
+        };
+        let screens = self.wave.layout_names().or_else(|| self.doc_layout.clone());
+        let txt = self.ed.doc.to_json(daedalus_core::VERSION, screens);
+        match std::fs::write(&path, txt) {
+            Ok(()) => {
+                self.file_name = path.file_stem().map(|s| s.to_string_lossy().to_string()).unwrap_or_default();
+                self.file = Some(path.clone());
+                self.ed.dirty = false;
+                self.add_recent(path);
+                self.toast("已儲存");
+                true
+            }
+            Err(e) => {
+                self.show_msgs("無法儲存", vec![Msg { err: true, text: format!("無法寫入檔案：{}", e), els: vec![] }]);
+                false
+            }
+        }
+    }
+    fn request(&mut self, p: Pending) {
+        if self.ed.dirty && !self.ed.doc.elements.is_empty() {
+            self.pending = Some(p);
+        } else {
+            self.do_pending(p);
+        }
+    }
+    fn do_pending(&mut self, p: Pending) {
+        match p {
+            Pending::New => self.new_doc(),
+            Pending::Open(None) => {
+                if let Some(p) = rfd::FileDialog::new().add_filter("電路檔", &["psimx", "json"]).add_filter("所有檔案", &["*"]).pick_file() {
+                    self.open_path(p);
+                }
+            }
+            Pending::Open(Some(p)) => self.open_path(p),
+            Pending::Example(i) => {
+                let ex = &EXAMPLES[i];
+                let _ = self.load_text(ex.json, ex.name.into(), None);
+                self.ed.dirty = false;
+            }
+            Pending::Exit => {
+                self.allow_close = true;
+            }
+        }
+    }
+
+    /* ---------------------------------------------------------------- simulation */
+    fn show_msgs(&mut self, title: &str, m: Vec<Msg>) {
+        self.msgs_title = title.into();
+        self.msgs = m;
+    }
+    fn run_sim(&mut self, ctx: &egui::Context, force_tran: bool) {
+        if self.run.is_some() {
+            return;
+        }
+        self.msgs.clear();
+        self.canvas.err_els.clear();
+        let br = build_netlist(&self.ed.doc);
+        let fail = |app: &mut App, errs: Vec<(String, Vec<i64>)>| {
+            for (_, els) in &errs {
+                app.canvas.err_els.extend(els.iter().copied());
+            }
+            app.show_msgs("無法執行模擬", errs.into_iter().map(|(t, e)| Msg { err: true, text: t, els: e }).collect());
+        };
+        if !br.errors.is_empty() {
+            fail(self, br.errors.iter().map(|e| (e.msg.clone(), e.els.clone())).collect());
+            return;
+        }
+        let sc = match eval_sim_ctrl(&self.ed.doc, &br.syms) {
+            Ok(s) => s,
+            Err(e) => {
+                fail(self, vec![(e.msg, e.els)]);
+                return;
+            }
+        };
+        let ac = if force_tran {
+            None
+        } else {
+            match eval_ac(&self.ed.doc, &br.syms) {
+                Ok(a) => a,
+                Err(e) => {
+                    fail(self, vec![(e.msg, e.els)]);
+                    return;
+                }
+            }
+        };
+        let mc = if ac.is_none() {
+            match daedalus_core::montecarlo::eval_mc(&self.ed.doc, &br.syms) {
+                Ok(s) => s,
+                Err(e) => {
+                    fail(self, vec![(e.msg, e.els)]);
+                    return;
+                }
+            }
+        } else {
+            None
+        };
+        let sweep = if ac.is_none() {
+            match daedalus_core::sweep::eval_sweep(&self.ed.doc, &br.syms) {
+                Ok(s) => s,
+                Err(e) => {
+                    fail(self, vec![(e.msg, e.els)]);
+                    return;
+                }
+            }
+        } else {
+            if self.ed.doc.elements.iter().any(|e| e.typ == "PSWEEP" && !e.dis) {
+                self.toast = Some(("參數掃描僅適用於暫態分析：本次執行 AC 掃頻（可用「執行暫態模擬」跑參數掃描）".into(), Instant::now()));
+            }
+            None
+        };
+        self.pill = None;
+        let threads = self.n_threads();
+        if let (Some(m), Some(_)) = (&mc, &sweep) {
+            fail(self, vec![("蒙地卡羅分析與參數掃描不可同時使用，請停用其中一個（選取後按 D）。".into(), vec![m.el])]);
+            return;
+        }
+        self.run = Some(Running::start(br.net, sc, ac, sweep, mc, threads, ctx.clone()));
+    }
+    /// Monte Carlo statistics table
+    fn mc_window(&mut self, ctx: &egui::Context) {
+        let Some((m, open)) = &mut self.mc_view else { return };
+        if !*open {
+            return;
+        }
+        let m = m.clone();
+        let mut keep = true;
+        egui::Window::new("蒙地卡羅統計結果").open(&mut keep).default_width(760.0).default_height(460.0).show(ctx, |ui| {
+            let runs = m.samples.len();
+            ui.label(format!("共 {} 次（#0 為標稱值），亂數種子 {}。統計以各次模擬的探棒數值計算，σ 為樣本標準差。", runs, m.seed));
+            egui::Grid::new("mc_vars").striped(true).num_columns(4).show(ui, |ui| {
+                ui.strong("變數");
+                ui.strong("標稱值");
+                ui.strong("容差");
+                ui.strong("分佈");
+                ui.end_row();
+                for i in 0..m.vars.len() {
+                    ui.label(&m.vars[i]);
+                    ui.monospace(crate::plot::si(m.nominal[i], "", 5));
+                    ui.monospace(format!("±{}%", m.tols[i] * 100.0));
+                    ui.label(&m.dists[i]);
+                    ui.end_row();
+                }
+            });
+            ui.separator();
+            egui::ScrollArea::vertical().max_height(300.0).show(ui, |ui| {
+                egui::Grid::new("mc_stats").striped(true).num_columns(8).show(ui, |ui| {
+                    for h in ["探棒", "量", "標稱", "平均", "σ", "σ/|平均|", "最小", "最大"] {
+                        ui.strong(h);
+                    }
+                    ui.end_row();
+                    for s in &m.stats {
+                        ui.label(&s.probe);
+                        ui.label(&s.metric);
+                        ui.monospace(crate::plot::si(s.values[0], "", 5));
+                        ui.monospace(crate::plot::si(s.mean, "", 5));
+                        ui.monospace(crate::plot::si(s.std, "", 4));
+                        ui.monospace(if s.mean != 0.0 { format!("{:.3} %", 100.0 * s.std / s.mean.abs()) } else { "—".into() });
+                        ui.monospace(crate::plot::si(s.min, "", 5));
+                        ui.monospace(crate::plot::si(s.max, "", 5));
+                        ui.end_row();
+                    }
+                });
+            });
+            ui.separator();
+            if ui.button("匯出各次參數與結果（CSV）…").clicked() {
+                if let Some(p) = rfd::FileDialog::new().add_filter("CSV", &["csv"]).set_file_name("montecarlo.csv").save_file() {
+                    let mut s = String::from("run");
+                    for v in &m.vars {
+                        s += &format!(",{}", v);
+                    }
+                    for st in &m.stats {
+                        s += &format!(",{} {}", st.probe, st.metric);
+                    }
+                    s.push('\n');
+                    for k in 0..runs {
+                        s += &k.to_string();
+                        for x in &m.samples[k] {
+                            s += &format!(",{}", x);
+                        }
+                        for st in &m.stats {
+                            s += &format!(",{}", st.values.get(k).copied().unwrap_or(f64::NAN));
+                        }
+                        s.push('\n');
+                    }
+                    if let Err(e) = std::fs::write(&p, s) {
+                        self.toast = Some((format!("無法寫入：{}", e), Instant::now()));
+                    }
+                }
+            }
+        });
+        if let Some(v) = &mut self.mc_view {
+            v.1 = keep;
+        }
+    }
+    /// worker threads for multi-run analyses
+    fn n_threads(&self) -> usize {
+        let hw = std::thread::available_parallelism().map(|n| n.get()).unwrap_or(4);
+        if self.threads == 0 {
+            hw
+        } else {
+            self.threads.min(hw.max(1) * 2)
+        }
+    }
+    fn poll_run(&mut self) {
+        let done = match &mut self.run {
+            Some(r) => r.poll(),
+            None => return,
+        };
+        let done = match done {
+            Some(d) => d,
+            None => return,
+        };
+        self.run = None;
+        match done {
+            Done::Tran(mut res, secs) => {
+                let st = res.stats.clone();
+                if let Some(m) = &res.mc {
+                    self.mc_view = Some((Arc::new(m.clone()), true));
+                }
+                let mut info = match &res.sweep {
+                    Some(s) if res.mc.is_some() => format!("蒙地卡羅分析完成 {}（{} 次，{} 核心平行）", fmt_dur(secs), s.labels.len(), s.threads),
+                    Some(s) => format!("參數掃描完成 {}（{} 次，{} 核心平行）", fmt_dur(secs), s.labels.len(), s.threads),
+                    None => format!("模擬完成 {}", fmt_dur(secs)),
+                };
+                if let Some(a) = &res.accuracy {
+                    info += &format!("；高精度：dt = {}（1/{}），估計誤差 {:.1e}{}", crate::plot::si(a.dt, "s", 3), 1u64 << a.level, a.est, if a.met { " ✓" } else { "（未達目標）" });
+                }
+                if res.events > 0 {
+                    info += &format!("，切換事件 {} 次", res.events);
+                }
+                if st.refined > 0 {
+                    info += &format!("，自動細分 {} 步", st.refined);
+                }
+                if st.refine_max > 0 && st.steps > 0 && st.refine_max as f64 > 0.02 * st.steps as f64 {
+                    info += "；建議縮小時間步長";
+                    res.warnings.push(format!("有 {} 個時間步即使細分到 1/16 仍超過誤差容許值（{:.1}% 的步數），建議縮小 Simulation Control 的時間步長。", st.refine_max, 100.0 * st.refine_max as f64 / st.steps as f64));
+                }
+                self.pill = Some((self.pal().ok, info));
+                let warns: Vec<Msg> = res.warnings.iter().take(50).map(|w| Msg { err: false, text: w.clone(), els: vec![] }).collect();
+                if !warns.is_empty() {
+                    self.show_msgs("模擬完成，但有警告", warns);
+                }
+                self.wave.title = self.file_name.clone();
+                self.wave.set_result(Arc::new(res), self.doc_layout.clone());
+            }
+            Done::Ac(res, secs) => {
+                self.pill = Some((self.pal().ok, format!("AC 掃頻完成 {}", fmt_dur(secs))));
+                let warns: Vec<Msg> = res.warnings.iter().take(50).map(|w| Msg { err: false, text: w.clone(), els: vec![] }).collect();
+                if !warns.is_empty() {
+                    self.show_msgs("模擬完成，但有警告", warns);
+                }
+                self.bode.title = self.file_name.clone();
+                self.bode.set_result(Arc::new(res));
+            }
+            Done::Err(m, el) => {
+                if m == "已中止" {
+                    self.pill = Some((self.pal().warn, "模擬已中止".into()));
+                } else {
+                    let els: Vec<i64> = el.into_iter().collect();
+                    self.canvas.err_els.extend(els.iter().copied());
+                    self.show_msgs("模擬錯誤", vec![Msg { err: true, text: m, els }]);
+                }
+            }
+        }
+    }
+    fn focus_els(&mut self, ids: &[i64]) {
+        self.ed.sel = ids.iter().map(|&i| Sel::El(i)).collect();
+        if let Some(e) = ids.first().and_then(|&i| self.ed.el(i)) {
+            let (x, y) = (e.x, e.y);
+            self.canvas.center_on(x, y);
+        }
+    }
+
+    /* ---------------------------------------------------------------- actions */
+    fn start_place(&mut self, typ: &str) {
+        let el = self.ed.new_element(typ, 0.0, 0.0, 0, false);
+        self.ed.doc.nid -= 1; // prototype only
+        self.canvas.mode = Mode::Place(Box::new(el));
+    }
+    fn place_now(&mut self, typ: &str, at: (f64, f64)) {
+        let proto = self.ed.new_element(typ, at.0, at.1, 0, false);
+        self.ed.doc.nid -= 1;
+        if let Err(m) = self.ed.place_element(&proto, at.0, at.1) {
+            self.toast(m);
+        }
+    }
+    fn delete(&mut self) {
+        let (e, w) = self.ed.delete_sel();
+        if e + w > 0 {
+            self.toast(format!("已刪除 {} 個元件、{} 條導線（Ctrl+Z 可復原）", e, w));
+        }
+    }
+    fn copy(&mut self, cut: bool) {
+        if let Some((e, w)) = self.ed.copy_sel() {
+            if cut {
+                self.ed.delete_sel();
+            } else {
+                self.toast(format!("已複製 {} 個元件、{} 條導線", e, w));
+            }
+        }
+    }
+    fn paste(&mut self) {
+        if let Some(g) = self.ed.clip.clone() {
+            self.canvas.mode = Mode::Paste(g);
+        }
+    }
+    fn toggle_disable(&mut self) {
+        if let Some((to, n)) = self.ed.toggle_disable() {
+            self.toast(if to { format!("已停用 {} 個元件（不參與模擬）", n) } else { format!("已啟用 {} 個元件", n) });
+        }
+    }
+    fn nudge(&mut self, dx: f64, dy: f64) {
+        if self.ed.sel.is_empty() {
+            return;
+        }
+        let base = self.ed.doc.clone();
+        self.ed.push_undo();
+        self.ed.move_selection(&base, dx, dy);
+        self.ed.finish_move();
+    }
+    fn open_props_sel(&mut self) {
+        let s = self.ed.selected_els();
+        if s.len() == 1 {
+            self.open_props(s[0]);
+        }
+    }
+    fn open_props(&mut self, id: i64) {
+        if self.ed.el(id).map(|e| e.typ == "SIMCTRL").unwrap_or(false) {
+            self.simctrl = Some(SimCtrlDlg::new(&mut self.ed));
+            return;
+        }
+        self.props = PropsDlg::new(&self.ed, id);
+    }
+    fn find_run(&mut self, q: &str) -> Vec<i64> {
+        let q = q.trim().to_lowercase();
+        if q.is_empty() {
+            return vec![];
+        }
+        self.ed
+            .doc
+            .elements
+            .iter()
+            .filter(|e| {
+                let d = lib().get(&e.typ);
+                e.name.to_lowercase().contains(&q) || e.typ.to_lowercase().contains(&q) || d.map(|d| d.name.to_lowercase().contains(&q) || d.zh.contains(&q)).unwrap_or(false) || e.params.values().any(|v| v.to_lowercase().contains(&q))
+            })
+            .map(|e| e.id)
+            .collect()
+    }
+
+    /* ---------------------------------------------------------------- keyboard */
+    fn keys(&mut self, ctx: &egui::Context) {
+        let modal = self.props.is_some() || self.simctrl.is_some() || self.quick.is_some() || self.inline.is_some() || self.pending.is_some();
+        // global
+        let c = |k: Key| move |i: &mut egui::InputState| i.consume_key(Modifiers::COMMAND, k);
+        if ctx.input_mut(|i| i.consume_key(Modifiers::NONE, Key::F5)) {
+            self.run_sim(ctx, false);
+        }
+        if ctx.input_mut(|i| i.consume_key(Modifiers::NONE, Key::F6)) {
+            if self.wave.res.is_some() {
+                self.wave.open = true;
+            } else if self.bode.res.is_some() {
+                self.bode.open = true;
+            } else {
+                self.toast("尚無模擬結果，請先按 F5 執行模擬");
+            }
+        }
+        if ctx.input_mut(|i| i.consume_key(Modifiers::NONE, Key::F7)) {
+            self.simctrl = Some(SimCtrlDlg::new(&mut self.ed));
+        }
+        if ctx.input_mut(c(Key::S)) {
+            self.save(false);
+        }
+        if ctx.input_mut(|i| i.consume_key(Modifiers::COMMAND | Modifiers::SHIFT, Key::S)) {
+            self.save(true);
+        }
+        if ctx.input_mut(c(Key::O)) {
+            self.request(Pending::Open(None));
+        }
+        if ctx.input_mut(c(Key::N)) {
+            self.request(Pending::New);
+        }
+        if modal || ctx.egui_wants_keyboard_input() {
+            return;
+        }
+        self.canvas.space_down = ctx.input(|i| i.key_down(Key::Space)) && ctx.input(|i| i.pointer.primary_down());
+        if ctx.input_mut(|i| i.consume_key(Modifiers::COMMAND | Modifiers::SHIFT, Key::Z)) || ctx.input_mut(c(Key::Y)) {
+            self.ed.redo();
+        }
+        if ctx.input_mut(c(Key::Z)) {
+            self.ed.undo();
+        }
+        if ctx.input_mut(c(Key::C)) || ctx.input_mut(|i| i.events.iter().any(|e| matches!(e, egui::Event::Copy))) {
+            self.copy(false);
+        }
+        if ctx.input_mut(c(Key::X)) || ctx.input_mut(|i| i.events.iter().any(|e| matches!(e, egui::Event::Cut))) {
+            self.copy(true);
+        }
+        if ctx.input_mut(c(Key::V)) || ctx.input(|i| i.events.iter().any(|e| matches!(e, egui::Event::Paste(_)))) {
+            self.paste();
+        }
+        if ctx.input_mut(c(Key::D)) {
+            if self.ed.copy_sel().is_some() {
+                self.paste();
+            }
+        }
+        if ctx.input_mut(c(Key::A)) {
+            self.ed.select_all();
+        }
+        if ctx.input_mut(c(Key::F)) {
+            self.find = Some((String::new(), 0));
+        }
+        let plain = |k: Key| move |i: &mut egui::InputState| i.consume_key(Modifiers::NONE, k);
+        let shift = |k: Key| move |i: &mut egui::InputState| i.consume_key(Modifiers::SHIFT, k);
+        if ctx.input_mut(plain(Key::R)) {
+            self.rotate(1);
+        }
+        if ctx.input_mut(shift(Key::R)) {
+            self.rotate(-1);
+        }
+        if ctx.input(|i| i.key_pressed(Key::Space) && !i.pointer.primary_down()) {
+            let s = ctx.input(|i| i.modifiers.shift);
+            self.rotate(if s { -1 } else { 1 });
+        }
+        if ctx.input_mut(plain(Key::X)) {
+            self.mirror(false);
+        }
+        if ctx.input_mut(plain(Key::Y)) {
+            self.mirror(true);
+        }
+        if ctx.input_mut(plain(Key::D)) {
+            self.toggle_disable();
+        }
+        if ctx.input_mut(plain(Key::W)) {
+            self.canvas.mode = Mode::Wire;
+            self.canvas.wire_pts.clear();
+        }
+        if ctx.input_mut(plain(Key::L)) {
+            self.start_place("LABEL");
+        }
+        if ctx.input_mut(plain(Key::G)) {
+            self.start_place("GND");
+        }
+        if ctx.input_mut(plain(Key::Delete)) || ctx.input_mut(plain(Key::Backspace)) {
+            self.delete();
+        }
+        if ctx.input_mut(plain(Key::Escape)) {
+            if matches!(self.canvas.mode, Mode::Select) {
+                self.ed.sel.clear();
+            }
+            self.canvas.cancel();
+            self.find = None;
+            self.canvas.find_hits.clear();
+        }
+        if ctx.input_mut(plain(Key::Enter)) {
+            self.open_props_sel();
+        }
+        if ctx.input_mut(plain(Key::F)) {
+            self.canvas.fit(&self.ed);
+        }
+        if ctx.input_mut(plain(Key::Plus)) || ctx.input_mut(plain(Key::Equals)) {
+            let c = self.canvas.rect.center();
+            self.canvas.zoom_at(1.25, c);
+        }
+        if ctx.input_mut(plain(Key::Minus)) {
+            let c = self.canvas.rect.center();
+            self.canvas.zoom_at(0.8, c);
+        }
+        if ctx.input_mut(plain(Key::Slash)) || ctx.input_mut(plain(Key::Insert)) {
+            let p = ctx.input(|i| i.pointer.hover_pos()).filter(|p| self.canvas.rect.contains(*p)).unwrap_or(self.canvas.rect.center());
+            let w = self.canvas.s2w(p);
+            self.quick = Some(QuickAdd::new(p, (w.0.round(), w.1.round())));
+        }
+        for (k, dx, dy) in [(Key::ArrowLeft, -1.0, 0.0), (Key::ArrowRight, 1.0, 0.0), (Key::ArrowUp, 0.0, -1.0), (Key::ArrowDown, 0.0, 1.0)] {
+            if ctx.input_mut(plain(k)) {
+                self.nudge(dx, dy);
+            }
+        }
+    }
+    fn rotate(&mut self, dir: i64) {
+        match &mut self.canvas.mode {
+            Mode::Place(p) => p.rot = (p.rot + dir + 4) & 3,
+            Mode::Paste(g) => {
+                for e in g.elements.iter_mut() {
+                    let (x, y) = (e.x, e.y);
+                    let (nx, ny) = if dir > 0 { (-y, x) } else { (y, -x) };
+                    e.x = nx;
+                    e.y = ny;
+                    e.rot = (e.rot + dir + 4) & 3;
+                }
+                for w in g.wires.iter_mut() {
+                    let r = |x: f64, y: f64| if dir > 0 { (-y, x) } else { (y, -x) };
+                    let (a, b) = r(w.x1, w.y1);
+                    let (c2, d) = r(w.x2, w.y2);
+                    w.x1 = a;
+                    w.y1 = b;
+                    w.x2 = c2;
+                    w.y2 = d;
+                }
+            }
+            _ => self.ed.rotate_sel(dir),
+        }
+    }
+    fn mirror(&mut self, vertical: bool) {
+        match &mut self.canvas.mode {
+            Mode::Place(p) => {
+                p.mir = !p.mir;
+                if vertical {
+                    p.rot = (p.rot + 2) & 3;
+                }
+            }
+            _ => self.ed.mirror_sel(vertical),
+        }
+    }
+
+    /* ---------------------------------------------------------------- menus and toolbar */
+    fn menu_bar(&mut self, ui: &mut Ui) {
+        egui::MenuBar::new().ui(ui, |ui| {
+            ui.menu_button("檔案", |ui| {
+                if ui.button("新增　Ctrl+N").clicked() {
+                    self.request(Pending::New);
+                    ui.close();
+                }
+                if ui.button("開啟…　Ctrl+O").clicked() {
+                    self.request(Pending::Open(None));
+                    ui.close();
+                }
+                ui.menu_button("最近開啟", |ui| {
+                    if self.recent.is_empty() {
+                        ui.weak("（無）");
+                    }
+                    for p in self.recent.clone() {
+                        if ui.button(p.display().to_string()).clicked() {
+                            self.request(Pending::Open(Some(p)));
+                            ui.close();
+                        }
+                    }
+                });
+                ui.menu_button(format!("範例（{}）", EXAMPLES.len()), |ui| {
+                    for cat in example_cats() {
+                        ui.menu_button(cat, |ui| {
+                            for (i, ex) in EXAMPLES.iter().enumerate().filter(|(_, e)| e.cat == cat) {
+                                if ui.button(ex.name).clicked() {
+                                    self.request(Pending::Example(i));
+                                    ui.close();
+                                }
+                            }
+                        });
+                    }
+                });
+                ui.separator();
+                if ui.button("儲存　Ctrl+S").clicked() {
+                    self.save(false);
+                    ui.close();
+                }
+                if ui.button("另存新檔…　Ctrl+Shift+S").clicked() {
+                    self.save(true);
+                    ui.close();
+                }
+                ui.separator();
+                if ui.button("結束").clicked() {
+                    self.request(Pending::Exit);
+                    ui.close();
+                }
+            });
+            ui.menu_button("編輯", |ui| {
+                if ui.add_enabled(self.ed.can_undo(), egui::Button::new("復原　Ctrl+Z")).clicked() {
+                    self.ed.undo();
+                    ui.close();
+                }
+                if ui.add_enabled(self.ed.can_redo(), egui::Button::new("重做　Ctrl+Y")).clicked() {
+                    self.ed.redo();
+                    ui.close();
+                }
+                ui.separator();
+                if ui.button("剪下　Ctrl+X").clicked() {
+                    self.copy(true);
+                    ui.close();
+                }
+                if ui.button("複製　Ctrl+C").clicked() {
+                    self.copy(false);
+                    ui.close();
+                }
+                if ui.button("貼上　Ctrl+V").clicked() {
+                    self.paste();
+                    ui.close();
+                }
+                if ui.button("刪除　Delete").clicked() {
+                    self.delete();
+                    ui.close();
+                }
+                if ui.button("全選　Ctrl+A").clicked() {
+                    self.ed.select_all();
+                    ui.close();
+                }
+                ui.separator();
+                if ui.button("旋轉　R").clicked() {
+                    self.rotate(1);
+                    ui.close();
+                }
+                if ui.button("左右鏡像　X").clicked() {
+                    self.mirror(false);
+                    ui.close();
+                }
+                if ui.button("上下鏡像　Y").clicked() {
+                    self.mirror(true);
+                    ui.close();
+                }
+                if ui.button("停用／啟用　D").clicked() {
+                    self.toggle_disable();
+                    ui.close();
+                }
+                ui.separator();
+                if ui.button("屬性…　Enter").clicked() {
+                    self.open_props_sel();
+                    ui.close();
+                }
+                if ui.button("尋找元件…　Ctrl+F").clicked() {
+                    self.find = Some((String::new(), 0));
+                    ui.close();
+                }
+            });
+            ui.menu_button("檢視", |ui| {
+                if ui.button("全部顯示　F").clicked() {
+                    self.canvas.fit(&self.ed);
+                    ui.close();
+                }
+                if ui.checkbox(&mut self.lib_open, "元件庫").clicked() {
+                    ui.close();
+                }
+                ui.checkbox(&mut self.canvas.pin_marks, "接腳類型標記");
+                if ui.checkbox(&mut self.dark, "深色主題").changed() {
+                    self.apply_theme(ui.ctx());
+                }
+            });
+            ui.menu_button("元件", |ui| {
+                for t in ["R", "L", "C", "DIODE", "MOSFET", "IGBT", "VDC", "VSIN", "GND", "VP", "IP", "LABEL"] {
+                    if let Some(d) = lib().get(t) {
+                        if ui.button(format!("{}（{}）", d.name, d.zh)).clicked() {
+                            self.start_place(t);
+                            ui.close();
+                        }
+                    }
+                }
+                ui.separator();
+                if ui.button("導線模式　W").clicked() {
+                    self.canvas.mode = Mode::Wire;
+                    ui.close();
+                }
+                if ui.button("快速新增…　/").clicked() {
+                    let c = self.canvas.rect.center();
+                    let w = self.canvas.s2w(c);
+                    self.quick = Some(QuickAdd::new(c, (w.0.round(), w.1.round())));
+                    ui.close();
+                }
+            });
+            ui.menu_button("模擬", |ui| {
+                if ui.add_enabled(self.run.is_none(), egui::Button::new("▶ 執行模擬　F5")).clicked() {
+                    self.run_sim(ui.ctx(), false);
+                    ui.close();
+                }
+                if ui.add_enabled(self.run.is_none(), egui::Button::new("執行暫態模擬（忽略 AC Sweep）")).clicked() {
+                    self.run_sim(ui.ctx(), true);
+                    ui.close();
+                }
+                if ui.add_enabled(self.run.is_some(), egui::Button::new("⏹ 中止")).clicked() {
+                    if let Some(r) = &self.run {
+                        r.cancel.store(true, std::sync::atomic::Ordering::Relaxed);
+                    }
+                    ui.close();
+                }
+                ui.separator();
+                if ui.button("模擬控制…　F7").clicked() {
+                    self.simctrl = Some(SimCtrlDlg::new(&mut self.ed));
+                    ui.close();
+                }
+                if ui.button("AC 掃頻設定…").clicked() {
+                    match self.ed.doc.elements.iter().find(|e| e.typ == "ACSWEEP").map(|e| e.id) {
+                        Some(id) => self.open_props(id),
+                        None => self.start_place("ACSWEEP"),
+                    }
+                    ui.close();
+                }
+                if ui.button("參數檔…").clicked() {
+                    match self.ed.doc.elements.iter().find(|e| e.typ == "PARAMS").map(|e| e.id) {
+                        Some(id) => self.open_props(id),
+                        None => self.start_place("PARAMS"),
+                    }
+                    ui.close();
+                }
+                if ui.button("蒙地卡羅分析設定…").clicked() {
+                    match self.ed.doc.elements.iter().find(|e| e.typ == "MONTECARLO").map(|e| e.id) {
+                        Some(id) => self.open_props(id),
+                        None => self.start_place("MONTECARLO"),
+                    }
+                    ui.close();
+                }
+                if ui.add_enabled(self.mc_view.is_some(), egui::Button::new("蒙地卡羅統計結果")).clicked() {
+                    if let Some(v) = &mut self.mc_view {
+                        v.1 = true;
+                    }
+                    ui.close();
+                }
+                if ui.button("參數掃描設定…").clicked() {
+                    match self.ed.doc.elements.iter().find(|e| e.typ == "PSWEEP").map(|e| e.id) {
+                        Some(id) => self.open_props(id),
+                        None => self.start_place("PSWEEP"),
+                    }
+                    ui.close();
+                }
+                ui.menu_button("硬體加速", |ui| {
+                    let hw = std::thread::available_parallelism().map(|n| n.get()).unwrap_or(4);
+                    ui.weak(format!("CPU：{} 個邏輯處理器", hw));
+                    ui.weak(format!("GPU 繪圖：{}", self.gpu.clone().unwrap_or_else(|| "OpenGL".into())));
+                    ui.separator();
+                    ui.label("AC 掃頻／參數掃描平行執行緒：");
+                    ui.radio_value(&mut self.threads, 0, format!("自動（全部 {} 核心）", hw));
+                    for n in [1usize, 2, 4, 8, 16, 32] {
+                        if n < hw {
+                            ui.radio_value(&mut self.threads, n, format!("{} 執行緒", n));
+                        }
+                    }
+                    ui.separator();
+                    ui.weak("單次暫態模擬是逐步相依的計算，無法拆給多核心或 GPU；\n多核心用於同時計算多個頻率點與多個掃描值。");
+                });
+                ui.separator();
+                if ui.add_enabled(self.wave.res.is_some(), egui::Button::new("波形視窗　F6")).clicked() {
+                    self.wave.open = true;
+                    ui.close();
+                }
+                if ui.add_enabled(self.bode.res.is_some(), egui::Button::new("波德圖視窗")).clicked() {
+                    self.bode.open = true;
+                    ui.close();
+                }
+            });
+            ui.menu_button("說明", |ui| {
+                if ui.button("操作說明與快捷鍵").clicked() {
+                    self.show_help = true;
+                    ui.close();
+                }
+                if ui.button(format!("關於 {}", APP_NAME)).clicked() {
+                    self.show_about = true;
+                    ui.close();
+                }
+            });
+        });
+    }
+    fn toolbar(&mut self, ui: &mut Ui) {
+        use crate::icons::{button, Icon};
+        let pal = *self.pal();
+        ui.horizontal_wrapped(|ui| {
+            ui.spacing_mut().item_spacing.x = 2.0;
+            if button(ui, Icon::New, "", "新增 (Ctrl+N)", true, false, None).clicked() {
+                self.request(Pending::New);
+            }
+            if button(ui, Icon::Open, "", "開啟 (Ctrl+O)", true, false, None).clicked() {
+                self.request(Pending::Open(None));
+            }
+            if button(ui, Icon::Save, "", "儲存 (Ctrl+S)", true, false, None).clicked() {
+                self.save(false);
+            }
+            ui.separator();
+            if button(ui, Icon::Undo, "", "復原 (Ctrl+Z)", self.ed.can_undo(), false, None).clicked() {
+                self.ed.undo();
+            }
+            if button(ui, Icon::Redo, "", "重做 (Ctrl+Y)", self.ed.can_redo(), false, None).clicked() {
+                self.ed.redo();
+            }
+            ui.separator();
+            let has = !self.ed.sel.is_empty() || !matches!(self.canvas.mode, Mode::Select | Mode::Wire);
+            if button(ui, Icon::Rotate, "", "旋轉 (R / 空白鍵)", has, false, None).clicked() {
+                self.rotate(1);
+            }
+            if button(ui, Icon::Mirror, "", "左右鏡像 (X)", has, false, None).clicked() {
+                self.mirror(false);
+            }
+            if button(ui, Icon::Delete, "", "刪除 (Delete)", !self.ed.sel.is_empty(), false, None).clicked() {
+                self.delete();
+            }
+            ui.separator();
+            if button(ui, Icon::Select, "", "選取模式 (Esc)", true, matches!(self.canvas.mode, Mode::Select), None).clicked() {
+                self.canvas.cancel();
+            }
+            if button(ui, Icon::Wire, "導線", "導線模式 (W)；也可直接從接腳拖曳", true, matches!(self.canvas.mode, Mode::Wire), None).clicked() {
+                self.canvas.mode = Mode::Wire;
+                self.canvas.wire_pts.clear();
+            }
+            if button(ui, Icon::Fit, "", "全部顯示 (F)", true, false, None).clicked() {
+                self.canvas.fit(&self.ed);
+            }
+            ui.separator();
+            let running = self.run.is_some();
+            if button(ui, Icon::Run, "執行", "執行模擬 (F5)", !running, false, Some(pal.ok)).clicked() {
+                self.run_sim(ui.ctx(), false);
+            }
+            if button(ui, Icon::Stop, "", "中止模擬", running, false, Some(pal.err)).clicked() {
+                if let Some(r) = &self.run {
+                    r.cancel.store(true, std::sync::atomic::Ordering::Relaxed);
+                }
+            }
+            if button(ui, Icon::Clock, "模擬控制", "模擬控制：時間步長、總時間 (F7)", true, false, None).clicked() {
+                self.simctrl = Some(SimCtrlDlg::new(&mut self.ed));
+            }
+            if button(ui, Icon::Wave, "波形", "開啟上次模擬結果 (F6)", self.wave.res.is_some() || self.bode.res.is_some(), false, None).clicked() {
+                if self.wave.res.is_some() {
+                    self.wave.open = true;
+                }
+                if self.bode.res.is_some() {
+                    self.bode.open = true;
+                }
+            }
+            ui.separator();
+            // frequently used components
+            for t in ["R", "L", "C", "DIODE", "MOSFET", "IGBT", "VDC", "VSIN", "GND", "VP", "IP", "LABEL", "COMP", "GATING", "PI"] {
+                if let Some(d) = lib().get(t) {
+                    let (rect, resp) = ui.allocate_exact_size(vec2(30.0, 26.0), egui::Sense::click());
+                    if resp.hovered() {
+                        ui.painter().rect_filled(rect, 3.0, ui.visuals().widgets.hovered.weak_bg_fill);
+                    }
+                    let ctl = d.cat.starts_with("Elements/Control") || d.cat.ends_with("Switch Controllers");
+                    draw_icon(ui, rect.shrink(2.0), d, &mut self.syms, if ctl { pal.ctl } else { pal.sym });
+                    if resp.on_hover_text(format!("{}（{}）", d.name, d.zh)).clicked() {
+                        self.start_place(t);
+                    }
+                }
+            }
+        });
+    }
+    fn status_bar(&mut self, ui: &mut Ui) {
+        ui.horizontal(|ui| {
+            ui.label(format!("{}{}", self.file_name, if self.ed.dirty { " *" } else { "" }));
+            ui.separator();
+            if let Some((x, y)) = self.canvas.mouse_world {
+                ui.monospace(format!("({:.0}, {:.0})", x.round(), y.round()));
+                ui.separator();
+            }
+            let mut info = format!("{} 元件 · {} 導線", self.ed.doc.elements.len(), self.ed.doc.wires.len());
+            let se = self.ed.selected_els();
+            if self.ed.sel.len() == 1 && se.len() == 1 {
+                if let Some(el) = self.ed.el(se[0]) {
+                    if let Some(d) = lib().get(&el.typ) {
+                        let ps: Vec<String> = d.params.iter().filter(|p| p.typ.as_deref() != Some("code") && d.show.contains(&p.k)).take(3).map(|p| format!("{}={}", p.k, el.params.get(&p.k).cloned().unwrap_or_default())).collect();
+                        info += &format!(" · 已選 {}{}", if el.name.is_empty() { d.name.clone() } else { el.name.clone() }, if ps.is_empty() { String::new() } else { format!("（{}）", ps.join(" ")) });
+                    }
+                }
+            } else if !self.ed.sel.is_empty() {
+                info += &format!(" · 已選 {}", self.ed.sel.len());
+            }
+            ui.label(info);
+            ui.separator();
+            ui.weak(format!("{:.0}%", self.canvas.scale / 20.0 * 100.0));
+            let mode = match self.canvas.mode {
+                Mode::Select => "",
+                Mode::Wire => "導線模式",
+                Mode::Place(_) => "放置元件（Shift 連續放置、R 旋轉、右鍵/Esc 取消）",
+                Mode::Paste(_) => "貼上（左鍵放置、Esc 取消）",
+            };
+            if !mode.is_empty() {
+                ui.separator();
+                ui.colored_label(self.pal().accent, mode);
+            }
+            if let Some((c, t)) = &self.pill {
+                ui.separator();
+                ui.colored_label(*c, t);
+            }
+            if let Some((t, at)) = &self.toast {
+                if at.elapsed().as_secs_f32() < 4.0 {
+                    ui.separator();
+                    ui.label(RichText::new(t).color(self.pal().accent));
+                    ui.ctx().request_repaint_after(std::time::Duration::from_millis(500));
+                }
+            }
+        });
+    }
+    fn messages(&mut self, ui: &mut Ui) {
+        let pal = *self.pal();
+        let mut close = false;
+        let mut focus: Option<Vec<i64>> = None;
+        ui.horizontal(|ui| {
+            ui.strong(&self.msgs_title);
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                if ui.button("✕").on_hover_text("關閉").clicked() {
+                    close = true;
+                }
+            });
+        });
+        egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
+            for m in &self.msgs {
+                let txt = RichText::new(format!("{} {}", if m.err { "✖" } else { "⚠" }, m.text)).color(if m.err { pal.err } else { pal.warn });
+                let r = ui.add(egui::Label::new(txt).wrap().sense(egui::Sense::click()));
+                if !m.els.is_empty() && r.on_hover_text("點選以標示相關元件").clicked() {
+                    focus = Some(m.els.clone());
+                }
+            }
+        });
+        if close {
+            self.msgs.clear();
+            self.canvas.err_els.clear();
+        }
+        if let Some(f) = focus {
+            self.focus_els(&f);
+        }
+    }
+
+    /* ---------------------------------------------------------------- frame */
+    pub fn frame(&mut self, ui: &mut Ui) {
+        let ctx = ui.ctx().clone();
+        let pal = *self.pal();
+        self.poll_run();
+        self.shot_main(&ctx);
+        if self.autorun {
+            self.autorun = false;
+            self.run_sim(&ctx, false);
+        }
+        self.keys(&ctx);
+        ctx.send_viewport_cmd(egui::ViewportCommand::Title(self.title()));
+        // closing with unsaved changes
+        if ctx.input(|i| i.viewport().close_requested()) && !self.allow_close && self.ed.dirty && !self.ed.doc.elements.is_empty() {
+            ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
+            self.pending = Some(Pending::Exit);
+        }
+        if self.allow_close {
+            ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+        }
+        egui::Panel::top("menu").show(ui, |ui| self.menu_bar(ui));
+        egui::Panel::top("toolbar").show(ui, |ui| self.toolbar(ui));
+        egui::Panel::bottom("status").show(ui, |ui| self.status_bar(ui));
+        if !self.msgs.is_empty() {
+            egui::Panel::bottom("msgs").resizable(true).default_size(120.0).min_size(60.0).show(ui, |ui| self.messages(ui));
+        }
+        if self.lib_open {
+            egui::Panel::left("library").resizable(true).default_size(290.0).min_size(200.0).show(ui, |ui| {
+                if let Some(t) = self.lib.ui(ui, &mut self.syms, &pal) {
+                    self.start_place(&t);
+                }
+            });
+        }
+        let mut events = vec![];
+        egui::CentralPanel::no_frame().show(ui, |ui| {
+            self.canvas.ui(ui, &mut self.ed, &mut self.syms, &pal, &mut events);
+            if self.ed.doc.elements.len() <= 1 && self.ed.doc.wires.is_empty() {
+                let r = self.canvas.rect;
+                let wr = egui::Rect::from_center_size(r.center(), vec2(520.0, 230.0));
+                ui.scope_builder(egui::UiBuilder::new().max_rect(wr), |ui| {
+                    egui::Frame::popup(ui.style()).show(ui, |ui| {
+                        ui.heading("開始畫電路");
+                        ui.label("1. 放元件：在空白處雙擊或按 / 輸入名稱；也可以從左側元件庫或上方常用列點選。");
+                        ui.label("2. 接線：從接腳拖曳到另一個接腳；■ 是功率、▶ 是控制訊號，兩者要透過感測器或 On-Off Controller 連接。");
+                        ui.label("3. 改參數：直接點元件旁的 R=10 等文字修改，或雙擊元件開啟完整屬性。");
+                        ui.label("4. 模擬：放一個電壓探棒，按 F5 執行並檢視波形。");
+                        ui.horizontal_wrapped(|ui| {
+                            ui.label("或開啟範例：");
+                            for (i, ex) in EXAMPLES.iter().enumerate().take(4) {
+                                if ui.link(ex.name).clicked() {
+                                    self.request(Pending::Example(i));
+                                }
+                            }
+                        });
+                    });
+                });
+            }
+        });
+        for e in events {
+            match e {
+                CanvasEvent::OpenProps(id) => self.open_props(id),
+                CanvasEvent::QuickAdd(p, at) => self.quick = Some(QuickAdd::new(p, at)),
+                CanvasEvent::Toast(t) => self.toast(t),
+                CanvasEvent::InlineEdit(id, key, pos) => self.inline = InlineEdit::new(&self.ed, id, key, pos),
+                CanvasEvent::ContextMenu => self.ctx_menu = ctx.input(|i| i.pointer.hover_pos()),
+            }
+        }
+        self.context_menu(&ctx);
+        self.dialogs(&ctx);
+        self.viewers(&ctx, &pal);
+    }
+
+    fn context_menu(&mut self, ctx: &egui::Context) {
+        let pos = match self.ctx_menu {
+            Some(p) => p,
+            None => return,
+        };
+        let mut close = false;
+        let resp = egui::Area::new(egui::Id::new("ctxmenu")).fixed_pos(pos).order(egui::Order::Foreground).show(ctx, |ui| {
+            egui::Frame::menu(ui.style()).show(ui, |ui| {
+                ui.set_min_width(170.0);
+                let has = !self.ed.sel.is_empty();
+                let one = self.ed.selected_els().len() == 1;
+                if ui.add_enabled(one, egui::Button::new("屬性…")).clicked() {
+                    self.open_props_sel();
+                    close = true;
+                }
+                ui.separator();
+                for (t, f) in [("旋轉　R", 0), ("左右鏡像　X", 1), ("上下鏡像　Y", 2), ("停用／啟用　D", 3)] {
+                    if ui.add_enabled(has, egui::Button::new(t)).clicked() {
+                        match f {
+                            0 => self.rotate(1),
+                            1 => self.mirror(false),
+                            2 => self.mirror(true),
+                            _ => self.toggle_disable(),
+                        }
+                        close = true;
+                    }
+                }
+                ui.separator();
+                if ui.add_enabled(has, egui::Button::new("剪下")).clicked() {
+                    self.copy(true);
+                    close = true;
+                }
+                if ui.add_enabled(has, egui::Button::new("複製")).clicked() {
+                    self.copy(false);
+                    close = true;
+                }
+                if ui.add_enabled(self.ed.clip.is_some(), egui::Button::new("貼上")).clicked() {
+                    self.paste();
+                    close = true;
+                }
+                if ui.add_enabled(has, egui::Button::new("刪除")).clicked() {
+                    self.delete();
+                    close = true;
+                }
+            });
+        });
+        if close || (ctx.input(|i| i.pointer.any_pressed()) && !resp.response.hovered() && !ctx.input(|i| i.pointer.secondary_pressed())) || ctx.input(|i| i.key_pressed(Key::Escape)) {
+            self.ctx_menu = None;
+        }
+    }
+
+    fn dialogs(&mut self, ctx: &egui::Context) {
+        if let Some(d) = &mut self.props {
+            match d.ui(ctx, &mut self.ed) {
+                DlgResult::Keep => {}
+                _ => self.props = None,
+            }
+        }
+        if let Some(d) = &mut self.simctrl {
+            if !d.ui(ctx, &mut self.ed) {
+                self.simctrl = None;
+            }
+        }
+        if let Some(q) = &mut self.quick {
+            match q.ui(ctx) {
+                QaResult::Keep => {}
+                QaResult::Close => self.quick = None,
+                QaResult::Place(t, at) => {
+                    self.quick = None;
+                    self.place_now(&t, at);
+                }
+            }
+        }
+        if let Some(ie) = &mut self.inline {
+            if !ie.ui(ctx, &mut self.ed) {
+                self.inline = None;
+            }
+        }
+        if let Some((q, idx)) = self.find.clone() {
+            let mut keep = true;
+            let mut q2 = q.clone();
+            let mut idx2 = idx;
+            egui::Window::new("尋找元件").collapsible(false).resizable(false).default_pos(ctx.content_rect().right_top() + vec2(-360.0, 90.0)).show(ctx, |ui| {
+                ui.horizontal(|ui| {
+                    let r = ui.add(egui::TextEdit::singleline(&mut q2).hint_text("名稱、型別或參數值").desired_width(200.0));
+                    if q.is_empty() && !r.has_focus() {
+                        r.request_focus();
+                    }
+                    let hits = self.find_run(&q2);
+                    ui.label(format!("{} 個", hits.len()));
+                    let mut go = r.changed() && !hits.is_empty();
+                    if r.changed() {
+                        idx2 = 0;
+                    }
+                    if ui.button("▲").clicked() && !hits.is_empty() {
+                        idx2 = (idx2 + hits.len() - 1) % hits.len();
+                        go = true;
+                    }
+                    if (ui.button("▼").clicked() || ui.input(|i| i.key_pressed(Key::Enter))) && !hits.is_empty() {
+                        idx2 = (idx2 + 1) % hits.len();
+                        go = true;
+                    }
+                    if ui.button("✕").clicked() || ui.input(|i| i.key_pressed(Key::Escape)) {
+                        keep = false;
+                    }
+                    self.canvas.find_hits = hits.clone();
+                    if go {
+                        if let Some(&id) = hits.get(idx2) {
+                            self.focus_els(&[id]);
+                        }
+                    }
+                });
+            });
+            if keep {
+                self.find = Some((q2, idx2));
+            } else {
+                self.find = None;
+                self.canvas.find_hits.clear();
+            }
+        }
+        if let Some(r) = &self.run {
+            let (p, at, start, is_ac, title, info, sweep_n, acc) = (r.prog, r.at, r.start, r.is_ac, r.title.clone(), r.info.clone(), r.sweep_n, r.acc);
+            let mut cancel = false;
+            egui::Modal::new(egui::Id::new("progress")).show(ctx, |ui| {
+                ui.set_width(420.0);
+                ui.heading(format!("{}中…", title));
+                ui.add(egui::ProgressBar::new(p as f32).show_percentage());
+                let el = start.elapsed().as_secs_f64();
+                ui.horizontal(|ui| {
+                    ui.monospace(if is_ac {
+                        format!("f = {}", crate::plot::si(at, "Hz", 4))
+                    } else if sweep_n > 0 {
+                        format!("已完成 {} / {} 次", at as usize, sweep_n)
+                    } else if acc {
+                        format!("細分層級 dt/{}", 1u64 << (at as u32).min(30))
+                    } else {
+                        format!("t = {}", crate::plot::si(at, "s", 4))
+                    });
+                    ui.separator();
+                    ui.monospace(if p > 0.005 { format!("剩餘約 {}", fmt_dur(el * (1.0 - p) / p)) } else { format!("已執行 {}", fmt_dur(el)) });
+                });
+                ui.weak(info);
+                if ui.button("中止").clicked() {
+                    cancel = true;
+                }
+            });
+            if cancel {
+                r.cancel.store(true, std::sync::atomic::Ordering::Relaxed);
+            }
+            ctx.request_repaint_after(std::time::Duration::from_millis(100));
+        }
+        if let Some(p) = self.pending.take() {
+            let mut choice: Option<u8> = None;
+            egui::Modal::new(egui::Id::new("unsaved")).show(ctx, |ui| {
+                ui.heading("尚未儲存");
+                ui.label(format!("「{}」有尚未儲存的變更，要先儲存嗎？", self.file_name));
+                ui.horizontal(|ui| {
+                    if ui.button("儲存").clicked() {
+                        choice = Some(0);
+                    }
+                    if ui.button("不儲存").clicked() {
+                        choice = Some(1);
+                    }
+                    if ui.button("取消").clicked() {
+                        choice = Some(2);
+                    }
+                });
+            });
+            match choice {
+                None => self.pending = Some(p),
+                Some(0) => {
+                    if self.save(false) {
+                        self.do_pending(p);
+                    }
+                }
+                Some(1) => self.do_pending(p),
+                _ => {}
+            }
+        }
+        if self.show_help {
+            egui::Window::new("操作說明與快捷鍵").open(&mut self.show_help).default_width(620.0).show(ctx, help_ui);
+        }
+        self.mc_window(ctx);
+        if self.show_about {
+            let icon = self.icon.clone();
+            let gpu = self.gpu.clone().unwrap_or_else(|| "OpenGL".into());
+            egui::Window::new(format!("關於 {}", APP_NAME)).open(&mut self.show_about).collapsible(false).resizable(false).show(ctx, |ui| {
+                ui.horizontal(|ui| {
+                    if let Some(t) = &icon {
+                        ui.image((t.id(), vec2(96.0, 96.0)));
+                    }
+                    ui.vertical(|ui| {
+                        ui.heading(APP_NAME);
+                        ui.label(APP_TITLE_ZH);
+                        ui.monospace(format!("版本 {}", daedalus_core::VERSION));
+                        ui.label("原始設計：Johnny.ch.Tsai");
+                    });
+                });
+                ui.separator();
+                ui.label("取名自代達洛斯（Daedalus）：為伊卡洛斯打造雙翼的工匠。");
+                ui.label("模擬核心：改良節點分析（MNA）、梯形積分＋切換後後向尤拉阻尼、切換瞬間內插與割線修正、截斷誤差自動細分、SPICE 等級半導體模型（牛頓法 + pnjlim）、控制方塊排程（含代數迴路求解）。以 Rust 實作。");
+                ui.separator();
+                let hw = std::thread::available_parallelism().map(|n| n.get()).unwrap_or(4);
+                ui.label(format!("硬體加速：繪圖使用 GPU（{}）；AC 掃頻與參數掃描以 {} 個 CPU 核心平行運算。", gpu, hw));
+                ui.separator();
+                ui.label("Copyright (C) 2026 Johnny.ch.Tsai");
+                ui.label("本程式為自由軟體，依 GNU 通用公共授權條款第 3 版（GPL-3.0）發布：您可以再散布或修改它，但不提供任何擔保。授權全文見安裝資料夾中的 LICENSE 檔。");
+            });
+        }
+    }
+
+    fn viewers(&mut self, ctx: &egui::Context, pal: &Pal) {
+        if self.shot.is_some() && self.shot_stage < 2 {
+            return;
+        }
+        let icon = Arc::new(crate::app_icon());
+        if self.wave.open {
+            let title = format!("波形檢視器 — {}", self.wave.title);
+            let wave = &mut self.wave;
+            ctx.show_viewport_immediate(egui::ViewportId::from_hash_of("wave"), egui::ViewportBuilder::default().with_title(title).with_inner_size([1200.0, 760.0]).with_icon(icon.clone()), |ui, _class| {
+                egui::CentralPanel::default().show(ui, |ui| wave.ui(ui, pal));
+                if ui.input(|i| i.viewport().close_requested()) {
+                    wave.open = false;
+                }
+            });
+        }
+        if self.bode.open {
+            let title = format!("波德圖 — {}", self.bode.title);
+            let bode = &mut self.bode;
+            ctx.show_viewport_immediate(egui::ViewportId::from_hash_of("bode"), egui::ViewportBuilder::default().with_title(title).with_inner_size([1100.0, 760.0]).with_icon(icon), |ui, _class| {
+                egui::CentralPanel::default().show(ui, |ui| bode.ui(ui, pal));
+                if ui.input(|i| i.viewport().close_requested()) {
+                    bode.open = false;
+                }
+            });
+        }
+    }
+    /// development aid: --shot <prefix> saves screenshots of the main window (and result windows) and exits
+    fn shot_main(&mut self, ctx: &egui::Context) {
+        let prefix = match &self.shot {
+            Some(p) => p.clone(),
+            None => return,
+        };
+        ctx.request_repaint();
+        let n = SHOTS.load(std::sync::atomic::Ordering::SeqCst);
+        match self.shot_stage {
+            0 => {
+                self.shot_frame += 1;
+                if self.shot_frame > 25 && self.run.is_none() && !self.autorun {
+                    request_shot(ctx, format!("{}_main.png", prefix));
+                    self.shot_stage = 1;
+                }
+            }
+            1 => {
+                if n >= 1 {
+                    self.shot_stage = 2;
+                    self.shot_frame = 0;
+                    if !self.wave.open && !self.bode.open {
+                        self.shot_stage = 4;
+                    }
+                }
+            }
+            2 => {
+                self.shot_frame += 1;
+                if self.shot_frame > 25 {
+                    request_shot(ctx, format!("{}_result.png", prefix));
+                    self.shot_stage = 3;
+                }
+            }
+            3 => {
+                if n >= 2 {
+                    self.shot_stage = 4;
+                }
+            }
+            _ => {
+                self.allow_close = true;
+                ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+            }
+        }
+    }
+}
+
+impl eframe::App for App {
+    fn ui(&mut self, ui: &mut Ui, frame: &mut eframe::Frame) {
+        if self.gpu.is_none() {
+            use eframe::glow::HasContext;
+            self.gpu = Some(match frame.gl() {
+                Some(gl) => {
+                    let (r, v) = unsafe { (gl.get_parameter_string(eframe::glow::RENDERER), gl.get_parameter_string(eframe::glow::VERSION)) };
+                    let v = v.split_whitespace().next().unwrap_or("").to_string();
+                    format!("OpenGL {} — {}", v, r)
+                }
+                None => "OpenGL".into(),
+            });
+        }
+        self.frame(ui);
+    }
+    fn save(&mut self, storage: &mut dyn eframe::Storage) {
+        storage.set_string("dark", if self.dark { "1".into() } else { "0".into() });
+        storage.set_string("pin_marks", if self.canvas.pin_marks { "1".into() } else { "0".into() });
+        storage.set_string("threads", self.threads.to_string());
+        let r: Vec<String> = self.recent.iter().map(|p| p.display().to_string()).collect();
+        storage.set_string("recent", serde_json::to_string(&r).unwrap_or_default());
+    }
+}
+
+#[allow(dead_code)]
+fn _unused(_: &AcResult, _: &TranResult) {}
+
+static SHOTS: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+/// request a screenshot of the current viewport, saved as PNG to the given path
+fn request_shot(ctx: &egui::Context, path: String) {
+    let c = ctx.clone();
+    ctx.send_viewport_cmd(egui::ViewportCommand::Screenshot(egui::ScreenshotCallback::new(move |im| {
+        let [w, h] = im.size;
+        let mut buf = Vec::with_capacity(w * h * 4);
+        for p in &im.pixels {
+            buf.extend_from_slice(&p.to_array());
+        }
+        if let Some(rgba) = image::RgbaImage::from_raw(w as u32, h as u32, buf) {
+            let _ = rgba.save(&path);
+        }
+        SHOTS.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        c.request_repaint();
+    })));
+}

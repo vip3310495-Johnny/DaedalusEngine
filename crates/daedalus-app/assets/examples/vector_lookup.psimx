@@ -1,0 +1,2655 @@
+{
+ "app": "psimweb",
+ "version": "V1.1.0",
+ "doc": {
+  "elements": [
+   {
+    "id": 1,
+    "type": "TEXT",
+    "x": -20,
+    "y": -8,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "陣列 [2 4 6 8] 讀位址 2 → 6；摺積 [1 2 3] ⊗ [4 5] = [4 13 22 15]；環形緩衝區（長度 4、1 kHz）寫入斜坡 u = 1000·t；\n堆疊（深度 4）：0.1 ms + k·1 ms 推入斜坡值、2 ms + k·4 ms 取出（滿時擠掉最底層；輸出 = 頂端值）；\n2／4／8 輸入多工器（選擇線 400／200／100 Hz）；一維查表 (0,0)(1,10)(2,15)(3,17)（三角波 −0.5 ~ 3.5 輸入、端點箝位）；\n梯形波查表（θ = 30°、峰值 2）與方波查表（脈寬 120°）以 −360° ~ 360° 鋸齒角度驅動；取樣保持（1 kHz 上升緣）。"
+    }
+   },
+   {
+    "id": 2,
+    "type": "SIMCTRL",
+    "x": -20,
+    "y": -4,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "dt": "10u",
+     "tt": "20m",
+     "tp": "0",
+     "ps": "1",
+     "lte": "1",
+     "ltetol": "1e-3",
+     "interp": "1",
+     "damp": "1",
+     "acc": "0",
+     "etol": "1e-6",
+     "maxlv": "8"
+    }
+   },
+   {
+    "id": 3,
+    "type": "VSIN",
+    "x": -13,
+    "y": 14,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Ux",
+    "params": {
+     "Vm": "0.4",
+     "f": "100",
+     "ph": "0",
+     "off": "0.5",
+     "ts": "0"
+    }
+   },
+   {
+    "id": 5,
+    "type": "LABEL",
+    "x": -13,
+    "y": 10,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "x"
+    }
+   },
+   {
+    "id": 7,
+    "type": "GND",
+    "x": -13,
+    "y": 18,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 8,
+    "type": "VSIN",
+    "x": 1,
+    "y": 14,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Ud",
+    "params": {
+     "Vm": "80",
+     "f": "100",
+     "ph": "0",
+     "off": "0",
+     "ts": "0"
+    }
+   },
+   {
+    "id": 10,
+    "type": "LABEL",
+    "x": 1,
+    "y": 10,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "dg"
+    }
+   },
+   {
+    "id": 12,
+    "type": "GND",
+    "x": 1,
+    "y": 18,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 13,
+    "type": "VPWL2",
+    "x": 15,
+    "y": 14,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Ur",
+    "params": {
+     "f": "0",
+     "pairs": "(0,0) (20m,20)"
+    }
+   },
+   {
+    "id": 15,
+    "type": "LABEL",
+    "x": 15,
+    "y": 10,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "ramp"
+    }
+   },
+   {
+    "id": 17,
+    "type": "GND",
+    "x": 15,
+    "y": 18,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 18,
+    "type": "ARRAY",
+    "x": 29,
+    "y": 13,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Ar",
+    "params": {
+     "L": "4",
+     "vals": "2 4 6 8"
+    }
+   },
+   {
+    "id": 20,
+    "type": "LABEL",
+    "x": 33,
+    "y": 13,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "arr"
+    }
+   },
+   {
+    "id": 21,
+    "type": "MEMREAD",
+    "x": -12,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Mr",
+    "params": {
+     "off": "2"
+    }
+   },
+   {
+    "id": 23,
+    "type": "LABEL",
+    "x": -16,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "arr"
+    }
+   },
+   {
+    "id": 25,
+    "type": "LABEL",
+    "x": -8,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_arr"
+    }
+   },
+   {
+    "id": 26,
+    "type": "VP",
+    "x": 3,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_array2",
+    "params": {}
+   },
+   {
+    "id": 28,
+    "type": "LABEL",
+    "x": 3,
+    "y": 31,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_arr"
+    }
+   },
+   {
+    "id": 29,
+    "type": "ARRAY",
+    "x": 17,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Aa",
+    "params": {
+     "L": "3",
+     "vals": "1 2 3"
+    }
+   },
+   {
+    "id": 31,
+    "type": "LABEL",
+    "x": 21,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "va"
+    }
+   },
+   {
+    "id": 32,
+    "type": "ARRAY",
+    "x": 33,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Ab",
+    "params": {
+     "L": "2",
+     "vals": "4 5"
+    }
+   },
+   {
+    "id": 34,
+    "type": "LABEL",
+    "x": 37,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "vb"
+    }
+   },
+   {
+    "id": 35,
+    "type": "CONV",
+    "x": -12,
+    "y": 40,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Cv",
+    "params": {}
+   },
+   {
+    "id": 37,
+    "type": "LABEL",
+    "x": -16,
+    "y": 40,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "va"
+    }
+   },
+   {
+    "id": 39,
+    "type": "LABEL",
+    "x": -12,
+    "y": 44,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "vb"
+    }
+   },
+   {
+    "id": 41,
+    "type": "LABEL",
+    "x": -8,
+    "y": 40,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "cv"
+    }
+   },
+   {
+    "id": 42,
+    "type": "MEMREAD",
+    "x": 4,
+    "y": 40,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Mc1",
+    "params": {
+     "off": "1"
+    }
+   },
+   {
+    "id": 44,
+    "type": "LABEL",
+    "x": 0,
+    "y": 40,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "cv"
+    }
+   },
+   {
+    "id": 46,
+    "type": "LABEL",
+    "x": 8,
+    "y": 40,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_c1"
+    }
+   },
+   {
+    "id": 47,
+    "type": "VP",
+    "x": 19,
+    "y": 40,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_conv1",
+    "params": {}
+   },
+   {
+    "id": 49,
+    "type": "LABEL",
+    "x": 19,
+    "y": 44,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_c1"
+    }
+   },
+   {
+    "id": 50,
+    "type": "MEMREAD",
+    "x": 34,
+    "y": 40,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Mc3",
+    "params": {
+     "off": "3"
+    }
+   },
+   {
+    "id": 52,
+    "type": "LABEL",
+    "x": 30,
+    "y": 40,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "cv"
+    }
+   },
+   {
+    "id": 54,
+    "type": "LABEL",
+    "x": 38,
+    "y": 40,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_c3"
+    }
+   },
+   {
+    "id": 55,
+    "type": "VP",
+    "x": -13,
+    "y": 53,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_conv3",
+    "params": {}
+   },
+   {
+    "id": 57,
+    "type": "LABEL",
+    "x": -13,
+    "y": 57,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_c3"
+    }
+   },
+   {
+    "id": 58,
+    "type": "CBUF",
+    "x": 2,
+    "y": 53,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Cb",
+    "params": {
+     "L": "4",
+     "fs": "1k"
+    }
+   },
+   {
+    "id": 60,
+    "type": "LABEL",
+    "x": -2,
+    "y": 53,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "ramp"
+    }
+   },
+   {
+    "id": 62,
+    "type": "LABEL",
+    "x": 6,
+    "y": 53,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "cb"
+    }
+   },
+   {
+    "id": 63,
+    "type": "MEMREAD",
+    "x": 18,
+    "y": 53,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Mb1",
+    "params": {
+     "off": "1"
+    }
+   },
+   {
+    "id": 65,
+    "type": "LABEL",
+    "x": 14,
+    "y": 53,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "cb"
+    }
+   },
+   {
+    "id": 67,
+    "type": "LABEL",
+    "x": 22,
+    "y": 53,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_b1"
+    }
+   },
+   {
+    "id": 68,
+    "type": "VP",
+    "x": 33,
+    "y": 53,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_cbuf1",
+    "params": {}
+   },
+   {
+    "id": 70,
+    "type": "LABEL",
+    "x": 33,
+    "y": 57,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_b1"
+    }
+   },
+   {
+    "id": 71,
+    "type": "MEMREAD",
+    "x": -12,
+    "y": 66,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Mb3",
+    "params": {
+     "off": "3"
+    }
+   },
+   {
+    "id": 73,
+    "type": "LABEL",
+    "x": -16,
+    "y": 66,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "cb"
+    }
+   },
+   {
+    "id": 75,
+    "type": "LABEL",
+    "x": -8,
+    "y": 66,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_b3"
+    }
+   },
+   {
+    "id": 76,
+    "type": "VP",
+    "x": 3,
+    "y": 65,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_cbuf3",
+    "params": {}
+   },
+   {
+    "id": 78,
+    "type": "LABEL",
+    "x": 3,
+    "y": 69,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_b3"
+    }
+   },
+   {
+    "id": 79,
+    "type": "VSQU",
+    "x": 17,
+    "y": 67,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Upush",
+    "params": {
+     "Vpp": "1",
+     "f": "1k",
+     "D": "0.5",
+     "off": "0",
+     "ph": "36"
+    }
+   },
+   {
+    "id": 81,
+    "type": "LABEL",
+    "x": 17,
+    "y": 63,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "push"
+    }
+   },
+   {
+    "id": 83,
+    "type": "GND",
+    "x": 17,
+    "y": 71,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 84,
+    "type": "VSQU",
+    "x": 31,
+    "y": 67,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Upop",
+    "params": {
+     "Vpp": "1",
+     "f": "250",
+     "D": "0.5",
+     "off": "0",
+     "ph": "180"
+    }
+   },
+   {
+    "id": 86,
+    "type": "LABEL",
+    "x": 31,
+    "y": 63,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "pop"
+    }
+   },
+   {
+    "id": 88,
+    "type": "GND",
+    "x": 31,
+    "y": 71,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 89,
+    "type": "STACK",
+    "x": -11,
+    "y": 81,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Sk",
+    "params": {
+     "depth": "4"
+    }
+   },
+   {
+    "id": 91,
+    "type": "LABEL",
+    "x": -16,
+    "y": 80,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "ramp"
+    }
+   },
+   {
+    "id": 93,
+    "type": "LABEL",
+    "x": -16,
+    "y": 81,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "push"
+    }
+   },
+   {
+    "id": 95,
+    "type": "LABEL",
+    "x": -16,
+    "y": 82,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "pop"
+    }
+   },
+   {
+    "id": 97,
+    "type": "LABEL",
+    "x": -6,
+    "y": 81,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_stk"
+    }
+   },
+   {
+    "id": 98,
+    "type": "VP",
+    "x": 5,
+    "y": 79,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_stack",
+    "params": {}
+   },
+   {
+    "id": 100,
+    "type": "LABEL",
+    "x": 5,
+    "y": 83,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_stk"
+    }
+   },
+   {
+    "id": 101,
+    "type": "VSQU",
+    "x": 19,
+    "y": 81,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Us0",
+    "params": {
+     "Vpp": "1",
+     "f": "400",
+     "D": "0.5",
+     "off": "0",
+     "ph": "180"
+    }
+   },
+   {
+    "id": 103,
+    "type": "LABEL",
+    "x": 19,
+    "y": 77,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "s0"
+    }
+   },
+   {
+    "id": 105,
+    "type": "GND",
+    "x": 19,
+    "y": 85,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 106,
+    "type": "VSQU",
+    "x": 33,
+    "y": 81,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Us1",
+    "params": {
+     "Vpp": "1",
+     "f": "200",
+     "D": "0.5",
+     "off": "0",
+     "ph": "180"
+    }
+   },
+   {
+    "id": 108,
+    "type": "LABEL",
+    "x": 33,
+    "y": 77,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "s1"
+    }
+   },
+   {
+    "id": 110,
+    "type": "GND",
+    "x": 33,
+    "y": 85,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 111,
+    "type": "VSQU",
+    "x": -13,
+    "y": 95,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Us2",
+    "params": {
+     "Vpp": "1",
+     "f": "100",
+     "D": "0.5",
+     "off": "0",
+     "ph": "180"
+    }
+   },
+   {
+    "id": 113,
+    "type": "LABEL",
+    "x": -13,
+    "y": 91,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "s2"
+    }
+   },
+   {
+    "id": 115,
+    "type": "GND",
+    "x": -13,
+    "y": 99,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 116,
+    "type": "CONST",
+    "x": 1,
+    "y": 94,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "K0",
+    "params": {
+     "v": "10"
+    }
+   },
+   {
+    "id": 118,
+    "type": "LABEL",
+    "x": 5,
+    "y": 94,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "d0"
+    }
+   },
+   {
+    "id": 119,
+    "type": "CONST",
+    "x": 17,
+    "y": 94,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "K1",
+    "params": {
+     "v": "20"
+    }
+   },
+   {
+    "id": 121,
+    "type": "LABEL",
+    "x": 21,
+    "y": 94,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "d1"
+    }
+   },
+   {
+    "id": 122,
+    "type": "CONST",
+    "x": 32,
+    "y": 94,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "K2",
+    "params": {
+     "v": "30"
+    }
+   },
+   {
+    "id": 124,
+    "type": "LABEL",
+    "x": 36,
+    "y": 94,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "d2"
+    }
+   },
+   {
+    "id": 125,
+    "type": "CONST",
+    "x": -13,
+    "y": 108,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "K3",
+    "params": {
+     "v": "40"
+    }
+   },
+   {
+    "id": 127,
+    "type": "LABEL",
+    "x": -9,
+    "y": 108,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "d3"
+    }
+   },
+   {
+    "id": 128,
+    "type": "CONST",
+    "x": 3,
+    "y": 108,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "K4",
+    "params": {
+     "v": "50"
+    }
+   },
+   {
+    "id": 130,
+    "type": "LABEL",
+    "x": 7,
+    "y": 108,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "d4"
+    }
+   },
+   {
+    "id": 131,
+    "type": "CONST",
+    "x": 18,
+    "y": 108,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "K5",
+    "params": {
+     "v": "60"
+    }
+   },
+   {
+    "id": 133,
+    "type": "LABEL",
+    "x": 22,
+    "y": 108,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "d5"
+    }
+   },
+   {
+    "id": 134,
+    "type": "CONST",
+    "x": 34,
+    "y": 108,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "K6",
+    "params": {
+     "v": "70"
+    }
+   },
+   {
+    "id": 136,
+    "type": "LABEL",
+    "x": 38,
+    "y": 108,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "d6"
+    }
+   },
+   {
+    "id": 137,
+    "type": "CONST",
+    "x": -13,
+    "y": 120,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "K7",
+    "params": {
+     "v": "80"
+    }
+   },
+   {
+    "id": 139,
+    "type": "LABEL",
+    "x": -9,
+    "y": 120,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "d7"
+    }
+   },
+   {
+    "id": 140,
+    "type": "MUX2",
+    "x": 3,
+    "y": 120,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "X2",
+    "params": {}
+   },
+   {
+    "id": 142,
+    "type": "LABEL",
+    "x": -1,
+    "y": 119,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "x"
+    }
+   },
+   {
+    "id": 144,
+    "type": "LABEL",
+    "x": -1,
+    "y": 120,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "dg"
+    }
+   },
+   {
+    "id": 146,
+    "type": "LABEL",
+    "x": 3,
+    "y": 124,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "s0"
+    }
+   },
+   {
+    "id": 148,
+    "type": "LABEL",
+    "x": 7,
+    "y": 120,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_m2"
+    }
+   },
+   {
+    "id": 149,
+    "type": "VP",
+    "x": 18,
+    "y": 119,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_mux2",
+    "params": {}
+   },
+   {
+    "id": 151,
+    "type": "LABEL",
+    "x": 18,
+    "y": 123,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_m2"
+    }
+   },
+   {
+    "id": 152,
+    "type": "MUX4",
+    "x": 33,
+    "y": 121,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "X4",
+    "params": {}
+   },
+   {
+    "id": 154,
+    "type": "LABEL",
+    "x": 29,
+    "y": 119,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "d0"
+    }
+   },
+   {
+    "id": 156,
+    "type": "LABEL",
+    "x": 29,
+    "y": 120,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "d1"
+    }
+   },
+   {
+    "id": 158,
+    "type": "LABEL",
+    "x": 29,
+    "y": 121,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "d2"
+    }
+   },
+   {
+    "id": 160,
+    "type": "LABEL",
+    "x": 29,
+    "y": 122,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "d3"
+    }
+   },
+   {
+    "id": 162,
+    "type": "LABEL",
+    "x": 34,
+    "y": 126,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "s0"
+    }
+   },
+   {
+    "id": 164,
+    "type": "LABEL",
+    "x": 32,
+    "y": 126,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "s1"
+    }
+   },
+   {
+    "id": 166,
+    "type": "LABEL",
+    "x": 37,
+    "y": 121,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_m4"
+    }
+   },
+   {
+    "id": 167,
+    "type": "VP",
+    "x": -13,
+    "y": 135,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_mux4",
+    "params": {}
+   },
+   {
+    "id": 169,
+    "type": "LABEL",
+    "x": -13,
+    "y": 139,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_m4"
+    }
+   },
+   {
+    "id": 170,
+    "type": "MUX8",
+    "x": 2,
+    "y": 139,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "X8",
+    "params": {}
+   },
+   {
+    "id": 172,
+    "type": "LABEL",
+    "x": -2,
+    "y": 135,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "d0"
+    }
+   },
+   {
+    "id": 174,
+    "type": "LABEL",
+    "x": -2,
+    "y": 136,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "d1"
+    }
+   },
+   {
+    "id": 176,
+    "type": "LABEL",
+    "x": -2,
+    "y": 137,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "d2"
+    }
+   },
+   {
+    "id": 178,
+    "type": "LABEL",
+    "x": -2,
+    "y": 138,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "d3"
+    }
+   },
+   {
+    "id": 180,
+    "type": "LABEL",
+    "x": -2,
+    "y": 139,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "d4"
+    }
+   },
+   {
+    "id": 182,
+    "type": "LABEL",
+    "x": -2,
+    "y": 140,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "d5"
+    }
+   },
+   {
+    "id": 184,
+    "type": "LABEL",
+    "x": -2,
+    "y": 141,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "d6"
+    }
+   },
+   {
+    "id": 186,
+    "type": "LABEL",
+    "x": -2,
+    "y": 142,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "d7"
+    }
+   },
+   {
+    "id": 188,
+    "type": "LABEL",
+    "x": 6,
+    "y": 144,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "s0"
+    }
+   },
+   {
+    "id": 190,
+    "type": "LABEL",
+    "x": 2,
+    "y": 146,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "s1"
+    }
+   },
+   {
+    "id": 192,
+    "type": "LABEL",
+    "x": -2,
+    "y": 144,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "s2"
+    }
+   },
+   {
+    "id": 194,
+    "type": "LABEL",
+    "x": 6,
+    "y": 139,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_m8"
+    }
+   },
+   {
+    "id": 195,
+    "type": "VP",
+    "x": 17,
+    "y": 135,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_mux8",
+    "params": {}
+   },
+   {
+    "id": 197,
+    "type": "LABEL",
+    "x": 17,
+    "y": 139,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_m8"
+    }
+   },
+   {
+    "id": 198,
+    "type": "VTRI",
+    "x": 31,
+    "y": 136,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Ut",
+    "params": {
+     "Vpp": "4",
+     "f": "100",
+     "D": "0.5",
+     "off": "-0.5",
+     "ph": "0"
+    }
+   },
+   {
+    "id": 200,
+    "type": "LABEL",
+    "x": 31,
+    "y": 132,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "tri"
+    }
+   },
+   {
+    "id": 202,
+    "type": "GND",
+    "x": 31,
+    "y": 140,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 203,
+    "type": "LKUP",
+    "x": -12,
+    "y": 155,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Lk",
+    "params": {
+     "tab": "0 0 1 10 2 15 3 17"
+    }
+   },
+   {
+    "id": 205,
+    "type": "LABEL",
+    "x": -16,
+    "y": 155,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "tri"
+    }
+   },
+   {
+    "id": 207,
+    "type": "LABEL",
+    "x": -8,
+    "y": 155,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_lk"
+    }
+   },
+   {
+    "id": 208,
+    "type": "VP",
+    "x": 3,
+    "y": 155,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_lkup",
+    "params": {}
+   },
+   {
+    "id": 210,
+    "type": "LABEL",
+    "x": 3,
+    "y": 159,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_lk"
+    }
+   },
+   {
+    "id": 211,
+    "type": "VSAW",
+    "x": 17,
+    "y": 156,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Ua",
+    "params": {
+     "Vpk": "720",
+     "f": "50",
+     "off": "-360",
+     "ph": "0"
+    }
+   },
+   {
+    "id": 213,
+    "type": "LABEL",
+    "x": 17,
+    "y": 152,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "ang"
+    }
+   },
+   {
+    "id": 215,
+    "type": "GND",
+    "x": 17,
+    "y": 160,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 216,
+    "type": "LKUPTZ",
+    "x": 32,
+    "y": 155,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Lt",
+    "params": {
+     "th": "30",
+     "vpk": "2"
+    }
+   },
+   {
+    "id": 218,
+    "type": "LABEL",
+    "x": 28,
+    "y": 155,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "ang"
+    }
+   },
+   {
+    "id": 220,
+    "type": "LABEL",
+    "x": 36,
+    "y": 155,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_tz"
+    }
+   },
+   {
+    "id": 221,
+    "type": "VP",
+    "x": -13,
+    "y": 169,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_trap",
+    "params": {}
+   },
+   {
+    "id": 223,
+    "type": "LABEL",
+    "x": -13,
+    "y": 173,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_tz"
+    }
+   },
+   {
+    "id": 224,
+    "type": "LKUPSQ",
+    "x": 2,
+    "y": 169,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Ls",
+    "params": {
+     "th": "120"
+    }
+   },
+   {
+    "id": 226,
+    "type": "LABEL",
+    "x": -2,
+    "y": 169,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "ang"
+    }
+   },
+   {
+    "id": 228,
+    "type": "LABEL",
+    "x": 6,
+    "y": 169,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_sq"
+    }
+   },
+   {
+    "id": 229,
+    "type": "VP",
+    "x": 17,
+    "y": 169,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_sqtab",
+    "params": {}
+   },
+   {
+    "id": 231,
+    "type": "LABEL",
+    "x": 17,
+    "y": 173,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_sq"
+    }
+   },
+   {
+    "id": 232,
+    "type": "VSQU",
+    "x": 31,
+    "y": 170,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Usmp",
+    "params": {
+     "Vpp": "1",
+     "f": "1k",
+     "D": "0.5",
+     "off": "0",
+     "ph": "180"
+    }
+   },
+   {
+    "id": 234,
+    "type": "LABEL",
+    "x": 31,
+    "y": 166,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "smp"
+    }
+   },
+   {
+    "id": 236,
+    "type": "GND",
+    "x": 31,
+    "y": 174,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 237,
+    "type": "SAMP",
+    "x": -12,
+    "y": 183,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Sh",
+    "params": {}
+   },
+   {
+    "id": 239,
+    "type": "LABEL",
+    "x": -16,
+    "y": 183,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "x"
+    }
+   },
+   {
+    "id": 241,
+    "type": "LABEL",
+    "x": -12,
+    "y": 187,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "smp"
+    }
+   },
+   {
+    "id": 243,
+    "type": "LABEL",
+    "x": -8,
+    "y": 183,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_sh"
+    }
+   },
+   {
+    "id": 244,
+    "type": "VP",
+    "x": 3,
+    "y": 183,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_samp",
+    "params": {}
+   },
+   {
+    "id": 246,
+    "type": "LABEL",
+    "x": 3,
+    "y": 187,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o_sh"
+    }
+   }
+  ],
+  "wires": [
+   {
+    "id": 4,
+    "x1": -13,
+    "y1": 12,
+    "x2": -13,
+    "y2": 10
+   },
+   {
+    "id": 6,
+    "x1": -13,
+    "y1": 16,
+    "x2": -13,
+    "y2": 18
+   },
+   {
+    "id": 9,
+    "x1": 1,
+    "y1": 12,
+    "x2": 1,
+    "y2": 10
+   },
+   {
+    "id": 11,
+    "x1": 1,
+    "y1": 16,
+    "x2": 1,
+    "y2": 18
+   },
+   {
+    "id": 14,
+    "x1": 15,
+    "y1": 12,
+    "x2": 15,
+    "y2": 10
+   },
+   {
+    "id": 16,
+    "x1": 15,
+    "y1": 16,
+    "x2": 15,
+    "y2": 18
+   },
+   {
+    "id": 19,
+    "x1": 31,
+    "y1": 13,
+    "x2": 33,
+    "y2": 13
+   },
+   {
+    "id": 22,
+    "x1": -14,
+    "y1": 27,
+    "x2": -16,
+    "y2": 27
+   },
+   {
+    "id": 24,
+    "x1": -10,
+    "y1": 27,
+    "x2": -8,
+    "y2": 27
+   },
+   {
+    "id": 27,
+    "x1": 3,
+    "y1": 29,
+    "x2": 3,
+    "y2": 31
+   },
+   {
+    "id": 30,
+    "x1": 19,
+    "y1": 27,
+    "x2": 21,
+    "y2": 27
+   },
+   {
+    "id": 33,
+    "x1": 35,
+    "y1": 27,
+    "x2": 37,
+    "y2": 27
+   },
+   {
+    "id": 36,
+    "x1": -14,
+    "y1": 40,
+    "x2": -16,
+    "y2": 40
+   },
+   {
+    "id": 38,
+    "x1": -12,
+    "y1": 42,
+    "x2": -12,
+    "y2": 44
+   },
+   {
+    "id": 40,
+    "x1": -10,
+    "y1": 40,
+    "x2": -8,
+    "y2": 40
+   },
+   {
+    "id": 43,
+    "x1": 2,
+    "y1": 40,
+    "x2": 0,
+    "y2": 40
+   },
+   {
+    "id": 45,
+    "x1": 6,
+    "y1": 40,
+    "x2": 8,
+    "y2": 40
+   },
+   {
+    "id": 48,
+    "x1": 19,
+    "y1": 42,
+    "x2": 19,
+    "y2": 44
+   },
+   {
+    "id": 51,
+    "x1": 32,
+    "y1": 40,
+    "x2": 30,
+    "y2": 40
+   },
+   {
+    "id": 53,
+    "x1": 36,
+    "y1": 40,
+    "x2": 38,
+    "y2": 40
+   },
+   {
+    "id": 56,
+    "x1": -13,
+    "y1": 55,
+    "x2": -13,
+    "y2": 57
+   },
+   {
+    "id": 59,
+    "x1": 0,
+    "y1": 53,
+    "x2": -2,
+    "y2": 53
+   },
+   {
+    "id": 61,
+    "x1": 4,
+    "y1": 53,
+    "x2": 6,
+    "y2": 53
+   },
+   {
+    "id": 64,
+    "x1": 16,
+    "y1": 53,
+    "x2": 14,
+    "y2": 53
+   },
+   {
+    "id": 66,
+    "x1": 20,
+    "y1": 53,
+    "x2": 22,
+    "y2": 53
+   },
+   {
+    "id": 69,
+    "x1": 33,
+    "y1": 55,
+    "x2": 33,
+    "y2": 57
+   },
+   {
+    "id": 72,
+    "x1": -14,
+    "y1": 66,
+    "x2": -16,
+    "y2": 66
+   },
+   {
+    "id": 74,
+    "x1": -10,
+    "y1": 66,
+    "x2": -8,
+    "y2": 66
+   },
+   {
+    "id": 77,
+    "x1": 3,
+    "y1": 67,
+    "x2": 3,
+    "y2": 69
+   },
+   {
+    "id": 80,
+    "x1": 17,
+    "y1": 65,
+    "x2": 17,
+    "y2": 63
+   },
+   {
+    "id": 82,
+    "x1": 17,
+    "y1": 69,
+    "x2": 17,
+    "y2": 71
+   },
+   {
+    "id": 85,
+    "x1": 31,
+    "y1": 65,
+    "x2": 31,
+    "y2": 63
+   },
+   {
+    "id": 87,
+    "x1": 31,
+    "y1": 69,
+    "x2": 31,
+    "y2": 71
+   },
+   {
+    "id": 90,
+    "x1": -14,
+    "y1": 80,
+    "x2": -16,
+    "y2": 80
+   },
+   {
+    "id": 92,
+    "x1": -14,
+    "y1": 81,
+    "x2": -16,
+    "y2": 81
+   },
+   {
+    "id": 94,
+    "x1": -14,
+    "y1": 82,
+    "x2": -16,
+    "y2": 82
+   },
+   {
+    "id": 96,
+    "x1": -8,
+    "y1": 81,
+    "x2": -6,
+    "y2": 81
+   },
+   {
+    "id": 99,
+    "x1": 5,
+    "y1": 81,
+    "x2": 5,
+    "y2": 83
+   },
+   {
+    "id": 102,
+    "x1": 19,
+    "y1": 79,
+    "x2": 19,
+    "y2": 77
+   },
+   {
+    "id": 104,
+    "x1": 19,
+    "y1": 83,
+    "x2": 19,
+    "y2": 85
+   },
+   {
+    "id": 107,
+    "x1": 33,
+    "y1": 79,
+    "x2": 33,
+    "y2": 77
+   },
+   {
+    "id": 109,
+    "x1": 33,
+    "y1": 83,
+    "x2": 33,
+    "y2": 85
+   },
+   {
+    "id": 112,
+    "x1": -13,
+    "y1": 93,
+    "x2": -13,
+    "y2": 91
+   },
+   {
+    "id": 114,
+    "x1": -13,
+    "y1": 97,
+    "x2": -13,
+    "y2": 99
+   },
+   {
+    "id": 117,
+    "x1": 3,
+    "y1": 94,
+    "x2": 5,
+    "y2": 94
+   },
+   {
+    "id": 120,
+    "x1": 19,
+    "y1": 94,
+    "x2": 21,
+    "y2": 94
+   },
+   {
+    "id": 123,
+    "x1": 34,
+    "y1": 94,
+    "x2": 36,
+    "y2": 94
+   },
+   {
+    "id": 126,
+    "x1": -11,
+    "y1": 108,
+    "x2": -9,
+    "y2": 108
+   },
+   {
+    "id": 129,
+    "x1": 5,
+    "y1": 108,
+    "x2": 7,
+    "y2": 108
+   },
+   {
+    "id": 132,
+    "x1": 20,
+    "y1": 108,
+    "x2": 22,
+    "y2": 108
+   },
+   {
+    "id": 135,
+    "x1": 36,
+    "y1": 108,
+    "x2": 38,
+    "y2": 108
+   },
+   {
+    "id": 138,
+    "x1": -11,
+    "y1": 120,
+    "x2": -9,
+    "y2": 120
+   },
+   {
+    "id": 141,
+    "x1": 1,
+    "y1": 119,
+    "x2": -1,
+    "y2": 119
+   },
+   {
+    "id": 143,
+    "x1": 1,
+    "y1": 120,
+    "x2": -1,
+    "y2": 120
+   },
+   {
+    "id": 145,
+    "x1": 3,
+    "y1": 122,
+    "x2": 3,
+    "y2": 124
+   },
+   {
+    "id": 147,
+    "x1": 5,
+    "y1": 120,
+    "x2": 7,
+    "y2": 120
+   },
+   {
+    "id": 150,
+    "x1": 18,
+    "y1": 121,
+    "x2": 18,
+    "y2": 123
+   },
+   {
+    "id": 153,
+    "x1": 31,
+    "y1": 119,
+    "x2": 29,
+    "y2": 119
+   },
+   {
+    "id": 155,
+    "x1": 31,
+    "y1": 120,
+    "x2": 29,
+    "y2": 120
+   },
+   {
+    "id": 157,
+    "x1": 31,
+    "y1": 121,
+    "x2": 29,
+    "y2": 121
+   },
+   {
+    "id": 159,
+    "x1": 31,
+    "y1": 122,
+    "x2": 29,
+    "y2": 122
+   },
+   {
+    "id": 161,
+    "x1": 34,
+    "y1": 124,
+    "x2": 34,
+    "y2": 126
+   },
+   {
+    "id": 163,
+    "x1": 32,
+    "y1": 124,
+    "x2": 32,
+    "y2": 126
+   },
+   {
+    "id": 165,
+    "x1": 35,
+    "y1": 121,
+    "x2": 37,
+    "y2": 121
+   },
+   {
+    "id": 168,
+    "x1": -13,
+    "y1": 137,
+    "x2": -13,
+    "y2": 139
+   },
+   {
+    "id": 171,
+    "x1": 0,
+    "y1": 135,
+    "x2": -2,
+    "y2": 135
+   },
+   {
+    "id": 173,
+    "x1": 0,
+    "y1": 136,
+    "x2": -2,
+    "y2": 136
+   },
+   {
+    "id": 175,
+    "x1": 0,
+    "y1": 137,
+    "x2": -2,
+    "y2": 137
+   },
+   {
+    "id": 177,
+    "x1": 0,
+    "y1": 138,
+    "x2": -2,
+    "y2": 138
+   },
+   {
+    "id": 179,
+    "x1": 0,
+    "y1": 139,
+    "x2": -2,
+    "y2": 139
+   },
+   {
+    "id": 181,
+    "x1": 0,
+    "y1": 140,
+    "x2": -2,
+    "y2": 140
+   },
+   {
+    "id": 183,
+    "x1": 0,
+    "y1": 141,
+    "x2": -2,
+    "y2": 141
+   },
+   {
+    "id": 185,
+    "x1": 0,
+    "y1": 142,
+    "x2": -2,
+    "y2": 142
+   },
+   {
+    "id": 187,
+    "x1": 4,
+    "y1": 144,
+    "x2": 6,
+    "y2": 144
+   },
+   {
+    "id": 189,
+    "x1": 2,
+    "y1": 144,
+    "x2": 2,
+    "y2": 146
+   },
+   {
+    "id": 191,
+    "x1": 0,
+    "y1": 144,
+    "x2": -2,
+    "y2": 144
+   },
+   {
+    "id": 193,
+    "x1": 4,
+    "y1": 139,
+    "x2": 6,
+    "y2": 139
+   },
+   {
+    "id": 196,
+    "x1": 17,
+    "y1": 137,
+    "x2": 17,
+    "y2": 139
+   },
+   {
+    "id": 199,
+    "x1": 31,
+    "y1": 134,
+    "x2": 31,
+    "y2": 132
+   },
+   {
+    "id": 201,
+    "x1": 31,
+    "y1": 138,
+    "x2": 31,
+    "y2": 140
+   },
+   {
+    "id": 204,
+    "x1": -14,
+    "y1": 155,
+    "x2": -16,
+    "y2": 155
+   },
+   {
+    "id": 206,
+    "x1": -10,
+    "y1": 155,
+    "x2": -8,
+    "y2": 155
+   },
+   {
+    "id": 209,
+    "x1": 3,
+    "y1": 157,
+    "x2": 3,
+    "y2": 159
+   },
+   {
+    "id": 212,
+    "x1": 17,
+    "y1": 154,
+    "x2": 17,
+    "y2": 152
+   },
+   {
+    "id": 214,
+    "x1": 17,
+    "y1": 158,
+    "x2": 17,
+    "y2": 160
+   },
+   {
+    "id": 217,
+    "x1": 30,
+    "y1": 155,
+    "x2": 28,
+    "y2": 155
+   },
+   {
+    "id": 219,
+    "x1": 34,
+    "y1": 155,
+    "x2": 36,
+    "y2": 155
+   },
+   {
+    "id": 222,
+    "x1": -13,
+    "y1": 171,
+    "x2": -13,
+    "y2": 173
+   },
+   {
+    "id": 225,
+    "x1": 0,
+    "y1": 169,
+    "x2": -2,
+    "y2": 169
+   },
+   {
+    "id": 227,
+    "x1": 4,
+    "y1": 169,
+    "x2": 6,
+    "y2": 169
+   },
+   {
+    "id": 230,
+    "x1": 17,
+    "y1": 171,
+    "x2": 17,
+    "y2": 173
+   },
+   {
+    "id": 233,
+    "x1": 31,
+    "y1": 168,
+    "x2": 31,
+    "y2": 166
+   },
+   {
+    "id": 235,
+    "x1": 31,
+    "y1": 172,
+    "x2": 31,
+    "y2": 174
+   },
+   {
+    "id": 238,
+    "x1": -14,
+    "y1": 183,
+    "x2": -16,
+    "y2": 183
+   },
+   {
+    "id": 240,
+    "x1": -12,
+    "y1": 185,
+    "x2": -12,
+    "y2": 187
+   },
+   {
+    "id": 242,
+    "x1": -10,
+    "y1": 183,
+    "x2": -8,
+    "y2": 183
+   },
+   {
+    "id": 245,
+    "x1": 3,
+    "y1": 185,
+    "x2": 3,
+    "y2": 187
+   }
+  ],
+  "nid": 247
+ },
+ "screens": [
+  [
+   "Y_array2",
+   "Y_conv1",
+   "Y_conv3"
+  ],
+  [
+   "Y_cbuf1",
+   "Y_cbuf3"
+  ],
+  [
+   "Y_stack"
+  ],
+  [
+   "Y_mux2"
+  ],
+  [
+   "Y_mux4",
+   "Y_mux8"
+  ],
+  [
+   "Y_lkup"
+  ],
+  [
+   "Y_trap",
+   "Y_sqtab"
+  ],
+  [
+   "Y_samp"
+  ]
+ ]
+}

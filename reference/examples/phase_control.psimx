@@ -1,0 +1,1303 @@
+{
+ "app": "psimweb",
+ "version": "V1.1.0",
+ "doc": {
+  "elements": [
+   {
+    "id": 1,
+    "type": "TEXT",
+    "x": -20,
+    "y": -8,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "單相相控（311 V 峰值、50 Hz、電阻負載）：\n閘流體全橋 α = 60°（觸發角控制器）：Vdc = (Vm/π)(1 + cos α) = 148.5 V；\nTRIAC α = 90°：Vrms = (Vm/√2)·√(1 − α/π + sin2α/2π) = 155.5 V；SCR 半波 α = 30°：Vavg = Vm(1 + cos α)/2π = 92.4 V；\nDIAC（30 V 轉折、5 V 導通）串 1.1 kΩ：|v| 超過 30 V 時導通，電流 = (v − 5)/1.1k。"
+    }
+   },
+   {
+    "id": 2,
+    "type": "SIMCTRL",
+    "x": -20,
+    "y": -4,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "dt": "5u",
+     "tt": "0.1",
+     "tp": "0",
+     "ps": "1",
+     "lte": "1",
+     "ltetol": "1e-3",
+     "interp": "1",
+     "damp": "1",
+     "acc": "0",
+     "etol": "1e-6",
+     "maxlv": "8"
+    }
+   },
+   {
+    "id": 3,
+    "type": "VSIN",
+    "x": -13,
+    "y": 14,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vac1",
+    "params": {
+     "Vm": "311",
+     "f": "50",
+     "ph": "0",
+     "off": "0",
+     "ts": "0"
+    }
+   },
+   {
+    "id": 5,
+    "type": "LABEL",
+    "x": -13,
+    "y": 10,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "ac1"
+    }
+   },
+   {
+    "id": 7,
+    "type": "GND",
+    "x": -13,
+    "y": 18,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 8,
+    "type": "BTHY1",
+    "x": 3,
+    "y": 14,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Bt",
+    "params": {
+     "vf": "0"
+    }
+   },
+   {
+    "id": 10,
+    "type": "LABEL",
+    "x": -2,
+    "y": 13,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "ac1"
+    }
+   },
+   {
+    "id": 12,
+    "type": "GND",
+    "x": -2,
+    "y": 15,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 14,
+    "type": "LABEL",
+    "x": 8,
+    "y": 13,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "d1"
+    }
+   },
+   {
+    "id": 16,
+    "type": "LABEL",
+    "x": 8,
+    "y": 15,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "d1n"
+    }
+   },
+   {
+    "id": 18,
+    "type": "LABEL",
+    "x": 3,
+    "y": 19,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "g1"
+    }
+   },
+   {
+    "id": 19,
+    "type": "R",
+    "x": 20,
+    "y": 13,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Rl1",
+    "params": {
+     "R": "10"
+    }
+   },
+   {
+    "id": 21,
+    "type": "LABEL",
+    "x": 16,
+    "y": 13,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "d1"
+    }
+   },
+   {
+    "id": 23,
+    "type": "LABEL",
+    "x": 24,
+    "y": 13,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "d1n"
+    }
+   },
+   {
+    "id": 24,
+    "type": "VP2",
+    "x": 35,
+    "y": 14,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vbridge",
+    "params": {}
+   },
+   {
+    "id": 26,
+    "type": "LABEL",
+    "x": 35,
+    "y": 10,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "d1"
+    }
+   },
+   {
+    "id": 28,
+    "type": "LABEL",
+    "x": 35,
+    "y": 18,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "d1n"
+    }
+   },
+   {
+    "id": 29,
+    "type": "ACTRL",
+    "x": -11,
+    "y": 29,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Act",
+    "params": {
+     "f": "50",
+     "pw": "90"
+    }
+   },
+   {
+    "id": 31,
+    "type": "LABEL",
+    "x": -16,
+    "y": 28,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "al1"
+    }
+   },
+   {
+    "id": 33,
+    "type": "LABEL",
+    "x": -16,
+    "y": 29,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "sy"
+    }
+   },
+   {
+    "id": 35,
+    "type": "LABEL",
+    "x": -16,
+    "y": 30,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "en"
+    }
+   },
+   {
+    "id": 37,
+    "type": "LABEL",
+    "x": -6,
+    "y": 29,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "g1"
+    }
+   },
+   {
+    "id": 38,
+    "type": "CONST",
+    "x": 5,
+    "y": 28,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Alpha",
+    "params": {
+     "v": "60"
+    }
+   },
+   {
+    "id": 40,
+    "type": "LABEL",
+    "x": 9,
+    "y": 28,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "al1"
+    }
+   },
+   {
+    "id": 41,
+    "type": "CONST",
+    "x": 21,
+    "y": 28,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Enable",
+    "params": {
+     "v": "1"
+    }
+   },
+   {
+    "id": 43,
+    "type": "LABEL",
+    "x": 25,
+    "y": 28,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "en"
+    }
+   },
+   {
+    "id": 44,
+    "type": "VSQU",
+    "x": 36,
+    "y": 29,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Sync",
+    "params": {
+     "Vpp": "1",
+     "f": "50",
+     "D": "0.5",
+     "off": "0",
+     "ph": "0"
+    }
+   },
+   {
+    "id": 46,
+    "type": "LABEL",
+    "x": 36,
+    "y": 25,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "sy"
+    }
+   },
+   {
+    "id": 48,
+    "type": "GND",
+    "x": 36,
+    "y": 33,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 49,
+    "type": "VSIN",
+    "x": -13,
+    "y": 43,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vac2",
+    "params": {
+     "Vm": "311",
+     "f": "50",
+     "ph": "0",
+     "off": "0",
+     "ts": "0"
+    }
+   },
+   {
+    "id": 51,
+    "type": "LABEL",
+    "x": -13,
+    "y": 39,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "ac2"
+    }
+   },
+   {
+    "id": 53,
+    "type": "GND",
+    "x": -13,
+    "y": 47,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 54,
+    "type": "TRIAC",
+    "x": 2,
+    "y": 42,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Tr",
+    "params": {
+     "vf": "0"
+    }
+   },
+   {
+    "id": 56,
+    "type": "LABEL",
+    "x": -2,
+    "y": 42,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "ac2"
+    }
+   },
+   {
+    "id": 58,
+    "type": "LABEL",
+    "x": 6,
+    "y": 42,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "t2"
+    }
+   },
+   {
+    "id": 60,
+    "type": "LABEL",
+    "x": 3,
+    "y": 46,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "gt"
+    }
+   },
+   {
+    "id": 61,
+    "type": "R",
+    "x": 18,
+    "y": 42,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Rl2",
+    "params": {
+     "R": "10"
+    }
+   },
+   {
+    "id": 63,
+    "type": "LABEL",
+    "x": 14,
+    "y": 42,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "t2"
+    }
+   },
+   {
+    "id": 65,
+    "type": "GND",
+    "x": 22,
+    "y": 42,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 66,
+    "type": "VP",
+    "x": 33,
+    "y": 42,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vtriac",
+    "params": {}
+   },
+   {
+    "id": 68,
+    "type": "LABEL",
+    "x": 33,
+    "y": 46,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "t2"
+    }
+   },
+   {
+    "id": 69,
+    "type": "GATING",
+    "x": -13,
+    "y": 56,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Gt",
+    "params": {
+     "f": "50",
+     "n": "4",
+     "pts": "90 180 270 360"
+    }
+   },
+   {
+    "id": 71,
+    "type": "LABEL",
+    "x": -9,
+    "y": 56,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "gt"
+    }
+   },
+   {
+    "id": 72,
+    "type": "VSIN",
+    "x": 2,
+    "y": 57,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vac3",
+    "params": {
+     "Vm": "311",
+     "f": "50",
+     "ph": "0",
+     "off": "0",
+     "ts": "0"
+    }
+   },
+   {
+    "id": 74,
+    "type": "LABEL",
+    "x": 2,
+    "y": 53,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "ac3"
+    }
+   },
+   {
+    "id": 76,
+    "type": "GND",
+    "x": 2,
+    "y": 61,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 77,
+    "type": "THY",
+    "x": 17,
+    "y": 56,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Scr",
+    "params": {
+     "vf": "0",
+     "ih": "0",
+     "il": "0",
+     "init": "0"
+    }
+   },
+   {
+    "id": 79,
+    "type": "LABEL",
+    "x": 13,
+    "y": 56,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "ac3"
+    }
+   },
+   {
+    "id": 81,
+    "type": "LABEL",
+    "x": 21,
+    "y": 56,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "k3"
+    }
+   },
+   {
+    "id": 83,
+    "type": "LABEL",
+    "x": 18,
+    "y": 60,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "gs"
+    }
+   },
+   {
+    "id": 84,
+    "type": "R",
+    "x": 33,
+    "y": 56,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Rl3",
+    "params": {
+     "R": "10"
+    }
+   },
+   {
+    "id": 86,
+    "type": "LABEL",
+    "x": 29,
+    "y": 56,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "k3"
+    }
+   },
+   {
+    "id": 88,
+    "type": "GND",
+    "x": 37,
+    "y": 56,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 89,
+    "type": "VP",
+    "x": -13,
+    "y": 70,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vscr",
+    "params": {}
+   },
+   {
+    "id": 91,
+    "type": "LABEL",
+    "x": -13,
+    "y": 74,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "k3"
+    }
+   },
+   {
+    "id": 92,
+    "type": "GATING",
+    "x": 1,
+    "y": 70,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Gs",
+    "params": {
+     "f": "50",
+     "n": "2",
+     "pts": "30 90"
+    }
+   },
+   {
+    "id": 94,
+    "type": "LABEL",
+    "x": 5,
+    "y": 70,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "gs"
+    }
+   },
+   {
+    "id": 95,
+    "type": "VSIN",
+    "x": 16,
+    "y": 71,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vac4",
+    "params": {
+     "Vm": "100",
+     "f": "50",
+     "ph": "0",
+     "off": "0",
+     "ts": "0"
+    }
+   },
+   {
+    "id": 97,
+    "type": "LABEL",
+    "x": 16,
+    "y": 67,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "ac4"
+    }
+   },
+   {
+    "id": 99,
+    "type": "GND",
+    "x": 16,
+    "y": 75,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 100,
+    "type": "R",
+    "x": 31,
+    "y": 70,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Rd1",
+    "params": {
+     "R": "1k"
+    }
+   },
+   {
+    "id": 102,
+    "type": "LABEL",
+    "x": 27,
+    "y": 70,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "ac4"
+    }
+   },
+   {
+    "id": 104,
+    "type": "LABEL",
+    "x": 35,
+    "y": 70,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "d4"
+    }
+   },
+   {
+    "id": 105,
+    "type": "DIAC",
+    "x": -12,
+    "y": 84,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Dc",
+    "params": {
+     "vbo": "30",
+     "vbb": "5"
+    }
+   },
+   {
+    "id": 107,
+    "type": "LABEL",
+    "x": -16,
+    "y": 84,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "d4"
+    }
+   },
+   {
+    "id": 109,
+    "type": "LABEL",
+    "x": -8,
+    "y": 84,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "d5"
+    }
+   },
+   {
+    "id": 110,
+    "type": "IP",
+    "x": 4,
+    "y": 84,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Idiac",
+    "params": {}
+   },
+   {
+    "id": 112,
+    "type": "LABEL",
+    "x": 0,
+    "y": 84,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "d5"
+    }
+   },
+   {
+    "id": 114,
+    "type": "LABEL",
+    "x": 8,
+    "y": 84,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "d6"
+    }
+   },
+   {
+    "id": 115,
+    "type": "R",
+    "x": 20,
+    "y": 84,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Rd2",
+    "params": {
+     "R": "100"
+    }
+   },
+   {
+    "id": 117,
+    "type": "LABEL",
+    "x": 16,
+    "y": 84,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "d6"
+    }
+   },
+   {
+    "id": 119,
+    "type": "GND",
+    "x": 24,
+    "y": 84,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   }
+  ],
+  "wires": [
+   {
+    "id": 4,
+    "x1": -13,
+    "y1": 12,
+    "x2": -13,
+    "y2": 10
+   },
+   {
+    "id": 6,
+    "x1": -13,
+    "y1": 16,
+    "x2": -13,
+    "y2": 18
+   },
+   {
+    "id": 9,
+    "x1": 0,
+    "y1": 13,
+    "x2": -2,
+    "y2": 13
+   },
+   {
+    "id": 11,
+    "x1": 0,
+    "y1": 15,
+    "x2": -2,
+    "y2": 15
+   },
+   {
+    "id": 13,
+    "x1": 6,
+    "y1": 13,
+    "x2": 8,
+    "y2": 13
+   },
+   {
+    "id": 15,
+    "x1": 6,
+    "y1": 15,
+    "x2": 8,
+    "y2": 15
+   },
+   {
+    "id": 17,
+    "x1": 3,
+    "y1": 17,
+    "x2": 3,
+    "y2": 19
+   },
+   {
+    "id": 20,
+    "x1": 18,
+    "y1": 13,
+    "x2": 16,
+    "y2": 13
+   },
+   {
+    "id": 22,
+    "x1": 22,
+    "y1": 13,
+    "x2": 24,
+    "y2": 13
+   },
+   {
+    "id": 25,
+    "x1": 35,
+    "y1": 12,
+    "x2": 35,
+    "y2": 10
+   },
+   {
+    "id": 27,
+    "x1": 35,
+    "y1": 16,
+    "x2": 35,
+    "y2": 18
+   },
+   {
+    "id": 30,
+    "x1": -14,
+    "y1": 28,
+    "x2": -16,
+    "y2": 28
+   },
+   {
+    "id": 32,
+    "x1": -14,
+    "y1": 29,
+    "x2": -16,
+    "y2": 29
+   },
+   {
+    "id": 34,
+    "x1": -14,
+    "y1": 30,
+    "x2": -16,
+    "y2": 30
+   },
+   {
+    "id": 36,
+    "x1": -8,
+    "y1": 29,
+    "x2": -6,
+    "y2": 29
+   },
+   {
+    "id": 39,
+    "x1": 7,
+    "y1": 28,
+    "x2": 9,
+    "y2": 28
+   },
+   {
+    "id": 42,
+    "x1": 23,
+    "y1": 28,
+    "x2": 25,
+    "y2": 28
+   },
+   {
+    "id": 45,
+    "x1": 36,
+    "y1": 27,
+    "x2": 36,
+    "y2": 25
+   },
+   {
+    "id": 47,
+    "x1": 36,
+    "y1": 31,
+    "x2": 36,
+    "y2": 33
+   },
+   {
+    "id": 50,
+    "x1": -13,
+    "y1": 41,
+    "x2": -13,
+    "y2": 39
+   },
+   {
+    "id": 52,
+    "x1": -13,
+    "y1": 45,
+    "x2": -13,
+    "y2": 47
+   },
+   {
+    "id": 55,
+    "x1": 0,
+    "y1": 42,
+    "x2": -2,
+    "y2": 42
+   },
+   {
+    "id": 57,
+    "x1": 4,
+    "y1": 42,
+    "x2": 6,
+    "y2": 42
+   },
+   {
+    "id": 59,
+    "x1": 3,
+    "y1": 44,
+    "x2": 3,
+    "y2": 46
+   },
+   {
+    "id": 62,
+    "x1": 16,
+    "y1": 42,
+    "x2": 14,
+    "y2": 42
+   },
+   {
+    "id": 64,
+    "x1": 20,
+    "y1": 42,
+    "x2": 22,
+    "y2": 42
+   },
+   {
+    "id": 67,
+    "x1": 33,
+    "y1": 44,
+    "x2": 33,
+    "y2": 46
+   },
+   {
+    "id": 70,
+    "x1": -11,
+    "y1": 56,
+    "x2": -9,
+    "y2": 56
+   },
+   {
+    "id": 73,
+    "x1": 2,
+    "y1": 55,
+    "x2": 2,
+    "y2": 53
+   },
+   {
+    "id": 75,
+    "x1": 2,
+    "y1": 59,
+    "x2": 2,
+    "y2": 61
+   },
+   {
+    "id": 78,
+    "x1": 15,
+    "y1": 56,
+    "x2": 13,
+    "y2": 56
+   },
+   {
+    "id": 80,
+    "x1": 19,
+    "y1": 56,
+    "x2": 21,
+    "y2": 56
+   },
+   {
+    "id": 82,
+    "x1": 18,
+    "y1": 58,
+    "x2": 18,
+    "y2": 60
+   },
+   {
+    "id": 85,
+    "x1": 31,
+    "y1": 56,
+    "x2": 29,
+    "y2": 56
+   },
+   {
+    "id": 87,
+    "x1": 35,
+    "y1": 56,
+    "x2": 37,
+    "y2": 56
+   },
+   {
+    "id": 90,
+    "x1": -13,
+    "y1": 72,
+    "x2": -13,
+    "y2": 74
+   },
+   {
+    "id": 93,
+    "x1": 3,
+    "y1": 70,
+    "x2": 5,
+    "y2": 70
+   },
+   {
+    "id": 96,
+    "x1": 16,
+    "y1": 69,
+    "x2": 16,
+    "y2": 67
+   },
+   {
+    "id": 98,
+    "x1": 16,
+    "y1": 73,
+    "x2": 16,
+    "y2": 75
+   },
+   {
+    "id": 101,
+    "x1": 29,
+    "y1": 70,
+    "x2": 27,
+    "y2": 70
+   },
+   {
+    "id": 103,
+    "x1": 33,
+    "y1": 70,
+    "x2": 35,
+    "y2": 70
+   },
+   {
+    "id": 106,
+    "x1": -14,
+    "y1": 84,
+    "x2": -16,
+    "y2": 84
+   },
+   {
+    "id": 108,
+    "x1": -10,
+    "y1": 84,
+    "x2": -8,
+    "y2": 84
+   },
+   {
+    "id": 111,
+    "x1": 2,
+    "y1": 84,
+    "x2": 0,
+    "y2": 84
+   },
+   {
+    "id": 113,
+    "x1": 6,
+    "y1": 84,
+    "x2": 8,
+    "y2": 84
+   },
+   {
+    "id": 116,
+    "x1": 18,
+    "y1": 84,
+    "x2": 16,
+    "y2": 84
+   },
+   {
+    "id": 118,
+    "x1": 22,
+    "y1": 84,
+    "x2": 24,
+    "y2": 84
+   }
+  ],
+  "nid": 120
+ },
+ "screens": [
+  [
+   "Vbridge"
+  ],
+  [
+   "Vtriac"
+  ],
+  [
+   "Vscr"
+  ],
+  [
+   "Idiac"
+  ]
+ ]
+}

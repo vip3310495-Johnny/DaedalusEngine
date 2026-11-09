@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <!-- E 二極體之翼：電力電子最基本的二極體符號，三角形做成羽翼 -->
+  <defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3442C0"/><stop offset="1" stop-color="#1C2475"/></linearGradient></defs>
+  <rect x="8" y="8" width="240" height="240" rx="56" fill="url(#bg)"/>
+  <path d="M36 128 H82 M172 128 H220" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round"/>
+  <path d="M86 72 L162 128 L86 184 Q104 168 90 156 Q110 142 92 128 Q110 114 90 100 Q104 88 86 72 Z" fill="#FFFFFF"/>
+  <path d="M166 74 V182" stroke="#FFFFFF" stroke-width="13" stroke-linecap="round"/>
+  <circle cx="200" cy="66" r="16" fill="#FFC23D"/>
+</svg>

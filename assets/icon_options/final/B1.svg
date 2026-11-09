@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <!-- DaedalusEngine：代達洛斯打造的羽翼，下方為功率開關的 PWM 波形 -->
+  <defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3442C0"/><stop offset="1" stop-color="#1C2475"/></linearGradient></defs>
+  <rect x="8" y="8" width="240" height="240" rx="56" fill="url(#bg)"/>
+  <path transform="translate(52 168) rotate(-60)" d="M0 -15 L112 -12.6 Q160 0 112 12.6 L0 15 A15 15 0 0 1 0 -15 Z" fill="#FFFFFF" opacity="1"/>
+  <path transform="translate(52 168) rotate(-42)" d="M0 -15 L100 -12.6 Q148 0 100 12.6 L0 15 A15 15 0 0 1 0 -15 Z" fill="#FFFFFF" opacity="0.86"/>
+  <path transform="translate(52 168) rotate(-24)" d="M0 -15 L84 -12.6 Q132 0 84 12.6 L0 15 A15 15 0 0 1 0 -15 Z" fill="#FFFFFF" opacity="0.72"/>
+  <path transform="translate(52 168) rotate(-6)" d="M0 -15 L64 -12.6 Q112 0 64 12.6 L0 15 A15 15 0 0 1 0 -15 Z" fill="#FFFFFF" opacity="0.58"/>
+  <path d="M40 212 H64 V192 H96 V212 H116 V192 H160 V212 H182 V192 H214" fill="none" stroke="#FFC23D" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

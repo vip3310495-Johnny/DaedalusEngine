@@ -1,0 +1,357 @@
+{
+ "app": "psimweb",
+ "version": "V3.2.1",
+ "doc": {
+  "elements": [
+   {
+    "id": 1,
+    "type": "VDC",
+    "x": 0,
+    "y": 6,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vin",
+    "params": {
+     "V": "100"
+    }
+   },
+   {
+    "id": 2,
+    "type": "GND",
+    "x": 0,
+    "y": 8,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 3,
+    "type": "MOSFET",
+    "x": 6,
+    "y": 4,
+    "rot": 3,
+    "mir": false,
+    "dis": false,
+    "name": "Q1",
+    "params": {
+     "ron": "10u",
+     "vd": "0",
+     "init": "0",
+     "roff": "1M"
+    }
+   },
+   {
+    "id": 5,
+    "type": "DIODE",
+    "x": 10,
+    "y": 6,
+    "rot": 3,
+    "mir": false,
+    "dis": false,
+    "name": "D1",
+    "params": {
+     "vf": "0",
+     "init": "0",
+     "ron": "10u",
+     "roff": "1M",
+     "model": "ideal",
+     "vfd": "0.85",
+     "ifd": "5",
+     "rd": "20m",
+     "trr": "0",
+     "qrr": "0",
+     "irr": "0",
+     "cjd": "0",
+     "vcj": "0",
+     "bvd": "0",
+     "spice": ""
+    }
+   },
+   {
+    "id": 7,
+    "type": "L",
+    "x": 13,
+    "y": 4,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "L1",
+    "params": {
+     "L": "100u",
+     "i0": "0"
+    }
+   },
+   {
+    "id": 8,
+    "type": "IP",
+    "x": 17,
+    "y": 4,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "IL",
+    "params": {}
+   },
+   {
+    "id": 9,
+    "type": "C",
+    "x": 19,
+    "y": 6,
+    "rot": 1,
+    "mir": false,
+    "dis": false,
+    "name": "Co",
+    "params": {
+     "C": "100u",
+     "v0": "0"
+    }
+   },
+   {
+    "id": 10,
+    "type": "R",
+    "x": 25,
+    "y": 6,
+    "rot": 1,
+    "mir": false,
+    "dis": false,
+    "name": "RL",
+    "params": {
+     "R": "5"
+    }
+   },
+   {
+    "id": 12,
+    "type": "VP",
+    "x": 22,
+    "y": 2,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vo",
+    "params": {}
+   },
+   {
+    "id": 14,
+    "type": "VDC",
+    "x": 2,
+    "y": 17,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vref",
+    "params": {
+     "V": "0.437"
+    }
+   },
+   {
+    "id": 15,
+    "type": "GND",
+    "x": 2,
+    "y": 19,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 16,
+    "type": "VTRI",
+    "x": 2,
+    "y": 23,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vtri",
+    "params": {
+     "Vpp": "1",
+     "f": "50k",
+     "D": "0.5",
+     "off": "0",
+     "ph": "0"
+    }
+   },
+   {
+    "id": 17,
+    "type": "GND",
+    "x": 2,
+    "y": 25,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 18,
+    "type": "COMP",
+    "x": 13,
+    "y": 18,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "CMP",
+    "params": {}
+   },
+   {
+    "id": 24,
+    "type": "ONCTRL",
+    "x": 19,
+    "y": 18,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "ON1",
+    "params": {}
+   },
+   {
+    "id": 29,
+    "type": "VP",
+    "x": 23,
+    "y": 16,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vg",
+    "params": {}
+   },
+   {
+    "id": 31,
+    "type": "SIMCTRL",
+    "x": 30,
+    "y": 2,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "dt": "0.2u",
+     "tt": "3m",
+     "tp": "0",
+     "ps": "1",
+     "lte": "1",
+     "ltetol": "1e-3",
+     "interp": "1",
+     "damp": "1"
+    }
+   },
+   {
+    "id": 32,
+    "type": "TEXT",
+    "x": 0,
+    "y": -3,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "Buck 轉換器：Vin=100 V、fsw=50 kHz、D=0.437 → 理想 Vo ≈ 43.7 V。按 F5 執行模擬。"
+    }
+   }
+  ],
+  "wires": [
+   {
+    "id": 4,
+    "x1": 0,
+    "y1": 4,
+    "x2": 4,
+    "y2": 4
+   },
+   {
+    "id": 6,
+    "x1": 8,
+    "y1": 4,
+    "x2": 11,
+    "y2": 4
+   },
+   {
+    "id": 11,
+    "x1": 19,
+    "y1": 4,
+    "x2": 25,
+    "y2": 4
+   },
+   {
+    "id": 13,
+    "x1": 0,
+    "y1": 8,
+    "x2": 25,
+    "y2": 8
+   },
+   {
+    "id": 19,
+    "x1": 2,
+    "y1": 15,
+    "x2": 10,
+    "y2": 15
+   },
+   {
+    "id": 20,
+    "x1": 10,
+    "y1": 15,
+    "x2": 10,
+    "y2": 17
+   },
+   {
+    "id": 21,
+    "x1": 2,
+    "y1": 21,
+    "x2": 8,
+    "y2": 21
+   },
+   {
+    "id": 22,
+    "x1": 8,
+    "y1": 21,
+    "x2": 8,
+    "y2": 19
+   },
+   {
+    "id": 23,
+    "x1": 8,
+    "y1": 19,
+    "x2": 10,
+    "y2": 19
+   },
+   {
+    "id": 25,
+    "x1": 16,
+    "y1": 18,
+    "x2": 17,
+    "y2": 18
+   },
+   {
+    "id": 26,
+    "x1": 21,
+    "y1": 18,
+    "x2": 21,
+    "y2": 12
+   },
+   {
+    "id": 27,
+    "x1": 21,
+    "y1": 12,
+    "x2": 6,
+    "y2": 12
+   },
+   {
+    "id": 28,
+    "x1": 6,
+    "y1": 12,
+    "x2": 6,
+    "y2": 6
+   },
+   {
+    "id": 30,
+    "x1": 21,
+    "y1": 18,
+    "x2": 23,
+    "y2": 18
+   }
+  ],
+  "nid": 33
+ }
+}

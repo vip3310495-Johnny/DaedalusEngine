@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <!-- simplified DaedalusEngine icon for 16-32 px: bold wings, sun and switching edge -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2c43a8"/>
+      <stop offset="1" stop-color="#0d1745"/>
+    </linearGradient>
+    <path id="f" d="M0 0 C 18 -14 56 -16 84 -6 C 90 -4 90 4 84 6 C 56 16 18 14 0 0 Z" fill="#ffffff"/>
+    <g id="wing">
+      <use href="#f" transform="translate(14 -10) rotate(62) scale(0.8 1)"/>
+      <use href="#f" transform="translate(40 -30) rotate(28) scale(0.95 1)"/>
+      <use href="#f" transform="translate(58 -44) rotate(-10)"/>
+      <path d="M-4 8 C 12 -18 42 -48 80 -58 C 88 -60 92 -52 84 -46 C 58 -28 30 -6 10 14 Z" fill="#ffffff"/>
+    </g>
+  </defs>
+  <rect x="4" y="4" width="248" height="248" rx="48" fill="url(#sky)"/>
+  <circle cx="128" cy="56" r="30" fill="#ffc83d"/>
+  <g transform="translate(136 162) rotate(-8) scale(0.86)"><use href="#wing"/></g>
+  <g transform="translate(120 162) scale(-1 1) rotate(-8) scale(0.86)"><use href="#wing"/></g>
+  <path d="M30 224 H76 V196 H128 V224 H180 V196 H226" fill="none" stroke="#ffb020" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
