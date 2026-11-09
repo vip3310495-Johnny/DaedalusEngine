@@ -78,7 +78,7 @@ const fmt = x => (typeof x !== 'number' ? String(x) : !isFinite(x) ? String(x) :
 function main() {
   const defs = require('./defs.js');
   const want = process.argv.slice(2).filter(a => !a.startsWith('-'));
-  let bad = 0, total = 0;
+  let bad = 0, total = 0, skipped = 0;
   const summary = [];
   for (const ex of defs) {
     if (want.length && !want.includes(ex.key)) continue;
@@ -94,17 +94,26 @@ function main() {
     h.stats = st;
     let rows;
     try { rows = ex.checks(h); } catch (e) { rows = [{ item: 'check error', th: '', sim: e.message, ok: false }]; }
-    let exBad = 0;
+    // a row with skip = n stands for n checks that could not run (e.g. no ngspice): never counted as passed
+    let exBad = 0, exRun = 0, exSkip = 0;
     for (const r of rows) {
+      if (r.skip) {
+        exSkip += r.skip;
+        console.log(`SKIP | ${ex.key.padEnd(18)} | ${r.item}（${r.skip} 項）| ${r.note || ''}`);
+        continue;
+      }
       total++;
+      exRun++;
       if (!r.ok) { bad++; exBad++; }
       console.log(`${r.ok ? ' OK ' : 'FAIL'} | ${ex.key.padEnd(18)} | ${r.item} | 理論 ${fmt(r.th)} | 模擬 ${fmt(r.sim)}${r.note ? ' | ' + r.note : ''}`);
     }
-    summary.push(`${ex.key}: ${rows.length - exBad}/${rows.length}（${ms} ms${st.warnings && st.warnings.length ? '，警告 ' + st.warnings.length : ''}）`);
+    skipped += exSkip;
+    summary.push(`${ex.key}: ${exRun - exBad}/${exRun}${exSkip ? `，略過 ${exSkip}` : ''}（${ms} ms${st.warnings && st.warnings.length ? '，警告 ' + st.warnings.length : ''}）`);
     if (st.warnings && st.warnings.length && process.argv.includes('-w')) console.log('   warnings: ' + st.warnings.slice(0, 3).join(' / '));
   }
   console.log('\n' + summary.join('\n'));
-  console.log(`\n${total - bad}/${total} checks passed`);
-  process.exit(bad ? 1 : 0);
+  console.log(`\n${total - bad}/${total} checks passed${skipped ? `（另有 ${skipped} 項因缺少參考工具而略過，未計入）` : ''}`);
+  // --strict (CI release builds): a skipped check is a failure
+  process.exit(bad || (skipped && process.argv.includes('--strict')) ? 1 : 0);
 }
 main();

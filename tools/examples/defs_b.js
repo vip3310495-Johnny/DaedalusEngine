@@ -165,7 +165,7 @@ module.exports = (EX, H) => {
         const fs = require('fs'), path = require('path'), { execFileSync } = require('child_process');
         const root = path.resolve(__dirname, '..', '..');
         const ng = path.join(root, 'tools/ngspice/Spice64/bin/ngspice_con.exe');
-        if (!fs.existsSync(ng)) return [row('ngspice 參考', '需要 tools/ngspice', '略過', true, '未安裝 ngspice')];
+        if (!fs.existsSync(ng)) return [{ item: '5 個波形對 ngspice 比對', skip: 5, note: '未安裝 tools/ngspice（下載方式見 README）' }];
         const wd = path.join(root, 'tests/examples');
         fs.writeFileSync(path.join(wd, 'spice_ref.cir'), ngNet);
         execFileSync(ng, ['-b', 'spice_ref.cir'], { cwd: wd, stdio: 'ignore' });
