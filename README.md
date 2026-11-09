@@ -5,6 +5,17 @@
 
 名稱取自希臘神話中為伊卡洛斯打造羽翼的工匠代達洛斯（Daedalus）；圖示是代達洛斯打造的羽翼，下方是功率開關的 PWM 波形。
 
+## 下載
+
+**[⬇ 下載安裝檔 DaedalusEngine-Setup-V1.1.1.exe](https://github.com/vip3310495-Johnny/DaedalusEngine/releases/download/v1.1.1/DaedalusEngine-Setup-V1.1.1.exe)**（10.2 MB，Windows 10／11，不需要系統管理員權限）
+
+- 下載後按兩下執行，依畫面按「安裝」即可；已安裝舊版時會自動提供「更新」。
+- 最新版與所有舊版：[Releases 頁面](https://github.com/vip3310495-Johnny/DaedalusEngine/releases/latest)。安裝檔只放在 Releases，不放在程式碼清單中。
+- SHA-256：`bbff4b5a9b3a38618da5ad1d5a9484f21b7428e3f24a2ba7c892669a7410349b`
+  （驗證：`certutil -hashfile DaedalusEngine-Setup-V1.1.1.exe SHA256`）
+- 目前版本尚未經程式碼簽章（SignPath 申請中）：Windows 可能顯示「Windows 已保護您的電腦」，請按「其他資訊 › 仍要執行」；
+  開啟「智慧型應用程式控制」（Smart App Control）的電腦會直接封鎖，需等簽章版。
+
 ---
 
 ## 安裝與解除安裝
