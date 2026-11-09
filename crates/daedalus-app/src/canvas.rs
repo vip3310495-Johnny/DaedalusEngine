@@ -11,6 +11,8 @@ use std::collections::HashSet;
 pub enum Mode {
     Select,
     Wire,
+    /// hand tool: left-drag moves the view
+    Hand,
     Place(Box<Element>),
     Paste(Group),
 }
@@ -229,6 +231,24 @@ impl Canvas {
         }
     }
 
+    /// grey preview of an element that follows the mouse (placement and paste)
+    fn draw_ghost(&self, painter: &egui::Painter, el: &Element, syms: &mut SymCache, pal: &Pal) {
+        let d = match lib().get(&el.typ) {
+            Some(d) => d,
+            None => return,
+        };
+        if d.has("label") {
+            self.draw_label_el(painter, el, pal, true);
+        } else if d.has("text") {
+            let t = el.params.get("text").cloned().unwrap_or_default();
+            for (li, l) in t.split('\n').enumerate() {
+                painter.text(self.w2s(el.x, el.y + li as f64 * 1.1), Align2::LEFT_BOTTOM, l, FontId::proportional(0.9 * self.scale), pal.ghost);
+            }
+        } else {
+            self.draw_symbol(painter, el, syms, pal.ghost, false);
+        }
+    }
+
     fn draw_label_el(&self, painter: &egui::Painter, el: &Element, pal: &Pal, ghost: bool) {
         let t = el.params.get("text").cloned().unwrap_or_default();
         let wd = (0.62 * t.chars().count() as f64 + 0.9).max(1.6);
@@ -427,7 +447,8 @@ impl Canvas {
             }
         }
         // middle-button (or space+left) pan
-        let pan_btn = resp.dragged_by(egui::PointerButton::Middle) || (self.space_down && resp.dragged_by(egui::PointerButton::Primary));
+        let hand = matches!(self.mode, Mode::Hand);
+        let pan_btn = resp.dragged_by(egui::PointerButton::Middle) || ((self.space_down || hand) && resp.dragged_by(egui::PointerButton::Primary));
         if pan_btn {
             self.off += resp.drag_delta();
             self.drag = Drag::Pan;
@@ -455,12 +476,7 @@ impl Canvas {
                     proto.x = s.0;
                     proto.y = s.1;
                     let g = (**proto).clone();
-                    let d = lib().get(&g.typ).unwrap();
-                    if d.has("label") {
-                        self.draw_label_el(&painter, &g, pal, true);
-                    } else {
-                        self.draw_symbol(&painter, &g, syms, pal.ghost, false);
-                    }
+                    self.draw_ghost(&painter, &g, syms, pal);
                 }
                 if resp.clicked() {
                     let g = (**proto).clone();
@@ -484,7 +500,7 @@ impl Canvas {
                         let mut e2 = e.clone();
                         e2.x += s.0;
                         e2.y += s.1;
-                        self.draw_symbol(&painter, &e2, syms, pal.ghost, false);
+                        self.draw_ghost(&painter, &e2, syms, pal);
                     }
                     for wi in &g.wires {
                         painter.line_segment([self.w2s(wi.x1 + s.0, wi.y1 + s.1), self.w2s(wi.x2 + s.0, wi.y2 + s.1)], Stroke::new(1.4, pal.ghost));
@@ -495,6 +511,12 @@ impl Canvas {
                         next_mode = Some(Mode::Select);
                     }
                 }
+                if resp.secondary_clicked() {
+                    next_mode = Some(Mode::Select);
+                }
+            }
+            Mode::Hand => {
+                hover_text = hover_text.or(Some("手形工具：拖曳移動視圖；Esc 或選取工具離開".into()));
                 if resp.secondary_clicked() {
                     next_mode = Some(Mode::Select);
                 }
@@ -683,7 +705,9 @@ impl Canvas {
                 resp.clone().on_hover_text_at_pointer(t);
             }
         }
-        if self.space_down || matches!(self.drag, Drag::Pan) {
+        if matches!(self.drag, Drag::Pan) {
+            ui.ctx().set_cursor_icon(egui::CursorIcon::Grabbing);
+        } else if self.space_down || matches!(self.mode, Mode::Hand) {
             ui.ctx().set_cursor_icon(egui::CursorIcon::Grab);
         } else if matches!(self.mode, Mode::Wire) || matches!(self.drag, Drag::WireFrom { .. }) {
             ui.ctx().set_cursor_icon(egui::CursorIcon::Crosshair);

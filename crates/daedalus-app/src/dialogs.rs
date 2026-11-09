@@ -199,8 +199,9 @@ impl PropsDlg {
                 }
             });
         });
-        if !open {
-            return DlgResult::Close;
+        // the window's ✕ keeps the edits (validated like 確定); only 取消 discards them
+        if !open && !matches!(res, DlgResult::Close) {
+            res = DlgResult::Apply;
         }
         if let DlgResult::Apply = res {
             let mut errs = vec![];
@@ -233,7 +234,14 @@ impl PropsDlg {
                 return DlgResult::Keep;
             }
             let name = if d.noname() { None } else { Some(self.name.trim().to_string()) };
-            ed.set_params(self.id, name, self.vals.clone(), Some(self.disp.clone()));
+            // nothing edited: close without an undo step or a "modified" mark
+            let same_vals = self.vals.keys().chain(el.params.keys()).all(|k| self.vals.get(k).map(|s| s.as_str()).unwrap_or("") == el.params.get(k).map(|s| s.as_str()).unwrap_or(""));
+            let same_name = name.as_deref().map(|n| n == el.name).unwrap_or(true);
+            let ed_disp = el.disp.clone().unwrap_or_default();
+            let same_disp = self.disp.iter().all(|(k, v)| ed_disp.get(k).copied().unwrap_or(*v) == *v);
+            if !(same_vals && same_name && same_disp) {
+                ed.set_params(self.id, name, self.vals.clone(), Some(self.disp.clone()));
+            }
             return DlgResult::Close;
         }
         res
@@ -267,6 +275,7 @@ impl SimCtrlDlg {
         let syms = doc_syms(&ed.doc);
         let mut keep = true;
         let mut open = true;
+        let mut apply = false;
         egui::Window::new("Simulation Control 模擬控制").open(&mut open).collapsible(false).default_width(480.0).show(ctx, |ui| {
             egui::Grid::new("sc").num_columns(3).spacing([10.0, 6.0]).show(ui, |ui| {
                 for (k, l, u) in [("dt", "Time step 時間步長", "s"), ("tt", "Total time 總時間", "s"), ("tp", "Print time 輸出起始時間", "s"), ("ps", "Print step 輸出間隔", "")] {
@@ -353,6 +362,21 @@ impl SimCtrlDlg {
             ui.separator();
             ui.horizontal(|ui| {
                 if ui.button("確定").clicked() {
+                    apply = true;
+                }
+                if ui.button("取消").clicked() {
+                    keep = false;
+                }
+            });
+        });
+        // the window's ✕ keeps the edits (validated like 確定); only 取消 discards them
+        if !open && keep {
+            apply = true;
+        }
+        if apply {
+            let g = |k: &str| expr::eval_const(self.vals.get(k).map(|s| s.as_str()).unwrap_or(""), &syms);
+            {
+                {
                     let mut bad = vec![];
                     for k in ["dt", "tt", "tp", "ps"] {
                         match g(k) {
@@ -371,17 +395,20 @@ impl SimCtrlDlg {
                         }
                     }
                     if bad.is_empty() {
-                        ed.set_params(self.id, None, self.vals.clone(), None);
+                        let cur = ed.el(self.id).map(|e| e.params.clone()).unwrap_or_default();
+                        let same = self.vals.keys().chain(cur.keys()).all(|k| self.vals.get(k).map(|s| s.as_str()).unwrap_or("") == cur.get(k).map(|s| s.as_str()).unwrap_or(""));
+                        if !same {
+                            ed.set_params(self.id, None, self.vals.clone(), None);
+                        }
                         keep = false;
                     } else {
+                        // invalid values: stay open and show why
                         self.err = bad.join("；");
+                        return true;
                     }
                 }
-                if ui.button("取消").clicked() {
-                    keep = false;
-                }
-            });
-        });
+            }
+        }
         keep && open
     }
 }
@@ -564,17 +591,19 @@ pub fn help_ui(ui: &mut Ui) {
         ("W", "導線模式：逐點畫線，點到接腳或導線即結束，右鍵/雙擊結束"),
         ("點元件旁的名稱 / 參數文字", "就地修改（Enter 確定、Esc 取消）"),
         ("雙擊元件 / Enter", "開啟完整屬性"),
-        ("R / Shift+R / 空白鍵", "旋轉（逆向）"),
+        ("R / C / L / D / P", "放置電阻 / 電容 / 電感 / 二極體 / 電壓探棒（對地）"),
+        ("G / N", "放置接地 / 節點標籤"),
+        ("空白鍵 / Ctrl+R", "旋轉（Shift+空白鍵、Ctrl+Shift+R 反向）"),
         ("X / Y", "左右 / 上下鏡像"),
-        ("D", "停用 / 啟用元件（不參與模擬）"),
-        ("G / L", "放置接地 / 節點標籤"),
+        ("Ctrl+B", "停用 / 啟用元件（不參與模擬）"),
+        ("H", "手形工具：拖曳移動視圖"),
         ("Delete", "刪除"),
         ("Ctrl+C / X / V / D", "複製 / 剪下 / 貼上 / 原地複製"),
         ("Ctrl+Z / Ctrl+Y", "復原 / 重做"),
         ("Ctrl+A", "全選"),
         ("方向鍵", "微調位置（導線自動跟隨）"),
         ("滾輪 / F / + / −", "縮放 / 全部顯示 / 放大 / 縮小"),
-        ("中鍵拖曳 / 按住空白鍵拖曳", "平移"),
+        ("中鍵拖曳 / 按住空白鍵拖曳 / H", "平移"),
         ("Ctrl+F", "尋找元件"),
         ("F5 / F6 / F7", "執行模擬 / 開啟上次結果 / 模擬控制"),
         ("Ctrl+N / O / S", "新增 / 開啟 / 儲存"),
@@ -588,5 +617,6 @@ pub fn help_ui(ui: &mut Ui) {
     });
     ui.add_space(6.0);
     ui.label("接腳類型標記：■ 功率、▶ 控制輸入（指向元件）、▶ 控制輸出（指向外）、◇ 功率或控制皆可。功率電路與控制電路必須透過感測器、On-Off Controller 或 Control-Power Interface 連接。");
-    ui.label("波形視窗：拖曳框選放大時間軸、滾輪縮放、Shift+滾輪縮放 Y 軸、雙擊還原、中鍵拖曳平移；開啟「游標」後左鍵設 C1、右鍵設 C2。");
+    ui.label("波形視窗：開啟時為一個空白畫面，從左側清單勾選訊號；拖曳框選放大時間軸、滾輪縮放、Shift+滾輪縮放 Y 軸、雙擊還原、中鍵拖曳平移；開啟「游標」後左鍵設 C1、右鍵設 C2。");
+    ui.label("「波形運算」以探棒訊號寫運算式（如 Vo*Io、sqrt(Va^2+Vb^2)）建立新訊號；「FFT」分析游標 C1–C2 之間（或目前顯示範圍）的頻譜、諧波與 THD。");
 }

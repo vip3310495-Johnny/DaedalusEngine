@@ -93,6 +93,9 @@ pub struct App {
     lib_open: bool,
     pub autorun: bool,
     pub shot: Option<String>,
+    /// development aid: scripted GUI test (DAEDALUS_SCRIPT)
+    pub script: Option<crate::script::Script>,
+    dbg_rects: Vec<(String, egui::Rect)>,
     shot_stage: u8,
     shot_frame: u32,
 }
@@ -132,6 +135,8 @@ impl App {
             mc_view: None,
             lib_open: true,
             autorun: false,
+            script: None,
+            dbg_rects: vec![],
             shot: None,
             shot_stage: 0,
             shot_frame: 0,
@@ -341,7 +346,7 @@ impl App {
         self.pill = None;
         let threads = self.n_threads();
         if let (Some(m), Some(_)) = (&mc, &sweep) {
-            fail(self, vec![("蒙地卡羅分析與參數掃描不可同時使用，請停用其中一個（選取後按 D）。".into(), vec![m.el])]);
+            fail(self, vec![("蒙地卡羅分析與參數掃描不可同時使用，請停用其中一個（選取後按 Ctrl+B）。".into(), vec![m.el])]);
             return;
         }
         self.run = Some(Running::start(br.net, sc, ac, sweep, mc, threads, ctx.clone()));
@@ -534,6 +539,14 @@ impl App {
             self.canvas.mode = Mode::Paste(g);
         }
     }
+    fn toggle_hand(&mut self) {
+        if matches!(self.canvas.mode, Mode::Hand) {
+            self.canvas.cancel();
+        } else {
+            self.canvas.cancel();
+            self.canvas.mode = Mode::Hand;
+        }
+    }
     fn toggle_disable(&mut self) {
         if let Some((to, n)) = self.ed.toggle_disable() {
             self.toast(if to { format!("已停用 {} 個元件（不參與模擬）", n) } else { format!("已啟用 {} 個元件", n) });
@@ -641,12 +654,21 @@ impl App {
             self.find = Some((String::new(), 0));
         }
         let plain = |k: Key| move |i: &mut egui::InputState| i.consume_key(Modifiers::NONE, k);
-        let shift = |k: Key| move |i: &mut egui::InputState| i.consume_key(Modifiers::SHIFT, k);
-        if ctx.input_mut(plain(Key::R)) {
+        // rotate: Space / Ctrl+R (reverse: Shift+Space / Ctrl+Shift+R); the Ctrl+Shift chord is tested first
+        if ctx.input_mut(|i| i.consume_key(Modifiers::COMMAND | Modifiers::SHIFT, Key::R)) {
+            self.rotate(-1);
+        }
+        if ctx.input_mut(c(Key::R)) {
             self.rotate(1);
         }
-        if ctx.input_mut(shift(Key::R)) {
-            self.rotate(-1);
+        if ctx.input_mut(c(Key::B)) {
+            self.toggle_disable();
+        }
+        // place common elements (LTspice style single keys)
+        for (k, t) in [(Key::R, "R"), (Key::C, "C"), (Key::L, "L"), (Key::D, "DIODE"), (Key::P, "VP"), (Key::G, "GND"), (Key::N, "LABEL")] {
+            if ctx.input_mut(plain(k)) {
+                self.start_place(t);
+            }
         }
         if ctx.input(|i| i.key_pressed(Key::Space) && !i.pointer.primary_down()) {
             let s = ctx.input(|i| i.modifiers.shift);
@@ -658,18 +680,12 @@ impl App {
         if ctx.input_mut(plain(Key::Y)) {
             self.mirror(true);
         }
-        if ctx.input_mut(plain(Key::D)) {
-            self.toggle_disable();
-        }
         if ctx.input_mut(plain(Key::W)) {
             self.canvas.mode = Mode::Wire;
             self.canvas.wire_pts.clear();
         }
-        if ctx.input_mut(plain(Key::L)) {
-            self.start_place("LABEL");
-        }
-        if ctx.input_mut(plain(Key::G)) {
-            self.start_place("GND");
+        if ctx.input_mut(plain(Key::H)) {
+            self.toggle_hand();
         }
         if ctx.input_mut(plain(Key::Delete)) || ctx.input_mut(plain(Key::Backspace)) {
             self.delete();
@@ -824,7 +840,7 @@ impl App {
                     ui.close();
                 }
                 ui.separator();
-                if ui.button("旋轉　R").clicked() {
+                if ui.button("旋轉　空白鍵 / Ctrl+R").clicked() {
                     self.rotate(1);
                     ui.close();
                 }
@@ -836,7 +852,7 @@ impl App {
                     self.mirror(true);
                     ui.close();
                 }
-                if ui.button("停用／啟用　D").clicked() {
+                if ui.button("停用／啟用　Ctrl+B").clicked() {
                     self.toggle_disable();
                     ui.close();
                 }
@@ -997,12 +1013,15 @@ impl App {
                 self.ed.redo();
             }
             ui.separator();
-            let has = !self.ed.sel.is_empty() || !matches!(self.canvas.mode, Mode::Select | Mode::Wire);
-            if button(ui, Icon::Rotate, "", "旋轉 (R / 空白鍵)", has, false, None).clicked() {
+            let has = !self.ed.sel.is_empty() || !matches!(self.canvas.mode, Mode::Select | Mode::Wire | Mode::Hand);
+            if button(ui, Icon::Rotate, "", "旋轉 (空白鍵 / Ctrl+R；反向 Shift+空白鍵)", has, false, None).clicked() {
                 self.rotate(1);
             }
             if button(ui, Icon::Mirror, "", "左右鏡像 (X)", has, false, None).clicked() {
                 self.mirror(false);
+            }
+            if button(ui, Icon::MirrorV, "", "上下鏡像 (Y)", has, false, None).clicked() {
+                self.mirror(true);
             }
             if button(ui, Icon::Delete, "", "刪除 (Delete)", !self.ed.sel.is_empty(), false, None).clicked() {
                 self.delete();
@@ -1014,6 +1033,9 @@ impl App {
             if button(ui, Icon::Wire, "導線", "導線模式 (W)；也可直接從接腳拖曳", true, matches!(self.canvas.mode, Mode::Wire), None).clicked() {
                 self.canvas.mode = Mode::Wire;
                 self.canvas.wire_pts.clear();
+            }
+            if button(ui, Icon::Hand, "", "手形工具：拖曳移動視圖 (H)；任何工具下中鍵或空白鍵＋拖曳亦可", true, matches!(self.canvas.mode, Mode::Hand), None).clicked() {
+                self.toggle_hand();
             }
             if button(ui, Icon::Fit, "", "全部顯示 (F)", true, false, None).clicked() {
                 self.canvas.fit(&self.ed);
@@ -1049,7 +1071,17 @@ impl App {
                     }
                     let ctl = d.cat.starts_with("Elements/Control") || d.cat.ends_with("Switch Controllers");
                     draw_icon(ui, rect.shrink(2.0), d, &mut self.syms, if ctl { pal.ctl } else { pal.sym });
-                    if resp.on_hover_text(format!("{}（{}）", d.name, d.zh)).clicked() {
+                    let key = match t {
+                        "R" => "　快捷鍵 R",
+                        "C" => "　快捷鍵 C",
+                        "L" => "　快捷鍵 L",
+                        "DIODE" => "　快捷鍵 D",
+                        "VP" => "　快捷鍵 P",
+                        "LABEL" => "　快捷鍵 N",
+                        "GND" => "　快捷鍵 G",
+                        _ => "",
+                    };
+                    if resp.on_hover_text(format!("{}（{}）{}", d.name, d.zh, key)).clicked() {
                         self.start_place(t);
                     }
                 }
@@ -1082,7 +1114,8 @@ impl App {
             let mode = match self.canvas.mode {
                 Mode::Select => "",
                 Mode::Wire => "導線模式",
-                Mode::Place(_) => "放置元件（Shift 連續放置、R 旋轉、右鍵/Esc 取消）",
+                Mode::Hand => "手形工具：拖曳移動視圖（H 或 Esc 離開）",
+                Mode::Place(_) => "放置元件（Shift 連續放置、空白鍵旋轉、X/Y 鏡像、右鍵/Esc 取消）",
                 Mode::Paste(_) => "貼上（左鍵放置、Esc 取消）",
             };
             if !mode.is_empty() {
@@ -1137,7 +1170,11 @@ impl App {
         let ctx = ui.ctx().clone();
         let pal = *self.pal();
         self.poll_run();
-        self.shot_main(&ctx);
+        if self.script.is_none() {
+            self.shot_main(&ctx);
+        } else {
+            ctx.request_repaint();
+        }
         if self.autorun {
             self.autorun = false;
             self.run_sim(&ctx, false);
@@ -1204,7 +1241,15 @@ impl App {
         self.viewers(&ctx, &pal);
     }
 
+    fn menu_btn(&mut self, ui: &mut Ui, enabled: bool, text: &str) -> bool {
+        let r = ui.add_enabled(enabled, egui::Button::new(text));
+        if self.script.is_some() {
+            self.dbg_rects.push((text.to_string(), r.rect));
+        }
+        r.clicked()
+    }
     fn context_menu(&mut self, ctx: &egui::Context) {
+        self.dbg_rects.clear();
         let pos = match self.ctx_menu {
             Some(p) => p,
             None => return,
@@ -1215,13 +1260,13 @@ impl App {
                 ui.set_min_width(170.0);
                 let has = !self.ed.sel.is_empty();
                 let one = self.ed.selected_els().len() == 1;
-                if ui.add_enabled(one, egui::Button::new("屬性…")).clicked() {
+                if self.menu_btn(ui, one, "屬性…") {
                     self.open_props_sel();
                     close = true;
                 }
                 ui.separator();
-                for (t, f) in [("旋轉　R", 0), ("左右鏡像　X", 1), ("上下鏡像　Y", 2), ("停用／啟用　D", 3)] {
-                    if ui.add_enabled(has, egui::Button::new(t)).clicked() {
+                for (t, f) in [("旋轉　空白鍵", 0), ("左右鏡像　X", 1), ("上下鏡像　Y", 2), ("停用／啟用　Ctrl+B", 3)] {
+                    if self.menu_btn(ui, has, t) {
                         match f {
                             0 => self.rotate(1),
                             1 => self.mirror(false),
@@ -1232,25 +1277,28 @@ impl App {
                     }
                 }
                 ui.separator();
-                if ui.add_enabled(has, egui::Button::new("剪下")).clicked() {
+                if self.menu_btn(ui, has, "剪下") {
                     self.copy(true);
                     close = true;
                 }
-                if ui.add_enabled(has, egui::Button::new("複製")).clicked() {
+                if self.menu_btn(ui, has, "複製") {
                     self.copy(false);
                     close = true;
                 }
-                if ui.add_enabled(self.ed.clip.is_some(), egui::Button::new("貼上")).clicked() {
+                let can_paste = self.ed.clip.is_some();
+                if self.menu_btn(ui, can_paste, "貼上") {
                     self.paste();
                     close = true;
                 }
-                if ui.add_enabled(has, egui::Button::new("刪除")).clicked() {
+                if self.menu_btn(ui, has, "刪除") {
                     self.delete();
                     close = true;
                 }
             });
         });
-        if close || (ctx.input(|i| i.pointer.any_pressed()) && !resp.response.hovered() && !ctx.input(|i| i.pointer.secondary_pressed())) || ctx.input(|i| i.key_pressed(Key::Escape)) {
+        let menu_rect = resp.response.rect;
+        let press_outside = ctx.input(|i| i.pointer.any_pressed() && !i.pointer.secondary_pressed() && i.pointer.press_origin().map(|p| !menu_rect.contains(p)).unwrap_or(false));
+        if close || press_outside || ctx.input(|i| i.key_pressed(Key::Escape)) {
             self.ctx_menu = None;
         }
     }
@@ -1416,7 +1464,7 @@ impl App {
     }
 
     fn viewers(&mut self, ctx: &egui::Context, pal: &Pal) {
-        if self.shot.is_some() && self.shot_stage < 2 {
+        if self.shot.is_some() && self.script.is_none() && self.shot_stage < 2 {
             return;
         }
         let icon = Arc::new(crate::app_icon());
@@ -1486,7 +1534,138 @@ impl App {
     }
 }
 
+impl App {
+    /// one step of the scripted GUI test (see script.rs); called from raw_input_hook before each frame
+    fn script_step(&mut self, ctx: &egui::Context, raw: &mut egui::RawInput) {
+        use crate::script::{button, key, mods};
+        use egui::Event;
+        let Some(sc) = self.script.as_mut() else { return };
+        if !sc.later.is_empty() {
+            raw.events.append(&mut sc.later);
+            if sc.later_mods != egui::Modifiers::NONE {
+                raw.events.push(Event::ModifiersChanged(egui::Modifiers::NONE));
+                sc.later_mods = egui::Modifiers::NONE;
+            }
+            return;
+        }
+        if sc.wait > 0 {
+            sc.wait -= 1;
+            raw.events.push(Event::PointerMoved(sc.pos));
+            return;
+        }
+        if sc.i >= sc.steps.len() {
+            self.script = None;
+            self.allow_close = true;
+            ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+            return;
+        }
+        let st = sc.steps[sc.i].clone();
+        sc.i += 1;
+        sc.wait = 2;
+        let num = |k: usize| st.get(k).and_then(|v| v.parse::<f64>().ok()).unwrap_or(0.0);
+        let prefix = sc.prefix.clone();
+        match st[0].as_str() {
+            "wait" => sc.wait = num(1) as u32,
+            "move" => {
+                sc.pos = egui::pos2(num(1) as f32, num(2) as f32);
+                raw.events.push(Event::PointerMoved(sc.pos));
+            }
+            "wmove" => {
+                sc.pos = self.canvas.w2s(num(1), num(2));
+                raw.events.push(Event::PointerMoved(sc.pos));
+            }
+            "down" | "up" => {
+                raw.events.push(Event::PointerButton { pos: sc.pos, button: button(st.get(1).map(|s| s.as_str()).unwrap_or("left")), pressed: st[0] == "down", modifiers: egui::Modifiers::NONE });
+            }
+            "click" | "dblclick" => {
+                let b = button(st.get(1).map(|s| s.as_str()).unwrap_or("left"));
+                let n = if st[0] == "dblclick" { 2 } else { 1 };
+                for k in 0..n {
+                    raw.events.push(Event::PointerButton { pos: sc.pos, button: b, pressed: true, modifiers: egui::Modifiers::NONE });
+                    let up = Event::PointerButton { pos: sc.pos, button: b, pressed: false, modifiers: egui::Modifiers::NONE };
+                    if k + 1 < n {
+                        raw.events.push(up);
+                    } else {
+                        sc.later.push(up);
+                    }
+                }
+            }
+            "drag" => {
+                let (a, b) = (self.canvas.w2s(num(1), num(2)), self.canvas.w2s(num(3), num(4)));
+                let mut ins = vec![vec!["move".to_string(), a.x.to_string(), a.y.to_string()], vec!["down".into(), "left".into()]];
+                for k in 1..=6 {
+                    let p = a + (b - a) * (k as f32 / 6.0);
+                    ins.push(vec!["move".into(), p.x.to_string(), p.y.to_string()]);
+                }
+                ins.push(vec!["up".into(), "left".into()]);
+                let at = sc.i;
+                sc.steps.splice(at..at, ins);
+                sc.wait = 0;
+            }
+            "key" => {
+                if let Some(k) = st.get(1).and_then(|n| key(n)) {
+                    let m = mods(&st[2..]);
+                    if m != egui::Modifiers::NONE {
+                        raw.events.push(Event::ModifiersChanged(m));
+                    }
+                    raw.events.push(Event::Key { key: k, physical_key: Some(k), pressed: true, repeat: false, modifiers: m });
+                    sc.later.push(Event::Key { key: k, physical_key: Some(k), pressed: false, repeat: false, modifiers: m });
+                    sc.later_mods = m;
+                }
+            }
+            "menu" => {
+                let t = st[1..].join(" ");
+                if let Some((_, r)) = self.dbg_rects.iter().find(|(n, _)| n.starts_with(&t)) {
+                    let c = r.center();
+                    let at = sc.i;
+                    sc.steps.splice(at..at, vec![vec!["move".to_string(), c.x.to_string(), c.y.to_string()], vec!["click".into(), "left".into()]]);
+                    sc.wait = 0;
+                } else {
+                    eprintln!("script: no menu item {}", t);
+                }
+            }
+            "fit" => self.canvas.fit(&self.ed),
+            "run" => {
+                sc.wait = 10;
+                self.run_sim(ctx, false);
+            }
+            "wave_add" => self.wave.script_add(&st[1..].join(" ")),
+            "wave_math" => self.wave.script_math(st.get(1).cloned().unwrap_or_default(), st[2..].join(" ")),
+            "wave_fft" => self.wave.script_fft(&st[1..].join(" ")),
+            "wave_cursors" => self.wave.script_cursors(num(1), num(2)),
+            "shot" => {
+                sc.wait = 15;
+                request_shot(ctx, format!("{}_{}.png", prefix, st.get(1).map(|s| s.as_str()).unwrap_or("shot")));
+            }
+            "dump" => {
+                let path = format!("{}_{}.json", prefix, st.get(1).map(|s| s.as_str()).unwrap_or("state"));
+                let _ = std::fs::write(path, self.script_dump().to_string());
+            }
+            "quit" => sc.i = sc.steps.len(),
+            other => eprintln!("script: unknown command {}", other),
+        }
+    }
+    fn script_dump(&self) -> serde_json::Value {
+        let els: Vec<serde_json::Value> = self.ed.doc.elements.iter().map(|e| serde_json::json!({ "id": e.id, "typ": e.typ, "x": e.x, "y": e.y, "rot": e.rot, "mir": e.mir, "name": e.name, "text": e.params.get("text"), "params": e.params })).collect();
+        let sel: Vec<i64> = self.ed.selected_els();
+        let o = self.canvas.w2s(0.0, 0.0);
+        let mode = match &self.canvas.mode {
+            Mode::Select => "select".to_string(),
+            Mode::Wire => "wire".to_string(),
+            Mode::Hand => "hand".to_string(),
+            Mode::Place(p) => format!("place:{}", p.typ),
+            Mode::Paste(_) => "paste".to_string(),
+        };
+        serde_json::json!({ "elements": els, "wires": self.ed.doc.wires.len(), "sel": sel, "origin": [o.x, o.y], "scale": self.canvas.scale, "mode": mode, "props_open": self.props.is_some(), "ctx_menu": self.ctx_menu.is_some(), "undo": self.ed.can_undo(), "dirty": self.ed.dirty, "wave": self.wave.script_dump() })
+    }
+}
+
 impl eframe::App for App {
+    fn raw_input_hook(&mut self, ctx: &egui::Context, raw_input: &mut egui::RawInput) {
+        if self.script.is_some() {
+            self.script_step(ctx, raw_input);
+        }
+    }
     fn ui(&mut self, ui: &mut Ui, frame: &mut eframe::Frame) {
         if self.gpu.is_none() {
             use eframe::glow::HasContext;

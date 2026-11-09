@@ -1,0 +1,20 @@
+{
+ "app": "psimweb",
+ "version": "V1.2.0",
+ "doc": {
+  "elements": [
+   {"id": 1, "type": "VSIN", "x": 0, "y": 4, "rot": 0, "mir": false, "dis": false, "name": "Vs", "params": {"Vm": "1", "f": "1k", "ph": "0", "off": "0", "ts": "0"}},
+   {"id": 2, "type": "GND", "x": 0, "y": 6, "rot": 0, "mir": false, "dis": false, "name": "", "params": {}},
+   {"id": 3, "type": "R", "x": 3, "y": 2, "rot": 0, "mir": false, "dis": false, "name": "R1", "params": {"R": "1k"}},
+   {"id": 4, "type": "LABEL", "x": 5, "y": 2, "rot": 0, "mir": false, "dis": false, "name": "", "params": {"text": "OUT"}},
+   {"id": 5, "type": "VP", "x": 5, "y": 0, "rot": 0, "mir": false, "dis": false, "name": "Vout", "params": {}},
+   {"id": 6, "type": "C", "x": 5, "y": 4, "rot": 1, "mir": false, "dis": false, "name": "C1", "params": {"C": "1u", "v0": "0"}},
+   {"id": 7, "type": "GND", "x": 5, "y": 6, "rot": 0, "mir": false, "dis": false, "name": "", "params": {}},
+   {"id": 8, "type": "SIMCTRL", "x": 14, "y": -4, "rot": 0, "mir": false, "dis": false, "name": "", "params": {"dt": "1u", "tt": "5m", "tp": "0", "ps": "1", "lte": "1", "ltetol": "1e-3", "interp": "1", "damp": "1"}}
+  ],
+  "wires": [
+   {"id": 9, "x1": 0, "y1": 2, "x2": 1, "y2": 2}
+  ],
+  "nid": 10
+ }
+}

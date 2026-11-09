@@ -149,24 +149,34 @@ pub fn make(ctx: &mut ElCtx) -> Out {
         }
         "THY" => {
             let (a, k) = (ctx.p(0)?, ctx.p(1)?);
-            let o = SwO { vf: ctx.numd("vf", 0.0)?, ih: ctx.numd("ih", 0.0)?, il: ctx.numd("il", 0.0)?, init: init01(ctx)?, gn: Some(ctx.c(2)?), ..Default::default() };
-            vec![sw(ctx, a, k, SwT::Thy, o)]
+            let mut o = SwO { vf: ctx.numd("vf", 0.0)?, ih: ctx.numd("ih", 0.0)?, il: ctx.numd("il", 0.0)?, init: init01(ctx)?, ..Default::default() };
+            let mut out = power_gate(ctx, &mut o, 2, k, 1.0, false, "vgt")?;
+            out.insert(0, sw(ctx, a, k, SwT::Thy, o));
+            out
         }
         "TRIAC" => {
             let (a, k) = (ctx.p(0)?, ctx.p(1)?);
-            let o = SwO { vf: ctx.numd("vf", 0.0)?, gn: Some(ctx.c(2)?), ..Default::default() };
-            vec![sw(ctx, a, k, SwT::Triac, o)]
+            let mut o = SwO { vf: ctx.numd("vf", 0.0)?, ..Default::default() };
+            let mut out = power_gate(ctx, &mut o, 2, k, 1.0, true, "vgt")?;
+            out.insert(0, sw(ctx, a, k, SwT::Triac, o));
+            out
         }
         "GTO" => {
             let (a, k) = (ctx.p(0)?, ctx.p(1)?);
-            let o = SwO { vf: ctx.numd("vf", 0.0)?, init: init01(ctx)?, gn: Some(ctx.c(2)?), ..Default::default() };
-            vec![sw(ctx, a, k, SwT::Gto, o)]
+            let mut o = SwO { vf: ctx.numd("vf", 0.0)?, init: init01(ctx)?, ..Default::default() };
+            let mut out = power_gate(ctx, &mut o, 2, k, 1.0, false, "vgt")?;
+            out.insert(0, sw(ctx, a, k, SwT::Gto, o));
+            out
         }
         "NPN" | "PNP" => {
             let pnp = t == "PNP";
             let (a, k) = if pnp { (ctx.p(1)?, ctx.p(0)?) } else { (ctx.p(0)?, ctx.p(1)?) };
-            let o = SwO { vf: ctx.numd("vf", 0.0)?, roff: roff(ctx)?, init: init01(ctx)?, gn: Some(ctx.c(2)?), ginv: pnp, ..Default::default() };
-            vec![sw(ctx, a, k, SwT::Gto, o)]
+            let mut o = SwO { vf: ctx.numd("vf", 0.0)?, roff: roff(ctx)?, init: init01(ctx)?, ginv: pnp, ..Default::default() };
+            // power-driven base: B-E junction referred to the emitter (NPN: base above emitter; PNP: below)
+            let e_node = ctx.p(1)?;
+            let mut out = power_gate(ctx, &mut o, 2, e_node, if pnp { -1.0 } else { 1.0 }, false, "vbe")?;
+            out.insert(0, sw(ctx, a, k, SwT::Gto, o));
+            out
         }
         "IGBT" => {
             let (c, e) = (ctx.p(0)?, ctx.p(1)?);
@@ -363,4 +373,31 @@ pub fn make(ctx: &mut ElCtx) -> Out {
         _ => return control::make(ctx),
     };
     Ok(Some(v))
+}
+
+/// Gate / base pin `gi`: a logic signal (as before) sets `o.gn`; a power-circuit connection instead adds the junction
+/// diode(s) between the pin and `r` (forward drop = parameter `vj_key`, default 0.7 V) and makes the switch follow
+/// that junction (`o.pg`). `pol` = −1 for a PNP base (junction from emitter to base); `both` for the TRIAC gate.
+fn power_gate(ctx: &mut ElCtx, o: &mut SwO, gi: usize, r: i32, pol: f64, both: bool, vj_key: &str) -> R<Vec<Box<dyn Inst>>> {
+    if ctx.kind(gi) != 'P' {
+        o.gn = Some(ctx.c(gi)?);
+        o.pg = None;
+        return Ok(vec![]);
+    }
+    let g = ctx.p(gi)?;
+    let vj = ctx.numd(vj_key, 0.7)?;
+    if !(vj >= 0.0) {
+        return Err(ctx.err(format!("{} 不可為負", vj_key)));
+    }
+    o.gn = None;
+    o.pg = Some(PGate { g, r, pol, vj, both });
+    let jd = |vf: f64| SwO { vf, ..Default::default() };
+    let mut out: Vec<Box<dyn Inst>> = Vec::new();
+    if pol > 0.0 || both {
+        out.push(sw(ctx, g, r, SwT::D, jd(vj)));
+    }
+    if pol < 0.0 || both {
+        out.push(sw(ctx, r, g, SwT::D, jd(vj)));
+    }
+    Ok(out)
 }

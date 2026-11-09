@@ -78,7 +78,12 @@ pub fn draw_icon(ui: &Ui, rect: Rect, d: &ElDef, syms: &mut SymCache, col: Color
         }
     }
     if d.typ == "LABEL" {
-        p.text(c, egui::Align2::CENTER_CENTER, "Vo", egui::FontId::proportional(10.0), col);
+        // flag-shaped outline (as on the schematic) with a short name inside
+        let (w, h) = (rect.width().min(rect.height() * 1.6) * 0.86, rect.height() * 0.5);
+        let x0 = c.x - w / 2.0;
+        let pts = vec![pos2(x0, c.y), pos2(x0 + h * 0.5, c.y - h / 2.0), pos2(x0 + w, c.y - h / 2.0), pos2(x0 + w, c.y + h / 2.0), pos2(x0 + h * 0.5, c.y + h / 2.0)];
+        p.add(Shape::closed_line(pts, Stroke::new(1.0, col)));
+        p.text(pos2(c.x + h * 0.25, c.y), egui::Align2::CENTER_CENTER, "A", egui::FontId::proportional((h * 0.8).max(7.0)), col);
     }
 }
 

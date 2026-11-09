@@ -563,6 +563,31 @@ pub struct SwO {
     pub gn: Option<i32>,
     pub ginv: bool,
     pub init: i32,
+    /// gate driven by the power circuit (instead of the logic signal gn)
+    pub pg: Option<PGate>,
+}
+
+/// A base / gate connected to the power circuit: drive = pol·(v(g) − v(r)); the gate is on while the drive exceeds
+/// the junction drop vj, i.e. while the junction diode (a separate element between g and r) conducts.
+/// `both`: either polarity triggers (TRIAC gate referred to MT1).
+#[derive(Clone, Copy, Debug)]
+pub struct PGate {
+    pub g: i32,
+    pub r: i32,
+    pub pol: f64,
+    pub vj: f64,
+    pub both: bool,
+}
+impl PGate {
+    /// > 0 while the gate is driven
+    pub fn margin(&self, x: &[f64]) -> f64 {
+        let d = self.pol * (vx(x, self.g) - vx(x, self.r));
+        if self.both {
+            d.abs() - self.vj
+        } else {
+            d - self.vj
+        }
+    }
 }
 /// state 0 = off, 1 = forward on, 2 = reverse on
 #[derive(Clone)]
@@ -582,12 +607,13 @@ pub struct Sw {
     init0: i32,
     so: usize,
     times: Option<Vec<f64>>,
+    pg: Option<PGate>,
 }
 impl Sw {
     pub fn new(bd: &mut Builder, a: i32, k: i32, t: SwT, o: SwO) -> Self {
         let ron = (if o.ron != 0.0 && !o.ron.is_nan() { o.ron } else { RON }).max(1e-9);
         let roff = if o.roff != 0.0 && !o.roff.is_nan() { o.roff } else { ROFF };
-        Sw { a, k, t, ron, roff, vf: o.vf, vb: o.vb, vbb: o.vbb, ih: o.ih, il: o.il, gn: o.gn.unwrap_or(-1), ginv: o.ginv, init0: o.init, so: bd.req_p(4), times: None }
+        Sw { a, k, t, ron, roff, vf: o.vf, vb: o.vb, vbb: o.vbb, ih: o.ih, il: o.il, gn: if o.pg.is_some() { -1 } else { o.gn.unwrap_or(-1) }, ginv: o.ginv, init0: o.init, so: bd.req_p(4), times: None, pg: o.pg }
     }
     /// push-button / scheduled switch
     pub fn timed(bd: &mut Builder, a: i32, b: i32, init: i32, mut times: Vec<f64>) -> Self {
@@ -643,6 +669,42 @@ impl Sw {
         let g = self.s(e, 1);
         let g = if self.ginv { 1.0 - g } else { g };
         g != 0.0
+    }
+    /// gate state for the solution x: the logic signal, or the conducting junction of a power-driven gate
+    fn gate_on(&self, x: &[f64], e: &E) -> bool {
+        match &self.pg {
+            Some(p) => p.margin(x) > EPSV,
+            None => self.eg(e),
+        }
+    }
+    /// crossing function governing a change of a power-gated switch: turning on needs the gate AND the forward
+    /// voltage (the later crossing); a GTO / transistor turns off at gate release OR current reversal (the earlier)
+    fn pg_q(&self, xa: &[f64], xb: &[f64], ns: i32, e: &E) -> Option<(f64, f64)> {
+        let p = self.pg.as_ref()?;
+        let cross = |q: (f64, f64)| if q.0 != q.1 && (q.0 > 0.0) != (q.1 > 0.0) { Some(q.0 / (q.0 - q.1)) } else { None };
+        let qg = (p.margin(xa), p.margin(xb));
+        let st = self.st(e);
+        if st == 0 && ns != 0 {
+            let th = self.vf;
+            let m = |x: &[f64]| if ns == 2 { -self.v(x) - th } else { self.v(x) - th };
+            let qm = (m(xa), m(xb));
+            return match (cross(qm), cross(qg)) {
+                (Some(a), Some(b)) => Some(if a >= b { qm } else { qg }),
+                (Some(_), None) => Some(qm),
+                (None, Some(_)) => Some(qg),
+                _ => None,
+            };
+        }
+        if st != 0 && ns == 0 && self.t == SwT::Gto {
+            let qi = (self.i(xa, e), self.i(xb, e));
+            return match (cross(qi), cross(qg)) {
+                (Some(a), Some(b)) => Some(if a <= b { qi } else { qg }),
+                (Some(_), None) => Some(qi),
+                (None, Some(_)) => Some(qg),
+                _ => None,
+            };
+        }
+        None
     }
 }
 impl Inst for Sw {
@@ -762,20 +824,20 @@ impl Inst for Sw {
             }
             SwT::Thy => {
                 if st == 0 {
-                    return if self.eg(e) && v > self.vf + EPSV { 1 } else { 0 };
+                    return if self.gate_on(x, e) && v > self.vf + EPSV { 1 } else { 0 };
                 }
                 let i = self.i(x, e);
                 if i < self.ih - EPSI {
                     return 0;
                 }
-                if !self.eg(e) && self.s(e, 3) == 0.0 && self.il > 0.0 && i < self.il {
+                if !self.gate_on(x, e) && self.s(e, 3) == 0.0 && self.il > 0.0 && i < self.il {
                     return 0;
                 }
                 1
             }
             SwT::Triac => {
                 if st == 0 {
-                    if !self.eg(e) {
+                    if !self.gate_on(x, e) {
                         return 0;
                     }
                     return if v > self.vf + EPSV {
@@ -796,7 +858,7 @@ impl Inst for Sw {
                 }
             }
             SwT::Gto => {
-                if !self.eg(e) {
+                if !self.gate_on(x, e) {
                     return 0;
                 }
                 if st == 0 {
@@ -819,6 +881,11 @@ impl Inst for Sw {
         }
     }
     fn qq(&self, xa: &[f64], xb: &[f64], ns: i32, e: &E) -> Option<(f64, f64)> {
+        if self.pg.is_some() {
+            if let Some(q) = self.pg_q(xa, xb, ns, e) {
+                return Some(q);
+            }
+        }
         let st = self.st(e);
         if self.t == SwT::Ssw || self.t == SwT::Fix {
             return None;

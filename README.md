@@ -1,4 +1,4 @@
-# DaedalusEngine V1.1.1
+# DaedalusEngine V1.2.0
 
 電力電子電路模擬器（Windows 11，Rust 原生程式）。
 以網頁版「電力電子電路模擬器 V3.2.1」為參考重新實作，包含其全部元件模型，`.psimx` 電路檔兩邊通用。
@@ -7,12 +7,11 @@
 
 ## 下載
 
-**[⬇ 下載安裝檔 DaedalusEngine-Setup-V1.1.1.exe](https://github.com/vip3310495-Johnny/DaedalusEngine/releases/download/v1.1.1/DaedalusEngine-Setup-V1.1.1.exe)**（10.2 MB，Windows 10／11，不需要系統管理員權限）
+**[⬇ 下載安裝檔 DaedalusEngine-Setup-V1.2.0.exe](https://github.com/vip3310495-Johnny/DaedalusEngine/releases/download/v1.2.0/DaedalusEngine-Setup-V1.2.0.exe)**（10.2 MB，Windows 10／11，不需要系統管理員權限）
 
 - 下載後按兩下執行，依畫面按「安裝」即可；已安裝舊版時會自動提供「更新」。
 - 最新版與所有舊版：[Releases 頁面](https://github.com/vip3310495-Johnny/DaedalusEngine/releases/latest)。安裝檔只放在 Releases，不放在程式碼清單中。
-- SHA-256：`bbff4b5a9b3a38618da5ad1d5a9484f21b7428e3f24a2ba7c892669a7410349b`
-  （驗證：`certutil -hashfile DaedalusEngine-Setup-V1.1.1.exe SHA256`）
+- SHA-256 見各 Release 的 `SHA256SUMS.txt`（驗證：`certutil -hashfile DaedalusEngine-Setup-V1.2.0.exe SHA256`）
 - 目前版本尚未經程式碼簽章（SignPath 申請中）：Windows 可能顯示「Windows 已保護您的電腦」，請按「其他資訊 › 仍要執行」；
   開啟「智慧型應用程式控制」（Smart App Control）的電腦會直接封鎖，需等簽章版。
 
@@ -20,7 +19,7 @@
 
 ## 安裝與解除安裝
 
-- 執行 `DaedalusEngine-Setup-V1.1.1.exe`。**不需要系統管理員權限**：程式安裝於
+- 執行 `DaedalusEngine-Setup-V1.2.0.exe`。**不需要系統管理員權限**：程式安裝於
   `%LOCALAPPDATA%\Programs\DaedalusEngine`，捷徑與檔案關聯只寫入目前使用者（HKCU）。
 - 安裝內容：`DaedalusEngine.exe`（圖形介面）、`daedalus-cli.exe`（命令列批次模擬）、`uninstall.exe`、本說明。
 - **更新／修復**：已安裝時再執行安裝程式（或「設定 › 應用程式 › 已安裝的應用程式 › DaedalusEngine › 修改」）會進入維護畫面，
@@ -39,8 +38,8 @@
 ### 命令列（自動化部署）
 
 ```
-DaedalusEngine-Setup-V1.1.1.exe --silent [--dir <資料夾>] [--no-desktop|--desktop] [--no-assoc|--assoc] [--launch]   安裝或更新
-DaedalusEngine-Setup-V1.1.1.exe --silent --repair    修復已安裝的程式（uninstall.exe 亦可）
+DaedalusEngine-Setup-V1.2.0.exe --silent [--dir <資料夾>] [--no-desktop|--desktop] [--no-assoc|--assoc] [--launch]   安裝或更新
+DaedalusEngine-Setup-V1.2.0.exe --silent --repair    修復已安裝的程式（uninstall.exe 亦可）
 uninstall.exe --maintain                             開啟維護畫面（更新／修復／解除安裝）
 uninstall.exe --uninstall --silent [--purge]
 ```
@@ -52,7 +51,7 @@ uninstall.exe --uninstall --silent [--purge]
 
 ## 快速上手
 
-1. 「檔案 › 範例」依分類開啟 32 個範例電路（電力轉換、三相系統、功率元件、變壓器與磁性元件、類比與控制 IC、
+1. 「檔案 › 範例」依分類開啟 33 個範例電路（電力轉換、三相系統、功率元件、變壓器與磁性元件、類比與控制 IC、
    被動電路與濾波、電源與受控源、控制方塊、數位邏輯、數位控制、分析功能），每個都附理論驗證（見「範例電路與驗證」）。
 2. 按 **F5** 執行模擬；暫態結果顯示在波形視窗，AC 掃頻結果顯示在波德圖視窗（含交越頻率、相位邊限、增益邊限）。
 3. 左側元件庫可依分類瀏覽或搜尋（中英文皆可），點選後在電路圖上左鍵放置；也可在空白處按 `/` 或雙擊快速新增。
@@ -82,27 +81,35 @@ uninstall.exe --uninstall --silent [--purge]
 | `/` 或在空白處雙擊 | 快速新增元件 |
 | 從接腳拖曳 / `W` | 畫導線（自動 L 形繞線）/ 導線模式 |
 | 雙擊元件 / `Enter` | 屬性；點元件旁的文字可就地修改 |
-| `R`、`Shift+R`、空白鍵 | 旋轉 |
-| `X` / `Y` | 左右 / 上下鏡像 |
-| `D` | 停用 / 啟用元件 |
-| `G` / `L` | 接地 / 節點標籤 |
+| `R` / `C` / `L` / `D` / `P` | 放置電阻 / 電容 / 電感 / 二極體 / 電壓探棒（對地） |
+| `G` / `N` | 放置接地 / 節點標籤 |
+| 空白鍵、`Ctrl+R` | 旋轉（`Shift`+空白鍵、`Ctrl+Shift+R` 反向） |
+| `X` / `Y` | 左右 / 上下鏡像（工具列也有按鈕） |
+| `Ctrl+B` | 停用 / 啟用元件 |
 | `Ctrl+C / X / V / D` | 複製 / 剪下 / 貼上 / 原地複製 |
 | `Ctrl+Z` / `Ctrl+Y` | 復原 / 重做 |
 | 滾輪、`F`、`+`、`−` | 縮放、全部顯示 |
-| 中鍵拖曳 | 平移 |
+| 中鍵拖曳、按住空白鍵拖曳、`H` 手形工具 | 平移 |
 | `Ctrl+F` | 尋找元件 |
 | `F5` / `F6` / `F7` | 執行模擬 / 上次結果 / 模擬控制 |
 | `Ctrl+N / O / S` | 新增 / 開啟 / 儲存 |
 
-波形視窗：拖曳框選放大、滾輪縮放、`Shift`+滾輪縮放 Y 軸、雙擊還原；開啟游標後左鍵設 C1、右鍵設 C2，
+波形視窗：開啟時為一個空白畫面，從左側清單勾選要顯示的訊號（重新模擬會保留目前的畫面配置）。
+拖曳框選放大、滾輪縮放、`Shift`+滾輪縮放 Y 軸、雙擊還原；開啟游標後左鍵設 C1、右鍵設 C2，
 可量測 Max / Min / Avg / RMS / P-P / ∫dt，並匯出 CSV。
+
+- **波形運算**：工具列「波形運算」以探棒訊號寫運算式（例如 `Vo*Io` 瞬時功率、`sqrt(Va^2+Vb^2)`、`(V1-V2)/10`），
+  支援 + − * / ^、sqrt、abs、三角函數、exp、log 等；結果成為新訊號，可加入畫面、量測、游標讀值與 FFT，重新模擬時自動重算。
+- **FFT 頻譜分析**：工具列「FFT」分析游標 C1–C2 之間（未設游標時為目前顯示範圍）的訊號，可選矩形或 Hann 窗、
+  指定基本頻率、dB 刻度；列出直流、基本波振幅與相位、各次諧波與 THD，可匯出頻譜 CSV。
+  游標框選整數個週期時，諧波恰好落在頻率點上，振幅與相位精確。
 
 ---
 
 ## 範例電路與驗證
 
-內建 32 個範例（網頁版 7 個＋新增 25 個），**元件庫 220 種元件全部用到（涵蓋率 100 %）**。新增範例的理論值定義在 `tools/examples/defs*.js`，
-`node tools/examples/verify.js` 以命令列版執行全部範例並逐點比對：**263 項檢查全部通過**。
+內建 33 個範例（網頁版 7 個＋新增 26 個），**元件庫 220 種元件全部用到（涵蓋率 100 %）**。新增範例的理論值定義在 `tools/examples/defs*.js`，
+`node tools/examples/verify.js` 以命令列版執行全部範例並逐點比對：**269 項檢查全部通過**。
 
 | 類型 | 範例 | 比對方式 | 最大相對誤差 |
 |---|---|---|---|
@@ -229,6 +236,17 @@ Simulation Control 的「高精度模式」設為 1、填入目標誤差（預�
     系統 DLL 只從 System32 載入（防止下載資料夾中的同名 DLL 被載入）。
   - 建置流程：GitHub Actions 全部釘選到固定版本（commit SHA）、測試用 ngspice 檢查 SHA-256、每次建置以 `cargo audit`
     檢查相依套件已知漏洞、自動測試安裝／修復／解除安裝；新增 [SECURITY.md](SECURITY.md)。
+- **V1.2.0**（新功能與修正）：
+  - 開關型 NPN／PNP 電晶體與 SCR／TRIAC／GTO 的基極／閘極可直接接功率電路：接面為 0.7 V（參數 vbe／vgt）的二極體、
+    會汲取電流，有基極／閘極電流時導通（閘流體觸發後栓鎖）；接控制訊號時行為與以前相同。新增範例「基極／閘極接功率電路」驗證。
+    需要放大區特性（β、飽和、Early 效應）仍請用 SPICE 模型電晶體。MOSFET、IGBT 等維持邏輯控制。
+  - 電路圖：新增手形工具（H，拖曳移動視圖）、工具列上下鏡像按鈕；右鍵選單的所有項目原本按了沒反應 → 已修正；
+    複製貼上標籤時原本沒有灰色預覽 → 已修正；節點標籤的圖示改為標籤形狀。
+  - 快捷鍵改為 LTspice 風格：R 電阻、C 電容、L 電感、D 二極體、P 電壓探棒、G 接地、N 節點標籤；旋轉改為空白鍵／Ctrl+R、
+    停用改為 Ctrl+B（見「常用快捷鍵」）。
+  - 元件屬性與模擬控制視窗按右上角 ✕ 關閉時即套用修改（數值有誤時會留在視窗並顯示原因）；「取消」才放棄修改。
+  - 波形視窗：預設一個空白畫面；新增波形運算與 FFT 頻譜分析。
+  - 建置流程新增自動化圖形介面測試（`tools/gui_test`：模擬滑鼠鍵盤操作並比對狀態、保存截圖）。
 
 ---
 
@@ -249,10 +267,11 @@ cargo build --release -p daedalus-app            # 圖形介面
 cargo test -p daedalus-core                       # 單元測試
 bash tools/regress.sh                             # 與 JS 參考引擎交叉驗證（需要 Node.js）
 bash tools/verify.sh                              # 範例對理論、AC 掃頻、皮秒精度
-node tools/examples/gen.js                        # 由 defs*.js 產生 25 個驗證範例
-node tools/examples/verify.js                     # 執行並比對全部範例（263 項，AC 範例自動加 --ac）
+node tools/examples/gen.js                        # 由 defs*.js 產生 26 個驗證範例
+node tools/examples/verify.js                     # 執行並比對全部範例（269 項，AC 範例自動加 --ac）
 node tools/examples/coverage.js -m                # 範例的元件涵蓋率
-powershell -ExecutionPolicy Bypass -File tools\package.ps1   # 產生 dist\DaedalusEngine-Setup-V1.1.1.exe
+# 圖形介面自動測試（CI 執行；本機需 --shot 前綴）：DAEDALUS_SCRIPT=tools/gui_test/gui.script DaedalusEngine tools/gui_test/gui.psimx --shot out/gui
+powershell -ExecutionPolicy Bypass -File tools\package.ps1   # 產生 dist\DaedalusEngine-Setup-V1.2.0.exe
 ```
 
 專案結構：`crates/daedalus-core`（模擬引擎）、`daedalus-app`（GUI）、`daedalus-cli`（命令列）、

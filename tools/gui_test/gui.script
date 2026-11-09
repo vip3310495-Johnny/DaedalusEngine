@@ -1,0 +1,118 @@
+# Scripted GUI test (run by CI: DAEDALUS_SCRIPT=this file, DaedalusEngine.exe tools/gui_test/gui.psimx --shot <prefix>)
+# Checked by tools/gui_test/check.js; screenshots are kept as a CI artifact.
+wait 40
+fit
+wait 10
+shot 01_start
+dump 01_start
+
+# paste a label: a grey ghost follows the mouse until the click
+wmove 6.6 2
+click left
+wait 4
+key C ctrl
+key V ctrl
+wmove 10 8
+wait 6
+shot 02_paste_ghost
+dump 02_paste_ghost
+click left
+wait 4
+dump 03_pasted
+key Escape
+
+# rotate the label: Space, then Ctrl+R
+wmove 6.6 2
+click left
+wait 4
+key Space
+wait 4
+dump 04_label_space
+key R ctrl
+wait 4
+dump 05_label_ctrlR
+shot 05_label_ctrlR
+
+# right-click menu: items must react
+wmove 1.7 2.2
+click right
+wait 6
+shot 06_ctxmenu
+dump 06_ctxmenu
+menu 旋轉
+wait 6
+dump 07_ctx_rotated
+wmove 1.7 2.2
+click right
+wait 6
+menu 上下鏡像
+wait 6
+dump 08_ctx_flipped
+# undo the two R1 edits (R1 must be connected again for the simulation below)
+key Escape
+key Z ctrl
+key Z ctrl
+wait 4
+dump 08b_undo
+
+# hand tool: left-drag moves the view
+key H
+wait 3
+dump 09_hand
+drag 0 -2 4 2
+wait 6
+dump 10_hand_dragged
+key Escape
+wait 3
+
+# element shortcuts
+wmove 16 8
+key R
+wait 4
+dump 11_key_R
+shot 11_key_R
+key Escape
+key C
+wait 3
+dump 12_key_C
+key Escape
+key L
+wait 3
+dump 13_key_L
+key Escape
+key D
+wait 3
+dump 14_key_D
+key Escape
+key P
+wait 3
+dump 15_key_P
+key Escape
+key N
+wait 3
+dump 16_key_N
+key Escape
+key G
+wait 3
+dump 17_key_G
+key Escape
+wait 3
+
+# waveform viewer: blank single screen by default, math channel, FFT
+run
+wait 80
+dump 20_wave_default
+shot 20_wave_default
+wave_add Vout
+wave_math P2 Vout*2
+wait 6
+wave_math BAD Vout+*
+wait 6
+dump 21_wave_math
+shot 21_wave_math
+wave_cursors 0.001 0.004
+wave_fft Vout
+wait 12
+shot 22_fft
+dump 22_fft
+quit

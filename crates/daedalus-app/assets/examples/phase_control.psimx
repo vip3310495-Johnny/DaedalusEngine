@@ -1,6 +1,6 @@
 {
  "app": "psimweb",
- "version": "V1.1.1",
+ "version": "V1.2.0",
  "doc": {
   "elements": [
    {
@@ -442,7 +442,8 @@
     "dis": false,
     "name": "Tr",
     "params": {
-     "vf": "0"
+     "vf": "0",
+     "vgt": "0.7"
     }
    },
    {
@@ -627,7 +628,8 @@
      "vf": "0",
      "ih": "0",
      "il": "0",
-     "init": "0"
+     "init": "0",
+     "vgt": "0.7"
     }
    },
    {

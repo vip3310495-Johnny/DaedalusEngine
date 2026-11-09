@@ -12,7 +12,9 @@ mod plot;
 mod simrun;
 mod symbols;
 mod theme;
+mod script;
 mod wave;
+mod wave_tools;
 
 use std::sync::Arc;
 
@@ -76,6 +78,10 @@ fn main() -> eframe::Result<()> {
                 cc.egui_ctx.set_embed_viewports(true);
             }
             a.shot = shot.clone();
+            // development aid: scripted GUI test (needs --shot for the output prefix)
+            if let (Ok(p), Some(pre)) = (std::env::var("DAEDALUS_SCRIPT"), shot.as_ref()) {
+                a.script = script::Script::load(&p, pre);
+            }
             Ok(Box::new(a))
         }),
     )

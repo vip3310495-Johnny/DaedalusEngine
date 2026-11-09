@@ -2,6 +2,7 @@
 
 use crate::plot::{curve_points, si, Axes};
 use crate::theme::Pal;
+use crate::wave_tools::{eval_math, FftView, MathAct, MathDef, MathDlg};
 use daedalus_core::runner::TranResult;
 use egui::{pos2, vec2, Align2, Color32, FontId, Pos2, Rect, Sense, Shape, Stroke, Ui};
 use std::sync::Arc;
@@ -37,11 +38,25 @@ pub struct WaveView {
     drag: Option<(usize, WDrag)>,
     hover_t: Option<f64>,
     pub title: String,
+    /// math channels (re-evaluated for every new result) and the number of simulated signals before them
+    pub math: Vec<MathDef>,
+    nbase: usize,
+    math_dlg: Option<MathDlg>,
+    math_err: String,
+    fft: Option<FftView>,
+    pending: Vec<Pending>,
+}
+
+/// edits of the signal list, applied at the start of the next frame (when no other reference to the result is
+/// alive, so the math channels are appended in place)
+enum Pending {
+    AddMath(String, String),
+    RemoveMath(usize),
 }
 
 impl WaveView {
     pub fn new() -> Self {
-        WaveView { res: None, screens: vec![], act: 0, x: (0.0, 1.0), cursors: false, c1: None, c2: None, tool: Tool::Zoom, open: false, drag: None, hover_t: None, title: String::new() }
+        WaveView { res: None, screens: vec![], act: 0, x: (0.0, 1.0), cursors: false, c1: None, c2: None, tool: Tool::Zoom, open: false, drag: None, hover_t: None, title: String::new(), math: vec![], nbase: 0, math_dlg: None, math_err: String::new(), fft: None, pending: vec![] }
     }
     fn full_x(r: &TranResult) -> (f64, f64) {
         (r.t0, r.t0 + (r.n.max(2) - 1) as f64 * r.dt)
@@ -53,6 +68,24 @@ impl WaveView {
     }
     pub fn set_result(&mut self, res: Arc<TranResult>, layout: Option<Vec<Vec<String>>>) {
         let prev_names: Option<Vec<Vec<String>>> = self.layout_names();
+        let mut res = res;
+        self.nbase = res.names.len();
+        self.math_err.clear();
+        if !self.math.is_empty() {
+            let defs = std::mem::take(&mut self.math);
+            let r = Arc::make_mut(&mut res);
+            for m in defs {
+                match eval_math(r, r.names.len(), &m.expr) {
+                    Ok(v) if !r.names.contains(&m.name) => {
+                        r.names.push(m.name.clone());
+                        r.data.push(v);
+                        self.math.push(m);
+                    }
+                    Ok(_) => self.math_err = format!("運算訊號「{}」與探棒同名，已移除。", m.name),
+                    Err(e) => self.math_err = format!("運算訊號「{}」無法計算（{}），已移除。", m.name, e),
+                }
+            }
+        }
         let names = &res.names;
         let from_names = |l: &Vec<Vec<String>>| -> Vec<Screen> {
             l.iter()
@@ -74,13 +107,8 @@ impl WaveView {
             }
         }
         if screens.is_empty() {
-            let n = names.len();
-            if n <= 3 {
-                screens = vec![Screen { curves: (0..n).collect(), y: None }];
-            } else {
-                let per = n.div_ceil(4).max(2);
-                screens = (0..n).collect::<Vec<_>>().chunks(per).map(|c| Screen { curves: c.to_vec(), y: None }).collect();
-            }
+            // default: one blank screen; signals are added from the list on the left
+            screens = vec![Screen::default()];
         }
         // keep the zoom only when the time span is the same
         let fx = Self::full_x(&res);
@@ -204,6 +232,9 @@ impl WaveView {
 
     /* ---------------------------------------------------------------- UI */
     pub fn ui(&mut self, ui: &mut Ui, pal: &Pal) {
+        for p in std::mem::take(&mut self.pending) {
+            self.apply(p);
+        }
         let res = match &self.res {
             Some(r) => r.clone(),
             None => {
@@ -255,6 +286,14 @@ impl WaveView {
                     self.cursors = !self.cursors;
                 }
                 ui.separator();
+                if button(ui, Icon::Plus, "波形運算", "以探棒訊號做四則運算、開根號等，建立新的訊號", true, self.math_dlg.is_some(), None).clicked() {
+                    self.math_dlg = if self.math_dlg.is_some() { None } else { Some(MathDlg::new(self.math.len())) };
+                }
+                if button(ui, Icon::Wave, "FFT", "頻譜分析：游標 C1–C2 之間（未設游標時為目前顯示範圍）", true, self.fft.is_some(), None).clicked() {
+                    let ci = self.screens.get(self.act).and_then(|s| s.curves.first().copied()).unwrap_or(0);
+                    self.fft = if self.fft.is_some() { None } else { Some(FftView::new(ci)) };
+                }
+                ui.separator();
                 if button(ui, Icon::Export, "匯出 CSV", "匯出目前顯示時間範圍內的所有訊號", true, false, None).clicked() {
                     if let Some(csv) = self.csv() {
                         if let Some(p) = rfd::FileDialog::new().add_filter("CSV", &["csv"]).set_file_name(format!("{}.csv", self.title)).save_file() {
@@ -284,6 +323,26 @@ impl WaveView {
                             }
                         }
                     });
+                }
+                if !self.math.is_empty() || !self.math_err.is_empty() {
+                    ui.separator();
+                    ui.strong("運算訊號");
+                    let mut rm = None;
+                    for (k, m) in self.math.iter().enumerate() {
+                        ui.horizontal(|ui| {
+                            if ui.small_button("×").on_hover_text("刪除此運算訊號").clicked() {
+                                rm = Some(k);
+                            }
+                            ui.label(format!("{} = {}", m.name, m.expr));
+                        });
+                    }
+                    if let Some(k) = rm {
+                        self.pending.push(Pending::RemoveMath(k));
+                        ui.ctx().request_repaint();
+                    }
+                    if !self.math_err.is_empty() {
+                        ui.colored_label(pal.err, &self.math_err);
+                    }
                 }
                 ui.separator();
                 ui.strong("游標讀值");
@@ -529,5 +588,128 @@ impl WaveView {
                 }
             }
         });
+        // tool windows
+        let mut act = MathAct::None;
+        if let Some(d) = &mut self.math_dlg {
+            act = d.ui(ui.ctx(), &res.names);
+        }
+        match act {
+            MathAct::Add(n, e) => {
+                self.pending.push(Pending::AddMath(n, e));
+                ui.ctx().request_repaint();
+            }
+            MathAct::Close => self.math_dlg = None,
+            MathAct::None => {}
+        }
+        let (range, desc) = self.analysis_range();
+        let mut keep = true;
+        if let Some(f) = &mut self.fft {
+            keep = f.ui(ui.ctx(), &res, range, desc, pal);
+        }
+        if !keep {
+            self.fft = None;
+        }
+    }
+
+    /* ---------------------------------------------------------------- scripted GUI tests */
+    pub fn script_add(&mut self, name: &str) {
+        let ci = self.res.as_ref().and_then(|r| r.names.iter().position(|n| n == name));
+        if let (Some(ci), Some(s)) = (ci, self.screens.get_mut(self.act)) {
+            s.curves.push(ci);
+            s.y = None;
+        }
+    }
+    pub fn script_math(&mut self, name: String, expr: String) {
+        self.pending.push(Pending::AddMath(name, expr));
+    }
+    pub fn script_fft(&mut self, name: &str) {
+        let ci = self.res.as_ref().and_then(|r| r.names.iter().position(|n| n == name)).unwrap_or(0);
+        self.fft = Some(FftView::new(ci));
+    }
+    pub fn script_cursors(&mut self, a: f64, b: f64) {
+        self.cursors = true;
+        self.c1 = Some(a);
+        self.c2 = Some(b);
+    }
+    pub fn script_dump(&self) -> serde_json::Value {
+        let names = self.res.as_ref().map(|r| r.names.clone()).unwrap_or_default();
+        let screens: Vec<Vec<String>> = self.layout_names().unwrap_or_default();
+        let math: Vec<String> = self.math.iter().map(|m| format!("{}={}", m.name, m.expr)).collect();
+        serde_json::json!({ "open": self.open, "names": names, "screens": screens, "math": math, "math_err": self.math_err, "fft": self.fft.is_some() })
+    }
+
+    /// cursors C1–C2 when both are set, else the visible time range
+    fn analysis_range(&self) -> ((f64, f64), &'static str) {
+        match (self.cursors, self.c1, self.c2) {
+            (true, Some(a), Some(b)) if a != b => ((a.min(b), a.max(b)), "游標 C1–C2 之間"),
+            _ => (self.x, "目前顯示範圍"),
+        }
+    }
+
+    fn apply(&mut self, p: Pending) {
+        if self.res.is_none() {
+            return;
+        }
+        match p {
+            Pending::AddMath(name, expr) => {
+                let checked = {
+                    let r = self.res.as_ref().unwrap();
+                    if name.is_empty() || expr.is_empty() {
+                        Err("請輸入名稱與運算式".to_string())
+                    } else if r.names.iter().any(|n| n.eq_ignore_ascii_case(&name)) {
+                        Err(format!("名稱「{}」已被使用", name))
+                    } else {
+                        eval_math(r, r.names.len(), &expr).map_err(|e| format!("運算式錯誤：{}", e))
+                    }
+                };
+                match checked {
+                    Err(m) => {
+                        if let Some(d) = self.math_dlg.as_mut() {
+                            d.err = m;
+                        }
+                    }
+                    Ok(v) => {
+                        let r = Arc::make_mut(self.res.as_mut().unwrap());
+                        r.names.push(name.clone());
+                        r.data.push(v);
+                        let ci = r.names.len() - 1;
+                        if let Some(s) = self.screens.get_mut(self.act) {
+                            s.curves.push(ci);
+                            s.y = None;
+                        }
+                        self.math.push(MathDef { name, expr });
+                        let n = self.math.len();
+                        if let Some(d) = self.math_dlg.as_mut() {
+                            *d = MathDlg::new(n);
+                        }
+                    }
+                }
+            }
+            Pending::RemoveMath(k) => {
+                if k >= self.math.len() {
+                    return;
+                }
+                // rebuild the math channels after the simulated signals, keeping the screens by name
+                let layout = self.layout_names().unwrap_or_default();
+                self.math.remove(k);
+                let defs = std::mem::take(&mut self.math);
+                let nbase = self.nbase;
+                let r = Arc::make_mut(self.res.as_mut().unwrap());
+                r.names.truncate(nbase);
+                r.data.truncate(nbase);
+                for m in defs {
+                    if let Ok(v) = eval_math(r, r.names.len(), &m.expr) {
+                        r.names.push(m.name.clone());
+                        r.data.push(v);
+                        self.math.push(m);
+                    }
+                }
+                let names = r.names.clone();
+                for (s, l) in self.screens.iter_mut().zip(layout.iter()) {
+                    s.curves = l.iter().filter_map(|n| names.iter().position(|m| m == n)).collect();
+                    s.y = None;
+                }
+            }
+        }
     }
 }

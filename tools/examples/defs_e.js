@@ -1,4 +1,4 @@
-// Examples 23–25: three-phase measurement chain (voltage / current sensors, abc↔dqo, FFT, RMS, THD,
+// Examples 23–26: three-phase measurement chain (voltage / current sensors, abc↔dqo, FFT, RMS, THD,
 // control-to-power interface, simplified C block) a Monte Carlo tolerance analysis and a loop-gain measurement (AC sweep, loop probe).
 module.exports = (EX, H) => {
   const { PI, C, div, add, mul, cabs, carg, jw, row, wave, phasor } = H;
@@ -168,6 +168,54 @@ module.exports = (EX, H) => {
           cmp('Vo', f => div(Gp(f), add(C(1), Lg(f))), 'AC 探棒 Vo = Gp/(1 + T)'),
           row('穿越頻率（Hz，掃頻點間對數內插）', fc, fcs, h.near(fcs, fc, 0.02)),
           row('相位裕度（°）', pm, pms, Math.abs(pms - pm) < 1),
+        ];
+      },
+    });
+  }
+
+  // =================================================================== 26
+  {
+    const frac = x => x - Math.floor(x);
+    const ws = 2 * PI * 50, Vm = 100;
+    const vs = t => Vm * Math.sin(ws * t);
+    const deg = t => 360 * frac(50 * t);
+    const hi1k = t => frac(1000 * t) < 0.5;
+    const edges1k = Array.from({ length: 81 }, (_, k) => k * 0.5e-3);
+    const ac = [0, 10e-3, 20e-3, 30e-3, 40e-3, 10e-3 / 3, 20e-3 / 3 + 10e-3, 23.3333333e-3, 10e-3 / 3 + 30e-3];
+    const g1k = t => frac(1000 * t) < 0.3;
+    EX.push({
+      key: 'power_gate', cat: '功率元件', name: '基極／閘極接功率電路：NPN、PNP、SCR、TRIAC、GTO',
+      text: '開關型電晶體與閘流體的基極／閘極直接接功率電路（接面為 0.7 V 二極體，會汲取電流）：\nNPN：5 V 方波經 1 kΩ 驅動基極 → 高電位時 Ib = (5 − 0.7)/1k = 4.3 mA、C-E 導通；PNP：射極 12 V，基極經 1 kΩ 拉低時導通；\nSCR／TRIAC：100 V／50 Hz，閘極脈衝（脈衝變壓器式、參考陰極／MT1）在 60° 觸發；GTO：有閘極電流時導通、電流停止即關斷。',
+      sc: { dt: '2u', tt: '40m' },
+      parts: [
+        ['VSQU', 'Ub1', { Vpp: 5, f: '1k', D: 0.5 }, { '+': 'b1s', '-': '0' }], ['IP', 'Ib_npn', {}, { in: 'b1s', out: 'b1x' }], ['R', 'Rb1', { R: '1k' }, { 1: 'b1x', 2: 'b1' }],
+        ['VDC', 'Vcc1', { V: 12 }, { '+': 'vcc1', '-': '0' }], ['R', 'Rc1', { R: 100 }, { 1: 'vcc1', 2: 'c1' }],
+        ['NPN', 'Q1', {}, { C: 'c1', E: '0', B: 'b1' }], ['VP', 'Vc_npn', {}, { n: 'c1' }],
+        ['VDC', 'Vcc2', { V: 12 }, { '+': 'e2', '-': '0' }], ['PNP', 'Q2', {}, { C: 'c2', E: 'e2', B: 'b2' }],
+        ['R', 'Rb2', { R: '1k' }, { 1: 'b2', 2: 'b2s' }], ['VSQU', 'Ub2', { Vpp: 12, f: '1k', D: 0.5 }, { '+': 'b2s', '-': '0' }],
+        ['R', 'Rc2', { R: 100 }, { 1: 'c2', 2: '0' }], ['VP', 'Vc_pnp', {}, { n: 'c2' }],
+        ['VSIN', 'Vac', { Vm, f: 50 }, { '+': 'ac', '-': '0' }],
+        ['THY', 'S1', {}, { A: 'ac', K: 'k3', Gate: 'g3' }], ['R', 'Rl3', { R: 10 }, { 1: 'k3', 2: '0' }], ['VP', 'Vload_scr', {}, { n: 'k3' }],
+        ['VSQU', 'Ug3', { Vpp: 5, f: 50, D: 0.05, ph: 60 }, { '+': 'g3s', '-': 'k3' }], ['R', 'Rg3', { R: 100 }, { 1: 'g3s', 2: 'g3' }],
+        ['TRIAC', 'T1', {}, { 1: 'ac', 2: 'k4', Gate: 'g4' }], ['R', 'Rl4', { R: 10 }, { 1: 'k4', 2: '0' }], ['VP', 'Vload_triac', {}, { n: 'k4' }],
+        ['VSQU', 'Ug4', { Vpp: 5, f: 100, D: 0.1, ph: 120 }, { '+': 'g4s', '-': 'k4' }], ['R', 'Rg4', { R: 100 }, { 1: 'g4s', 2: 'g4' }],
+        ['VDC', 'Vdc5', { V: 50 }, { '+': 'v5', '-': '0' }], ['R', 'Rl5', { R: 10 }, { 1: 'v5', 2: 'a5' }],
+        ['GTO', 'G1', {}, { A: 'a5', K: '0', Gate: 'g5' }], ['VP', 'Va_gto', {}, { n: 'a5' }],
+        ['VSQU', 'Ug5', { Vpp: 5, f: '1k', D: 0.3 }, { '+': 'g5s', '-': '0' }], ['R', 'Rg5', { R: 100 }, { 1: 'g5s', 2: 'g5' }],
+      ],
+      screens: [['Vc_npn', 'Vc_pnp'], ['Ib_npn'], ['Vload_scr', 'Vload_triac'], ['Va_gto']],
+      checks: h => {
+        const W = (p, fn, skip, tol, lab) => wave(h, p, fn, 0, 40e-3, skip, tol, lab);
+        const gEdges = [].concat(...Array.from({ length: 41 }, (_, k) => [k * 1e-3, k * 1e-3 + 0.3e-3]));
+        const scrOn = t => { const d = deg(t); return d >= 60 && d < 180; };
+        const triOn = t => { const d = deg(t); return (d >= 60 && d < 180) || (d >= 240 && d < 360); };
+        return [
+          W('Vc_npn', t => (hi1k(t) ? 0 : 12), edges1k, 2e-4, 'NPN：基極高電位時導通（Vc = 0）、低電位時關斷（Vc = 12 V）'),
+          W('Ib_npn', t => (hi1k(t) ? 4.3e-3 : 0), edges1k, 2e-4, 'NPN 基極電流 = (5 − 0.7)/1 kΩ'),
+          W('Vc_pnp', t => (hi1k(t) ? 0 : 12), edges1k, 2e-4, 'PNP：基極拉低時導通（Vc = 12 V）'),
+          W('Vload_scr', t => (scrOn(t) ? vs(t) : 0), ac, 1e-4, 'SCR：60° 觸發，導通至電流過零'),
+          W('Vload_triac', t => (triOn(t) ? vs(t) : 0), ac, 1e-4, 'TRIAC：每半週 60° 觸發（雙向）'),
+          W('Va_gto', t => (g1k(t) ? 0 : 50), gEdges, 2e-4, 'GTO：閘極有電流時導通、停止即關斷'),
         ];
       },
     });

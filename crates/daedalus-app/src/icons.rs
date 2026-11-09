@@ -11,6 +11,10 @@ pub enum Icon {
     Redo,
     Rotate,
     Mirror,
+    /// flip upside down
+    MirrorV,
+    /// hand tool (pan the schematic)
+    Hand,
     Delete,
     Select,
     Wire,
@@ -76,6 +80,17 @@ pub fn paint(ui: &Ui, r: Rect, icon: Icon, col: Color32) {
         Icon::Mirror => {
             p.add(Shape::convex_polygon(vec![at(7.0, 3.0), at(7.0, 13.0), at(2.0, 13.0)], Color32::TRANSPARENT, st));
             p.add(Shape::convex_polygon(vec![at(9.0, 3.0), at(9.0, 13.0), at(14.0, 13.0)], col.gamma_multiply(0.5), st));
+        }
+        Icon::MirrorV => {
+            p.add(Shape::convex_polygon(vec![at(3.0, 7.0), at(13.0, 7.0), at(13.0, 2.0)], Color32::TRANSPARENT, st));
+            p.add(Shape::convex_polygon(vec![at(3.0, 9.0), at(13.0, 9.0), at(13.0, 14.0)], col.gamma_multiply(0.5), st));
+        }
+        Icon::Hand => {
+            // open hand: four fingers, thumb and palm
+            for (x, top) in [(5.0, 4.0), (7.3, 2.5), (9.6, 3.0), (11.8, 4.8)] {
+                p.add(line(&[(x, 9.0), (x, top)]));
+            }
+            p.add(line(&[(5.0, 9.5), (3.0, 7.8), (2.2, 8.6), (5.2, 13.2), (7.0, 14.5), (10.5, 14.5), (12.2, 12.8), (12.6, 10.5), (11.8, 4.8)]));
         }
         Icon::Delete => {
             p.add(line(&[(3.0, 4.0), (13.0, 4.0)]));

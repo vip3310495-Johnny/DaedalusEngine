@@ -176,5 +176,11 @@
   "name": "迴路增益量測（AC 掃頻、迴路探棒、閉迴路 RLC 電壓控制）",
   "cat": "分析功能",
   "generated": true
+ },
+ {
+  "key": "power_gate",
+  "name": "基極／閘極接功率電路：NPN、PNP、SCR、TRIAC、GTO",
+  "cat": "功率元件",
+  "generated": true
  }
 ]
