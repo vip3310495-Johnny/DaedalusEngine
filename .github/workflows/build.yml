@@ -60,8 +60,7 @@ jobs:
       - name: Verify all examples against theory
         shell: pwsh
         run: |
-          $strict = if ("${{ github.ref }}".StartsWith("refs/tags/v")) { "--strict" } else { "" }
-          node tools/examples/verify.js $strict
+          if ("${{ github.ref }}".StartsWith("refs/tags/v")) { node tools/examples/verify.js --strict } else { node tools/examples/verify.js }
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node tools/examples/coverage.js -m
 

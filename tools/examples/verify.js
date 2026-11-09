@@ -77,7 +77,7 @@ const fmt = x => (typeof x !== 'number' ? String(x) : !isFinite(x) ? String(x) :
 
 function main() {
   const defs = require('./defs.js');
-  const want = process.argv.slice(2).filter(a => !a.startsWith('-'));
+  const want = process.argv.slice(2).filter(a => a.trim() && !a.startsWith('-'));
   let bad = 0, total = 0, skipped = 0;
   const summary = [];
   for (const ex of defs) {
@@ -114,6 +114,7 @@ function main() {
   console.log('\n' + summary.join('\n'));
   console.log(`\n${total - bad}/${total} checks passed${skipped ? `（另有 ${skipped} 項因缺少參考工具而略過，未計入）` : ''}`);
   // --strict (CI release builds): a skipped check is a failure
-  process.exit(bad || (skipped && process.argv.includes('--strict')) ? 1 : 0);
+  if (total === 0) console.log('沒有執行任何檢查（範例名稱不符？）');
+  process.exit(bad || total === 0 || (skipped && process.argv.includes('--strict')) ? 1 : 0);
 }
 main();
