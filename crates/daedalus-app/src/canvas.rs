@@ -45,16 +45,20 @@ pub struct Canvas {
     pub find_hits: Vec<i64>,
     pub pin_marks: bool,
     pub rect: Rect,
-    label_rects: Vec<(i64, String, Rect)>,
+    pub label_rects: Vec<(i64, String, Rect)>,
     pub want_fit: bool,
     pub space_down: bool,
+    /// size of the element name / parameter labels relative to the default (File → Settings)
+    pub label_k: f32,
+    /// a double click on an empty spot opens the quick-add box (File → Settings; off by default)
+    pub dbl_quick: bool,
 }
 
 const PIN_KIND: &[(&str, &str)] = &[("p", "功率"), ("ci", "控制輸入"), ("g", "閘極（控制輸入）"), ("co", "控制輸出"), ("a", "功率或控制"), ("gnd", "接地"), ("lbl", "節點標籤")];
 
 impl Canvas {
     pub fn new() -> Self {
-        Canvas { off: vec2(400.0, 300.0), scale: 20.0, mode: Mode::Select, drag: Drag::None, wire_pts: vec![], mouse_world: None, err_els: HashSet::new(), find_hits: vec![], pin_marks: true, rect: Rect::NOTHING, label_rects: vec![], want_fit: true, space_down: false }
+        Canvas { off: vec2(400.0, 300.0), scale: 20.0, mode: Mode::Select, drag: Drag::None, wire_pts: vec![], mouse_world: None, err_els: HashSet::new(), find_hits: vec![], pin_marks: true, rect: Rect::NOTHING, label_rects: vec![], want_fit: true, space_down: false, label_k: 1.0, dbl_quick: false }
     }
     #[inline]
     pub fn w2s(&self, x: f64, y: f64) -> Pos2 {
@@ -273,34 +277,8 @@ impl Canvas {
         painter.add(TextShape::new(c - rot, galley, col).with_angle(angle));
     }
 
-    /* ---------------------------------------------------------------- main */
-    pub fn ui(&mut self, ui: &mut Ui, ed: &mut Editor, syms: &mut SymCache, pal: &Pal, events: &mut Vec<CanvasEvent>) {
-        let rect = ui.available_rect_before_wrap();
-        self.rect = rect;
-        if self.want_fit {
-            self.fit(ed);
-        }
-        let resp = ui.allocate_rect(rect, Sense::click_and_drag());
-        let painter = ui.painter_at(rect);
-        painter.rect_filled(rect, 0.0, pal.canvas);
-        // grid
-        {
-            let (wx0, wy0) = self.s2w(rect.min);
-            let (wx1, wy1) = self.s2w(rect.max);
-            let step = if self.scale >= 8.0 { 1.0 } else if self.scale >= 3.0 { 5.0 } else { 10.0 };
-            let mut x = (wx0 / step).floor() * step;
-            let dot = if self.scale >= 14.0 { 1.3 } else { 1.0 };
-            while x <= wx1 {
-                let mut y = (wy0 / step).floor() * step;
-                let major = (x / 5.0).round() * 5.0 == x;
-                while y <= wy1 {
-                    let mj = major && (y / 5.0).round() * 5.0 == y;
-                    painter.circle_filled(self.w2s(x, y), if mj { dot + 0.4 } else { dot * 0.7 }, if mj { pal.grid } else { pal.grid2.lerp_to_gamma(pal.grid, 0.5) });
-                    y += step;
-                }
-                x += step;
-            }
-        }
+    /// Wires, junctions, elements and their labels. `export` (PDF): no selection or open-pin marks.
+    pub fn draw_doc(&mut self, painter: &egui::Painter, ed: &mut Editor, syms: &mut SymCache, pal: &Pal, rect: Rect, export: bool) {
         // connectivity info
         let conn_ctl: Vec<bool>;
         let junc: Vec<(f64, f64)>;
@@ -346,7 +324,7 @@ impl Canvas {
         };
         // wires
         for (i, w) in ed.doc.wires.iter().enumerate() {
-            let sel = ed.sel.contains(&Sel::W(w.id));
+            let sel = !export && ed.sel.contains(&Sel::W(w.id));
             let col = if sel { pal.sel } else if conn_ctl[i] { pal.ctl } else { pal.wire };
             painter.line_segment([self.w2s(w.x1, w.y1), self.w2s(w.x2, w.y2)], Stroke::new(if sel { 2.4 } else { 1.6 }, col));
         }
@@ -360,7 +338,7 @@ impl Canvas {
                 Some(d) => d,
                 None => continue,
             };
-            let sel = ed.sel.contains(&Sel::El(el.id));
+            let sel = !export && ed.sel.contains(&Sel::El(el.id));
             let b = wbox(el);
             let brect = Rect::from_min_max(self.w2s(b.x0, b.y0), self.w2s(b.x1, b.y1));
             if !brect.expand(200.0).intersects(rect) {
@@ -392,7 +370,7 @@ impl Canvas {
                 let lines = label_lines(el);
                 if !lines.is_empty() && self.scale >= 6.0 {
                     let wide = (b.x1 - b.x0) >= (b.y1 - b.y0);
-                    let (fs, lh) = (0.78f32, 0.95f64);
+                    let (fs, lh) = (0.78f32 * self.label_k, 0.95f64 * self.label_k as f64);
                     let off = if d.has("lblRight") && el.rot & 1 == 0 { 0.5 } else { 0.0 };
                     let n = lines.len();
                     for (li, (key, txt)) in lines.iter().enumerate() {
@@ -418,11 +396,42 @@ impl Canvas {
                 painter.rect(brect.expand(0.4 * self.scale), CornerRadius::same(4), pal.err.gamma_multiply(0.08), Stroke::new(1.4, pal.err), StrokeKind::Outside);
             }
         }
-        for &(x, y) in &open {
+        for &(x, y) in open.iter().filter(|_| !export) {
             let c = self.w2s(x, y);
             let r = (0.2 * self.scale).max(2.5);
             painter.circle(c, r, pal.canvas, Stroke::new(1.2, pal.err));
         }
+    }
+
+    /* ---------------------------------------------------------------- main */
+    pub fn ui(&mut self, ui: &mut Ui, ed: &mut Editor, syms: &mut SymCache, pal: &Pal, events: &mut Vec<CanvasEvent>) {
+        let rect = ui.available_rect_before_wrap();
+        self.rect = rect;
+        if self.want_fit {
+            self.fit(ed);
+        }
+        let resp = ui.allocate_rect(rect, Sense::click_and_drag());
+        let painter = ui.painter_at(rect);
+        painter.rect_filled(rect, 0.0, pal.canvas);
+        // grid
+        {
+            let (wx0, wy0) = self.s2w(rect.min);
+            let (wx1, wy1) = self.s2w(rect.max);
+            let step = if self.scale >= 8.0 { 1.0 } else if self.scale >= 3.0 { 5.0 } else { 10.0 };
+            let mut x = (wx0 / step).floor() * step;
+            let dot = if self.scale >= 14.0 { 1.3 } else { 1.0 };
+            while x <= wx1 {
+                let mut y = (wy0 / step).floor() * step;
+                let major = (x / 5.0).round() * 5.0 == x;
+                while y <= wy1 {
+                    let mj = major && (y / 5.0).round() * 5.0 == y;
+                    painter.circle_filled(self.w2s(x, y), if mj { dot + 0.4 } else { dot * 0.7 }, if mj { pal.grid } else { pal.grid2.lerp_to_gamma(pal.grid, 0.5) });
+                    y += step;
+                }
+                x += step;
+            }
+        }
+        self.draw_doc(&painter, ed, syms, pal, rect, false);
 
         /* ------------------------------------------------------------ interaction */
         let ptr = ui.input(|i| i.pointer.hover_pos());
@@ -448,7 +457,8 @@ impl Canvas {
         }
         // middle-button (or space+left) pan
         let hand = matches!(self.mode, Mode::Hand);
-        let pan_btn = resp.dragged_by(egui::PointerButton::Middle) || ((self.space_down || hand) && resp.dragged_by(egui::PointerButton::Primary));
+        // middle drag, right drag (a right click without dragging opens the menu), space/hand + left drag
+        let pan_btn = resp.dragged_by(egui::PointerButton::Middle) || resp.dragged_by(egui::PointerButton::Secondary) || ((self.space_down || hand) && resp.dragged_by(egui::PointerButton::Primary));
         if pan_btn {
             self.off += resp.drag_delta();
             self.drag = Drag::Pan;
@@ -640,9 +650,16 @@ impl Canvas {
                         let p = ptr.unwrap();
                         if let Some((id, key, r)) = self.label_rects.iter().rev().find(|(_, _, r)| r.contains(p)).cloned() {
                             if !(shift || ctrl) {
+                                // the first click selects the element (so copy / paste / rotate act on it); a click on
+                                // the text of the element that is already selected edits that text in place
+                                let already = ed.sel.len() == 1 && ed.sel.contains(&Sel::El(id));
                                 ed.sel.clear();
                                 ed.sel.insert(Sel::El(id));
-                                events.push(CanvasEvent::InlineEdit(id, key, r.left_bottom()));
+                                if already && !resp.double_clicked() {
+                                    events.push(CanvasEvent::InlineEdit(id, key, r.left_bottom()));
+                                }
+                            } else if !ed.sel.remove(&Sel::El(id)) {
+                                ed.sel.insert(Sel::El(id));
                             }
                         } else {
                             let hit = ed.hit_element(w.0, w.1).map(Sel::El).or_else(|| ed.hit_wire(w.0, w.1, (5.0 / self.scale as f64).max(0.2)).map(Sel::W));
@@ -670,7 +687,8 @@ impl Canvas {
                     if let (Some(w), Some(p)) = (w, ptr) {
                         match ed.hit_element(w.0, w.1) {
                             Some(id) => events.push(CanvasEvent::OpenProps(id)),
-                            None => events.push(CanvasEvent::QuickAdd(p, snap(w))),
+                            None if self.dbl_quick => events.push(CanvasEvent::QuickAdd(p, snap(w))),
+                            None => {}
                         }
                     }
                 }

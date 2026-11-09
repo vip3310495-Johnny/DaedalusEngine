@@ -605,8 +605,9 @@ pub fn label_lines(el: &Element) -> Vec<(String, String)> {
     }
     for p in &d.params {
         let on = disp.get(&p.k).copied().unwrap_or_else(|| d.show.contains(&p.k));
-        if on {
-            let v = el.params.get(&p.k).cloned().unwrap_or_default();
+        let v = el.params.get(&p.k).cloned().unwrap_or_default();
+        // an empty list (a new Monte Carlo element's tolerances) shows nothing rather than "vars="
+        if on && !(v.trim().is_empty() && p.typ.as_deref() == Some("code")) {
             let numeric = !v.is_empty() && v.chars().all(|c| c.is_ascii_digit() || "-+.eE".contains(c));
             let u = if !p.u.is_empty() && numeric { p.u.clone() } else { String::new() };
             out.push((p.k.clone(), format!("{}={}{}", p.k, v, u)));

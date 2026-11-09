@@ -8,6 +8,21 @@ use daedalus_core::netlist::doc_syms;
 use egui::{Color32, RichText, Ui};
 use std::collections::BTreeMap;
 
+/// Width of the value fields (2.5 × the 40 points a grid column used to give them).
+const FIELD_W: f32 = 100.0;
+
+/// A text field in a grid column (other than the last) gets only that column's width from the previous frame,
+/// initially `interact_size.x` = 40 points, so `desired_width` alone never widened it. Reserve the width first;
+/// the field is at least `min` wide and fills a column that something else (a combo box, a code editor) widened.
+fn wide(ui: &mut Ui, min: f32, te: egui::TextEdit) -> egui::Response {
+    let w = ui.available_width().max(min);
+    ui.vertical(|ui| {
+        ui.set_min_width(w);
+        ui.add(te.desired_width(w))
+    })
+    .inner
+}
+
 /// validation of one parameter value (same rules as the simulator)
 pub fn validate(p: &ParamDef, v: &str, syms: &Syms, typ: &str) -> Option<String> {
     let t = p.typ.as_deref().unwrap_or("num");
@@ -60,6 +75,10 @@ pub struct PropsDlg {
     pub disp: BTreeMap<String, bool>,
     pub err: String,
     syms: Syms,
+    /// width of the last value field drawn (GUI test)
+    pub field_w: f32,
+    /// the tolerance table of a Monte Carlo element
+    pub mc: Option<crate::mc_edit::McEdit>,
 }
 pub enum DlgResult {
     Keep,
@@ -77,7 +96,30 @@ impl PropsDlg {
         for p in &d.params {
             disp.insert(p.k.clone(), ed_disp.get(&p.k).copied().unwrap_or_else(|| d.show.contains(&p.k)));
         }
-        Some(PropsDlg { id, name: el.name.clone(), vals: el.params.clone(), disp, err: String::new(), syms: doc_syms(&ed.doc) })
+        let mc = (el.typ == "MONTECARLO").then(|| crate::mc_edit::McEdit::new(el.params.get("vars").map(|s| s.as_str()).unwrap_or("")));
+        Some(PropsDlg { id, name: el.name.clone(), vals: el.params.clone(), disp, err: String::new(), syms: doc_syms(&ed.doc), field_w: 0.0, mc })
+    }
+    /// GUI test: edit the Monte Carlo table ("add" target, "push" target unchecked, "rlc", "remove" row)
+    pub fn script_mc(&mut self, ed: &Editor, cmd: &str, arg: &str) {
+        let Some(m) = self.mc.as_mut() else { return };
+        match cmd {
+            "add" => {
+                m.add(&ed.doc, &self.syms, arg);
+            }
+            "push" => m.rows.push(crate::mc_edit::McRow { target: arg.to_string(), tol: "5".into(), gauss: true }),
+            "rlc" => {
+                m.add_rlc(&ed.doc, &self.syms);
+            }
+            "remove" => {
+                if let Ok(i) = arg.parse::<usize>() {
+                    if i < m.rows.len() {
+                        m.rows.remove(i);
+                    }
+                }
+            }
+            _ => return,
+        }
+        m.store(self.vals.entry("vars".to_string()).or_default());
     }
     fn param_row(&mut self, ui: &mut Ui, d: &ElDef, p: &ParamDef, model_ideal: bool) {
         let model = self.vals.get("model").cloned().unwrap_or_default();
@@ -105,7 +147,7 @@ impl PropsDlg {
                     });
                 }
                 "code" => {
-                    let mut te = egui::TextEdit::multiline(v).code_editor().desired_rows(if p.k == "spice" { 3 } else { 5 }).desired_width(380.0);
+                    let mut te = egui::TextEdit::multiline(v).code_editor().desired_rows(if p.k == "spice" { 3 } else { 5 });
                     if p.k == "spice" {
                         let kind = p.preset_kind.clone().unwrap_or_default();
                         let hint = if model_ideal {
@@ -115,14 +157,14 @@ impl PropsDlg {
                         };
                         te = te.hint_text(hint);
                     }
-                    ui.add(te);
+                    wide(ui, 380.0, te);
                 }
                 _ => {
-                    let mut te = egui::TextEdit::singleline(v).desired_width(200.0);
+                    let mut te = egui::TextEdit::singleline(v);
                     if err.is_some() {
                         te = te.text_color(Color32::from_rgb(0xd9, 0x36, 0x3e));
                     }
-                    ui.add(te);
+                    self.field_w = wide(ui, FIELD_W, te).rect.width();
                 }
             }
         });
@@ -149,7 +191,7 @@ impl PropsDlg {
         let mut res = DlgResult::Keep;
         let mut open = true;
         let title = format!("{}{} 屬性", d.name, if el.name.is_empty() { String::new() } else { format!(" — {}", el.name) });
-        egui::Window::new(title).id(egui::Id::new(("props", self.id))).open(&mut open).collapsible(false).resizable(true).default_width(560.0).show(ctx, |ui| {
+        egui::Window::new(title).id(egui::Id::new(("props", self.id))).open(&mut open).collapsible(false).resizable(true).default_width(if self.mc.is_some() { 660.0 } else { 560.0 }).show(ctx, |ui| {
             let model = self.vals.get("model").cloned().unwrap_or_default();
             let model_ideal = model == "ideal" || model == "3state" || d.param("model").is_none();
             egui::ScrollArea::vertical().max_height(ctx.content_rect().height() * 0.7).show(ui, |ui| {
@@ -161,16 +203,21 @@ impl PropsDlg {
                     ui.end_row();
                     if !d.noname() {
                         ui.label("名稱 Name").on_hover_text("波形與激勵源以此名稱識別");
-                        ui.add(egui::TextEdit::singleline(&mut self.name).desired_width(200.0));
+                        wide(ui, FIELD_W, egui::TextEdit::singleline(&mut self.name));
                         ui.label("");
                         let show = self.disp.entry("name".into()).or_insert(true);
                         ui.checkbox(show, "");
                         ui.end_row();
                     }
-                    for p in d.params.iter().filter(|p| !p.adv) {
+                    let mc = self.mc.is_some();
+                    for p in d.params.iter().filter(|p| !p.adv && !(mc && p.k == "vars")) {
                         self.param_row(ui, d, p, model_ideal);
                     }
                 });
+                if let Some(m) = self.mc.as_mut() {
+                    ui.add_space(8.0);
+                    m.ui(ui, &ed.doc, &self.syms, self.vals.entry("vars".to_string()).or_default());
+                }
                 if d.params.iter().any(|p| p.adv) {
                     egui::CollapsingHeader::new("進階參數").default_open(model == "ds").show(ui, |ui| {
                         egui::Grid::new("pgrid_adv").num_columns(4).spacing([10.0, 6.0]).striped(true).show(ui, |ui| {
@@ -216,6 +263,14 @@ impl PropsDlg {
                 }
                 if let Some(e) = validate(p, self.vals.get(&p.k).map(|s| s.as_str()).unwrap_or(""), &self.syms, &d.typ) {
                     errs.push(format!("{}：{}", p.l.split(' ').next().unwrap_or(""), e));
+                }
+            }
+            if self.mc.is_some() {
+                let text = self.vals.get("vars").cloned().unwrap_or_default();
+                for (i, c) in daedalus_core::montecarlo::check_lines(&ed.doc, &self.syms, &text).into_iter().enumerate() {
+                    if let Err(e) = c.var {
+                        errs.push(format!("容差第 {} 項：{}", i + 1, e));
+                    }
                 }
             }
             if model == "custom" && self.vals.get("spice").map(|s| s.trim().is_empty()).unwrap_or(true) && d.param("spice").is_some() {
@@ -282,11 +337,11 @@ impl SimCtrlDlg {
                     ui.label(l);
                     let v = self.vals.entry(k.into()).or_default();
                     let ok = expr::eval_const(v, &syms).is_ok();
-                    let mut te = egui::TextEdit::singleline(v).desired_width(160.0);
+                    let mut te = egui::TextEdit::singleline(v);
                     if !ok {
                         te = te.text_color(Color32::from_rgb(0xd9, 0x36, 0x3e));
                     }
-                    ui.add(te);
+                    wide(ui, FIELD_W, te);
                     ui.label(u);
                     ui.end_row();
                 }
@@ -518,12 +573,14 @@ pub struct InlineEdit {
     pub text: String,
     pub err: Option<String>,
     focus: bool,
+    /// width of the text field (GUI test)
+    pub field_w: f32,
 }
 impl InlineEdit {
     pub fn new(ed: &Editor, id: i64, key: String, pos: egui::Pos2) -> Option<Self> {
         let el = ed.el(id)?;
         let text = if key == "__name" { el.name.clone() } else { el.params.get(&key).cloned().unwrap_or_default() };
-        Some(InlineEdit { id, key, pos, text, err: None, focus: true })
+        Some(InlineEdit { id, key, pos, text, err: None, focus: true, field_w: 0.0 })
     }
     /// returns false when finished
     pub fn ui(&mut self, ctx: &egui::Context, ed: &mut Editor) -> bool {
@@ -532,7 +589,8 @@ impl InlineEdit {
             egui::Frame::popup(ui.style()).show(ui, |ui| {
                 ui.horizontal(|ui| {
                     ui.label(if self.key == "__name" { "名稱".to_string() } else { self.key.clone() });
-                    let te = ui.add(egui::TextEdit::singleline(&mut self.text).desired_width(160.0));
+                    let te = ui.add(egui::TextEdit::singleline(&mut self.text).desired_width(400.0));
+                    self.field_w = te.rect.width();
                     if self.focus {
                         te.request_focus();
                         self.focus = false;
@@ -585,11 +643,11 @@ impl InlineEdit {
 /* ------------------------------------------------------------------ help / about */
 pub fn help_ui(ui: &mut Ui) {
     let rows = [
-        ("/ 或在空白處雙擊", "快速新增：輸入元件名稱（英文或中文），Enter 放在該處"),
+        ("/（或在空白處雙擊，需在「檔案 → 設定」開啟）", "快速新增：輸入元件名稱（英文或中文），Enter 放在該處"),
         ("點選元件庫項目", "灰色元件跟著游標移動，左鍵放置（按住 Shift 可連續放置）"),
         ("從接腳拖曳", "拉出導線到另一個接腳或導線（自動 L 形繞線）"),
         ("W", "導線模式：逐點畫線，點到接腳或導線即結束，右鍵/雙擊結束"),
-        ("點元件旁的名稱 / 參數文字", "就地修改（Enter 確定、Esc 取消）"),
+        ("選取元件後再點一次名稱 / 參數文字", "就地修改（Enter 確定、Esc 取消）；第一次點文字只會選取元件"),
         ("雙擊元件 / Enter", "開啟完整屬性"),
         ("R / C / L / D / P", "放置電阻 / 電容 / 電感 / 二極體 / 電壓探棒（對地）"),
         ("G / N", "放置接地 / 節點標籤"),
@@ -603,7 +661,7 @@ pub fn help_ui(ui: &mut Ui) {
         ("Ctrl+A", "全選"),
         ("方向鍵", "微調位置（導線自動跟隨）"),
         ("滾輪 / F / + / −", "縮放 / 全部顯示 / 放大 / 縮小"),
-        ("中鍵拖曳 / 按住空白鍵拖曳 / H", "平移"),
+        ("右鍵或中鍵拖曳 / 空白鍵＋拖曳 / H", "平移（右鍵點一下不拖曳＝右鍵選單）"),
         ("Ctrl+F", "尋找元件"),
         ("F5 / F6 / F7", "執行模擬 / 開啟上次結果 / 模擬控制"),
         ("Ctrl+N / O / S", "新增 / 開啟 / 儲存"),
@@ -618,5 +676,9 @@ pub fn help_ui(ui: &mut Ui) {
     ui.add_space(6.0);
     ui.label("接腳類型標記：■ 功率、▶ 控制輸入（指向元件）、▶ 控制輸出（指向外）、◇ 功率或控制皆可。功率電路與控制電路必須透過感測器、On-Off Controller 或 Control-Power Interface 連接。");
     ui.label("波形視窗：開啟時為一個空白畫面，從左側清單勾選訊號；拖曳框選放大時間軸、滾輪縮放、Shift+滾輪縮放 Y 軸、雙擊還原、中鍵拖曳平移；開啟「游標」後左鍵設 C1、右鍵設 C2。");
+    ui.label("點左側訊號旁的色塊可更改波形顏色（依訊號名稱記住）。「XY 縮放」工具：按住左鍵左右拖曳縮放時間軸、上下拖曳縮放 Y 軸。");
+    ui.label("「匯出報告」把第一個畫面、量測值與 C1/C2 游標讀值存成 PDF 或 Excel；「設定」可調整欄位、波形畫面、X/Y 軸字體大小與波形線寬（也套用到報告）。");
+    ui.label("「檔案 → 匯出畫面（PDF）」把整張電路圖存成向量 PDF；「檔案 → 設定」可調整介面與電路圖文字大小。");
+    ui.label("蒙地卡羅分析：在 Monte Carlo 元件的屬性視窗按「＋ 加入元件參數或變數…」選擇要隨機變化的數值（例如 R1.R），填入容差與分佈。");
     ui.label("「波形運算」以探棒訊號寫運算式（如 Vo*Io、sqrt(Va^2+Vb^2)）建立新訊號；「FFT」分析游標 C1–C2 之間（或目前顯示範圍）的頻譜、諧波與 THD。");
 }

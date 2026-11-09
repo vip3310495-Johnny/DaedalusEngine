@@ -69,21 +69,21 @@ module.exports = (EX, H) => {
   {
     const N = 200, TT = 10e-3, t1 = 1e-3;
     EX.push({
-      key: 'montecarlo_rc', cat: '分析功能', name: '蒙地卡羅容差分析：RC 分壓器（R1、R2 ±5 % 常態、C1 ±10 % 均勻）',
-      text: '10 V 經 R1 對 R2 ∥ C1 充電：Vo(∞) = 10·R2/(R1 + R2)、τ = (R1 ∥ R2)·C1。\n蒙地卡羅 200 次（#0 為標稱值），R1、R2 為常態分佈（容差 5 % = 3σ），C1 為 ±10 % 均勻分佈，種子 7。\n逐次驗證每一次模擬：Vo(1 ms) = Vo(∞)·(1 − e^(−1ms/τ))、Vo(10 ms) = Vo(∞)；統計：σ(Vo)/Vo ≈ 0.5·√2·(5 %/3) = 1.18 %。',
+      key: 'montecarlo_rc', cat: '分析功能', name: '蒙地卡羅容差分析：RC 分壓器（兩個電阻 ±5 % 常態、電容 ±10 % 均勻）',
+      text: '10 V 經 Ra 對 Rb ∥ Cf 充電：Vo(∞) = 10·Rb/(Ra + Rb)、τ = (Ra ∥ Rb)·Cf。蒙地卡羅 200 次（#0 為標稱值），種子 7。\n容差的兩種寫法：Rb.R、Cf.C 直接指定元件參數；Ra 的 R 欄填參數檔變數 R1，再對 R1 設定容差。\nRa、Rb 為常態分佈（容差 5 % = 3σ，抽樣截斷在 ±5 % 內），Cf 為 ±10 % 均勻分佈。\n逐次驗證每一次模擬：Vo(1 ms) = Vo(∞)·(1 − e^(−1ms/τ))、Vo(10 ms) = Vo(∞)；統計：σ(Vo)/Vo ≈ 0.5·√2·(5 %/3) = 1.18 %。',
       sc: { dt: '2u', tt: '10m' },
-      params: 'R1 = 1k\nR2 = 1k\nC1 = 1u',
-      extra: [['MONTECARLO', { n: N, seed: 7, vars: 'R1 5% gauss\nR2 5% gauss\nC1 10% uniform' }]],
+      params: 'R1 = 1k',
+      extra: [['MONTECARLO', { n: N, seed: 7, vars: 'R1 5% gauss\nRb.R 5% gauss\nCf.C 10% uniform' }]],
       parts: [
         ['VDC', 'Vin', { V: 10 }, { '+': 'in', '-': '0' }], ['R', 'Ra', { R: 'R1' }, { 1: 'in', 2: 'o' }],
-        ['R', 'Rb', { R: 'R2' }, { 1: 'o', 2: '0' }], ['C', 'Cf', { C: 'C1' }, { 1: 'o', 2: '0' }], ['VP', 'Vo', {}, { n: 'o' }],
+        ['R', 'Rb', { R: '1k' }, { 1: 'o', 2: '0' }], ['C', 'Cf', { C: '1u' }, { 1: 'o', 2: '0' }], ['VP', 'Vo', {}, { n: 'o' }],
       ],
       screens: [['Vo']],
       checks: h => {
         const mc = h.stats.mc;
         if (!mc) return [row('蒙地卡羅結果', '', '沒有 mc 資料', false)];
         const S = mc.samples, names = mc.vars;
-        const iR1 = names.indexOf('R1'), iR2 = names.indexOf('R2'), iC = names.indexOf('C1');
+        const iR1 = names.indexOf('R1'), iR2 = names.indexOf('Rb.R'), iC = names.indexOf('Cf.C');
         const cols = Object.keys(h).length && S.map((_, k) => `Vo [${k === 0 ? '#0 標稱' : '#' + k}]`);
         let e1 = 0, e2 = 0;
         const vinf = [];
@@ -101,21 +101,25 @@ module.exports = (EX, H) => {
         const fin = S.map((_, k) => h.last(cols[k]));
         const sR = sd(rel(iR1)), sR2 = sd(rel(iR2)), cU = rel(iC);
         const se = s => s / Math.sqrt(2 * (N - 2));
-        const sig = 5 * 0.5 * Math.SQRT2 * 0.05 / 3;
+        // Gaussian truncated at ±3σ: σ = 0.98658·tol/3
+        const TR = 0.98658, sR0 = 0.05 / 3 * TR;
+        const sig = 5 * 0.5 * Math.SQRT2 * sR0;
+        const rR = [...rel(iR1), ...rel(iR2)];
         return [
           row('執行次數（含 #0 標稱）', N, S.length, S.length === N || S.length === N + 1),
-          row('#0 為標稱值 R1 = R2 = 1k、C1 = 1µ', 1, +(S[0][iR1] === 1e3 && S[0][iR2] === 1e3 && Math.abs(S[0][iC] - 1e-6) < 1e-18), S[0][iR1] === 1e3 && S[0][iR2] === 1e3 && Math.abs(S[0][iC] - 1e-6) < 1e-18),
+          row('#0 為標稱值 R1 = Rb.R = 1k、Cf.C = 1µ', 1, +(S[0][iR1] === 1e3 && S[0][iR2] === 1e3 && Math.abs(S[0][iC] - 1e-6) < 1e-18), S[0][iR1] === 1e3 && S[0][iR2] === 1e3 && Math.abs(S[0][iC] - 1e-6) < 1e-18),
           row('每次 Vo(1 ms) 對解析解最大相對誤差', 0, e1, e1 < 1e-5),
           row('每次 Vo(10 ms) 對解析解最大相對誤差', 0, e2, e2 < 1e-6),
-          row('R1 抽樣 σ/R（應 = 5 %/3）', 0.05 / 3, sR, Math.abs(sR - 0.05 / 3) < 4 * se(0.05 / 3)),
-          row('R2 抽樣 σ/R（應 = 5 %/3）', 0.05 / 3, sR2, Math.abs(sR2 - 0.05 / 3) < 4 * se(0.05 / 3)),
-          row('C1 均勻分佈範圍 ⊂ ±10 %', 0.1, Math.max(...cU.map(Math.abs)), Math.max(...cU.map(Math.abs)) <= 0.1 + 1e-12),
-          row('C1 均勻分佈 σ（應 = 10 %/√3）', 0.1 / Math.sqrt(3), sd(cU), Math.abs(sd(cU) - 0.1 / Math.sqrt(3)) < 4 * se(0.1 / Math.sqrt(3))),
+          row('R1（參數檔變數）抽樣 σ/R（應 = 0.98658·5 %/3）', sR0, sR, Math.abs(sR - sR0) < 4 * se(sR0)),
+          row('Rb.R（元件參數）抽樣 σ/R（應 = 0.98658·5 %/3）', sR0, sR2, Math.abs(sR2 - sR0) < 4 * se(sR0)),
+          row('常態分佈截斷：R1、Rb.R 全部在 ±5 % 內', 0.05, Math.max(...rR.map(Math.abs)), Math.max(...rR.map(Math.abs)) <= 0.05 + 1e-12),
+          row('Cf.C 均勻分佈範圍 ⊂ ±10 %', 0.1, Math.max(...cU.map(Math.abs)), Math.max(...cU.map(Math.abs)) <= 0.1 + 1e-12),
+          row('Cf.C 均勻分佈 σ（應 = 10 %/√3）', 0.1 / Math.sqrt(3), sd(cU), Math.abs(sd(cU) - 0.1 / Math.sqrt(3)) < 4 * se(0.1 / Math.sqrt(3))),
           row('統計「末值」平均 = 各次末值平均', mean(fin), st && st.mean, !!st && h.near(st.mean, mean(fin), 1e-12)),
           row('統計「末值」σ = 各次末值 σ', sd(fin), st && st.std, !!st && h.near(st.std, sd(fin), 1e-9)),
           row('統計 最小／最大', `${Math.min(...fin).toFixed(4)}／${Math.max(...fin).toFixed(4)}`, st && `${st.min.toFixed(4)}／${st.max.toFixed(4)}`, !!st && st.min === Math.min(...fin) && st.max === Math.max(...fin)),
           row('Vo 平均 ≈ 5 V（4σ/√N 內）', 5, mean(vinf), Math.abs(mean(vinf) - 5) < 4 * sig / Math.sqrt(N)),
-          row('σ(Vo) ≈ 0.5·√2·(5 %/3)·5 V（一階誤差傳遞）', sig, sd(vinf), Math.abs(sd(vinf) - sig) < 4 * se(sig)),
+          row('σ(Vo) ≈ 0.5·√2·σ(R)·5 V（一階誤差傳遞）', sig, sd(vinf), Math.abs(sd(vinf) - sig) < 4 * se(sig)),
         ];
       },
     });

@@ -103,10 +103,14 @@ impl Axes {
     }
     /// grid, frame and tick labels
     pub fn draw(&self, p: &Painter, pal: &Pal, xunit: &str, show_x_labels: bool) {
+        self.draw_sized(p, pal, xunit, show_x_labels, 11.0);
+    }
+    /// the same with tick labels of `fs` points (the tick spacing grows with the labels)
+    pub fn draw_sized(&self, p: &Painter, pal: &Pal, xunit: &str, show_x_labels: bool, fs: f32) {
         let r = self.plot;
         p.rect_filled(r, 0.0, pal.canvas);
-        let font = FontId::monospace(11.0);
-        let (yt, ys) = nice_ticks(self.y.0, self.y.1, ((r.height() / 40.0) as usize).max(2));
+        let font = FontId::monospace(fs);
+        let (yt, ys) = nice_ticks(self.y.0, self.y.1, ((r.height() / (fs * 3.6)) as usize).max(2));
         for v in yt {
             let y = self.ys(v);
             if y < r.min.y - 0.5 || y > r.max.y + 0.5 {
@@ -131,7 +135,7 @@ impl Axes {
                 }
             }
         } else {
-            let (xt, xs) = nice_ticks(self.x.0, self.x.1, ((r.width() / 90.0) as usize).max(2));
+            let (xt, xs) = nice_ticks(self.x.0, self.x.1, ((r.width() / (fs * 8.2)) as usize).max(2));
             for v in xt {
                 let x = self.xs(v);
                 if x < r.min.x - 0.5 || x > r.max.x + 0.5 {

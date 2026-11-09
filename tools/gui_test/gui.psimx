@@ -1,6 +1,6 @@
 {
  "app": "psimweb",
- "version": "V1.2.0",
+ "version": "V1.3.0",
  "doc": {
   "elements": [
    {"id": 1, "type": "VSIN", "x": 0, "y": 4, "rot": 0, "mir": false, "dis": false, "name": "Vs", "params": {"Vm": "1", "f": "1k", "ph": "0", "off": "0", "ts": "0"}},

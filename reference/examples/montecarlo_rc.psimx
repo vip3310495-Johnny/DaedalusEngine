@@ -1,6 +1,6 @@
 {
  "app": "psimweb",
- "version": "V1.2.0",
+ "version": "V1.3.0",
  "doc": {
   "elements": [
    {
@@ -13,7 +13,7 @@
     "dis": false,
     "name": "",
     "params": {
-     "text": "10 V 經 R1 對 R2 ∥ C1 充電：Vo(∞) = 10·R2/(R1 + R2)、τ = (R1 ∥ R2)·C1。\n蒙地卡羅 200 次（#0 為標稱值），R1、R2 為常態分佈（容差 5 % = 3σ），C1 為 ±10 % 均勻分佈，種子 7。\n逐次驗證每一次模擬：Vo(1 ms) = Vo(∞)·(1 − e^(−1ms/τ))、Vo(10 ms) = Vo(∞)；統計：σ(Vo)/Vo ≈ 0.5·√2·(5 %/3) = 1.18 %。"
+     "text": "10 V 經 Ra 對 Rb ∥ Cf 充電：Vo(∞) = 10·Rb/(Ra + Rb)、τ = (Ra ∥ Rb)·Cf。蒙地卡羅 200 次（#0 為標稱值），種子 7。\n容差的兩種寫法：Rb.R、Cf.C 直接指定元件參數；Ra 的 R 欄填參數檔變數 R1，再對 R1 設定容差。\nRa、Rb 為常態分佈（容差 5 % = 3σ，抽樣截斷在 ±5 % 內），Cf 為 ±10 % 均勻分佈。\n逐次驗證每一次模擬：Vo(1 ms) = Vo(∞)·(1 − e^(−1ms/τ))、Vo(10 ms) = Vo(∞)；統計：σ(Vo)/Vo ≈ 0.5·√2·(5 %/3) = 1.18 %。"
     }
    },
    {
@@ -51,7 +51,7 @@
     "params": {
      "n": "200",
      "seed": "7",
-     "vars": "R1 5% gauss\nR2 5% gauss\nC1 10% uniform"
+     "vars": "R1 5% gauss\nRb.R 5% gauss\nCf.C 10% uniform"
     }
    },
    {
@@ -64,7 +64,7 @@
     "dis": false,
     "name": "",
     "params": {
-     "text": "R1 = 1k\nR2 = 1k\nC1 = 1u"
+     "text": "R1 = 1k"
     }
    },
    {
@@ -153,7 +153,7 @@
     "dis": false,
     "name": "Rb",
     "params": {
-     "R": "R2"
+     "R": "1k"
     }
    },
    {
@@ -190,7 +190,7 @@
     "dis": false,
     "name": "Cf",
     "params": {
-     "C": "C1",
+     "C": "1u",
      "v0": "0"
     }
    },

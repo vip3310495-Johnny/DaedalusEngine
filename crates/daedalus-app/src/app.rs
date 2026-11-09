@@ -8,6 +8,7 @@ use crate::libpanel::{draw_icon, LibPanel};
 use crate::simrun::{fmt_dur, Done, Running};
 use crate::symbols::SymCache;
 use crate::theme::{pal, Pal};
+use crate::settings::AppSettings;
 use crate::wave::WaveView;
 use daedalus_core::doc::Doc;
 use daedalus_core::library::lib;
@@ -98,6 +99,14 @@ pub struct App {
     dbg_rects: Vec<(String, egui::Rect)>,
     shot_stage: u8,
     shot_frame: u32,
+    /// File → Settings
+    settings: AppSettings,
+    show_settings: bool,
+    /// interface text size currently applied to the egui styles
+    ui_font_applied: f32,
+    /// schematic PDF to write in this frame (GUI-test script) and the last outcome
+    export_req: Option<PathBuf>,
+    export_msg: String,
 }
 
 impl App {
@@ -140,11 +149,25 @@ impl App {
             shot: None,
             shot_stage: 0,
             shot_frame: 0,
+            settings: AppSettings::default(),
+            show_settings: false,
+            ui_font_applied: 0.0,
+            export_req: None,
+            export_msg: String::new(),
         };
         if let Some(st) = cc.storage {
             app.dark = st.get_string("dark").map(|s| s == "1").unwrap_or(false);
             app.canvas.pin_marks = st.get_string("pin_marks").map(|s| s != "0").unwrap_or(true);
             app.threads = st.get_string("threads").and_then(|s| s.parse().ok()).unwrap_or(0);
+            if let Some(m) = st.get_string("wave_colors").and_then(|s| serde_json::from_str::<std::collections::HashMap<String, [u8; 3]>>(&s).ok()) {
+                app.wave.colors = m.into_iter().map(|(k, c)| (k, egui::Color32::from_rgb(c[0], c[1], c[2]))).collect();
+            }
+            if let Some(s) = st.get_string("app_settings").and_then(|s| serde_json::from_str::<AppSettings>(&s).ok()) {
+                app.settings = s.clamped();
+            }
+            if let Some(s) = st.get_string("wave_style").and_then(|s| serde_json::from_str::<crate::settings::WaveStyle>(&s).ok()) {
+                app.wave.style = s.clamped();
+            }
             app.recent = st.get_string("recent").and_then(|s| serde_json::from_str::<Vec<String>>(&s).ok()).unwrap_or_default().into_iter().map(PathBuf::from).filter(|p| p.exists()).collect();
         }
         if let Ok(img) = image::load_from_memory(include_bytes!("../assets/icon_256.png")) {
@@ -153,6 +176,8 @@ impl App {
             app.icon = Some(cc.egui_ctx.load_texture("app_icon", ci, Default::default()));
         }
         app.apply_theme(&cc.egui_ctx);
+        app.settings.apply(&cc.egui_ctx);
+        app.ui_font_applied = app.settings.ui_font;
         match open {
             Some(p) => app.open_path(p),
             None => app.new_doc(),
@@ -183,7 +208,9 @@ impl App {
         self.file = None;
         self.file_name = "未命名電路".into();
         self.doc_layout = None;
+        let colors = std::mem::take(&mut self.wave.colors);
         self.wave = WaveView::new();
+        self.wave.colors = colors;
         self.bode = BodeView::new();
         self.msgs.clear();
         self.canvas.err_els.clear();
@@ -196,7 +223,9 @@ impl App {
         self.file = path;
         self.file_name = name;
         self.doc_layout = screens;
+        let colors = std::mem::take(&mut self.wave.colors);
         self.wave = WaveView::new();
+        self.wave.colors = colors;
         self.bode = BodeView::new();
         self.msgs.clear();
         self.canvas.err_els.clear();
@@ -338,7 +367,9 @@ impl App {
                 }
             }
         } else {
-            if self.ed.doc.elements.iter().any(|e| e.typ == "PSWEEP" && !e.dis) {
+            if self.ed.doc.elements.iter().any(|e| e.typ == "MONTECARLO" && !e.dis) {
+                self.toast = Some(("蒙地卡羅分析僅適用於暫態分析：本次執行 AC 掃頻（可用「執行暫態模擬」跑蒙地卡羅分析）".into(), Instant::now()));
+            } else if self.ed.doc.elements.iter().any(|e| e.typ == "PSWEEP" && !e.dis) {
                 self.toast = Some(("參數掃描僅適用於暫態分析：本次執行 AC 掃頻（可用「執行暫態模擬」跑參數掃描）".into(), Instant::now()));
             }
             None
@@ -370,8 +401,8 @@ impl App {
                 ui.end_row();
                 for i in 0..m.vars.len() {
                     ui.label(&m.vars[i]);
-                    ui.monospace(crate::plot::si(m.nominal[i], "", 5));
-                    ui.monospace(format!("±{}%", m.tols[i] * 100.0));
+                    ui.monospace(crate::plot::si(m.nominal[i], m.units.get(i).map(|s| s.as_str()).unwrap_or(""), 5));
+                    ui.monospace(format!("±{}%", daedalus_core::montecarlo::fmt_pct(m.tols[i])));
                     ui.label(&m.dists[i]);
                     ui.end_row();
                 }
@@ -803,6 +834,16 @@ impl App {
                     self.save(true);
                     ui.close();
                 }
+                if ui.button("匯出畫面（PDF）…").on_hover_text("將目前的電路圖（全部元件與接線）匯出為向量 PDF").clicked() {
+                    let c = ui.ctx().clone();
+                    self.export_view_dialog(&c);
+                    ui.close();
+                }
+                ui.separator();
+                if ui.button("設定…").clicked() {
+                    self.show_settings = true;
+                    ui.close();
+                }
                 ui.separator();
                 if ui.button("結束").clicked() {
                     self.request(Pending::Exit);
@@ -1192,6 +1233,21 @@ impl App {
         egui::Panel::top("menu").show(ui, |ui| self.menu_bar(ui));
         egui::Panel::top("toolbar").show(ui, |ui| self.toolbar(ui));
         egui::Panel::bottom("status").show(ui, |ui| self.status_bar(ui));
+        if self.settings.ui_font != self.ui_font_applied {
+            self.settings.apply(&ctx);
+            self.ui_font_applied = self.settings.ui_font;
+        }
+        self.canvas.label_k = self.settings.label_pct / 100.0;
+        self.canvas.dbl_quick = self.settings.dbl_quick;
+        if self.show_settings && !crate::settings::app_settings_ui(&ctx, &mut self.settings) {
+            self.show_settings = false;
+        }
+        if let Some(p) = self.export_req.take() {
+            self.export_msg = match self.export_view(&ctx, &p) {
+                Ok(()) => "ok".into(),
+                Err(e) => e,
+            };
+        }
         if !self.msgs.is_empty() {
             egui::Panel::bottom("msgs").resizable(true).default_size(120.0).min_size(60.0).show(ui, |ui| self.messages(ui));
         }
@@ -1463,6 +1519,53 @@ impl App {
         }
     }
 
+    /// File → Export view: asks for the file name, then writes the PDF
+    fn export_view_dialog(&mut self, ctx: &egui::Context) {
+        if self.ed.doc.elements.is_empty() {
+            self.toast("電路圖是空的，沒有可匯出的內容");
+            return;
+        }
+        if let Some(p) = rfd::FileDialog::new().add_filter("PDF", &["pdf"]).set_file_name(format!("{}.pdf", self.file_name)).save_file() {
+            match self.export_view(ctx, &p) {
+                Ok(()) => self.toast(format!("已匯出 PDF：{}", p.display())),
+                Err(e) => self.toast(e),
+            }
+        }
+    }
+    /// The whole schematic (all elements and wires) as a vector PDF on an A4 page (landscape for a wide
+    /// drawing), drawn by the same code as the screen with the light colours and without editing marks.
+    fn export_view(&mut self, ctx: &egui::Context, path: &std::path::Path) -> Result<(), String> {
+        use crate::pdf_export::{write_pdf, Capture, Page, Part, A4};
+        let b = self.ed.bounds().ok_or_else(|| "電路圖是空的".to_string())?;
+        let sc = 20.0f32;
+        // room for the name / parameter labels next to the outermost elements
+        let pad = 2.0 + 2.0 * self.canvas.label_k as f64;
+        let (x0, y0) = (b.x0 - pad, b.y0 - pad);
+        let w = ((b.x1 - b.x0) + 2.0 * pad) as f32 * sc;
+        let h = ((b.y1 - b.y0) + 2.0 * pad) as f32 * sc;
+        let pal = &crate::theme::LIGHT;
+        let mut cv = Canvas::new();
+        cv.scale = sc;
+        cv.pin_marks = false;
+        cv.label_k = self.canvas.label_k;
+        cv.rect = egui::Rect::from_min_size(egui::Pos2::ZERO, vec2(w, h));
+        cv.off = vec2(-(x0 as f32) * sc, -(y0 as f32) * sc);
+        let area = cv.rect;
+        let cap = Capture::new(ctx, "schematic", area);
+        cv.draw_doc(&cap.painter, &mut self.ed, &mut self.syms, pal, area, true);
+        let shapes = cap.finish();
+        let (pw, ph) = if w >= h { (A4.1, A4.0) } else { A4 };
+        let (m, head) = (36.0f32, 24.0f32);
+        let k = ((pw - 2.0 * m) / w).min((ph - 2.0 * m - head) / h).min(1.5);
+        let off = vec2((pw - w * k) / 2.0, m + head + ((ph - 2.0 * m - head) - h * k) / 2.0);
+        let tcap = Capture::new(ctx, "schematic_title", egui::Rect::from_min_size(egui::Pos2::ZERO, vec2(pw, ph)));
+        tcap.painter.text(egui::pos2(m, m), egui::Align2::LEFT_TOP, &self.file_name, egui::FontId::proportional(12.0), pal.text);
+        tcap.painter.text(egui::pos2(pw - m, m), egui::Align2::RIGHT_TOP, format!("DaedalusEngine {}", daedalus_core::VERSION), egui::FontId::proportional(9.0), pal.muted);
+        let tshapes = tcap.finish();
+        let page = Page { size: (pw, ph), parts: vec![Part { shapes: tshapes, scale: 1.0, offset: egui::Vec2::ZERO }, Part { shapes, scale: k, offset: off }] };
+        let pdf = write_pdf(&[page])?;
+        std::fs::write(path, pdf).map_err(|e| format!("無法寫入 {}（{}）", path.display(), e))
+    }
     fn viewers(&mut self, ctx: &egui::Context, pal: &Pal) {
         if self.shot.is_some() && self.script.is_none() && self.shot_stage < 2 {
             return;
@@ -1625,6 +1728,47 @@ impl App {
                 }
             }
             "fit" => self.canvas.fit(&self.ed),
+            "textmove" => {
+                let id = num(1) as i64;
+                if let Some((_, _, r)) = self.canvas.label_rects.iter().find(|(i, _, _)| *i == id) {
+                    sc.pos = r.center();
+                    raw.events.push(Event::PointerMoved(sc.pos));
+                } else {
+                    eprintln!("script: no text for element {}", id);
+                }
+            }
+            "rdrag" => {
+                let (a, b) = (self.canvas.w2s(num(1), num(2)), self.canvas.w2s(num(3), num(4)));
+                let mut ins = vec![vec!["move".to_string(), a.x.to_string(), a.y.to_string()], vec!["down".into(), "right".into()]];
+                for k in 1..=6 {
+                    let p = a + (b - a) * (k as f32 / 6.0);
+                    ins.push(vec!["move".into(), p.x.to_string(), p.y.to_string()]);
+                }
+                ins.push(vec!["up".into(), "right".into()]);
+                let at = sc.i;
+                sc.steps.splice(at..at, ins);
+                sc.wait = 0;
+            }
+            "movewin" => {
+                let title = st[1..].join(" ");
+                if let Some(r) = ctx.memory(|m| m.area_rect(egui::Id::new(title.as_str()))) {
+                    sc.pos = r.center();
+                    raw.events.push(Event::PointerMoved(sc.pos));
+                } else {
+                    eprintln!("script: no window {}", title);
+                }
+            }
+            "scroll" => {
+                raw.events.push(Event::MouseWheel { unit: egui::MouseWheelUnit::Point, delta: egui::vec2(0.0, num(1) as f32), phase: egui::TouchPhase::Move, source: egui::MouseWheelSource::Wheel, modifiers: egui::Modifiers::NONE });
+                sc.wait = 6;
+            }
+            "close_dialogs" => {
+                self.props = None;
+                self.inline = None;
+                self.quick = None;
+                self.show_settings = false;
+            }
+            "wave_color" => self.wave.script_color(st.get(1).map(|s| s.as_str()).unwrap_or(""), st.get(2).map(|s| s.as_str()).unwrap_or("")),
             "run" => {
                 sc.wait = 10;
                 self.run_sim(ctx, false);
@@ -1633,6 +1777,44 @@ impl App {
             "wave_math" => self.wave.script_math(st.get(1).cloned().unwrap_or_default(), st[2..].join(" ")),
             "wave_fft" => self.wave.script_fft(&st[1..].join(" ")),
             "wave_cursors" => self.wave.script_cursors(num(1), num(2)),
+            "wave_style" => self.wave.script_style([num(1) as f32, num(2) as f32, num(3) as f32, num(4) as f32]),
+            "wave_tool" => self.wave.script_tool(st.get(1).map(|s| s.as_str()).unwrap_or("")),
+            "wave_settings" => self.wave.script_settings(num(1) != 0.0),
+            "wave_close_tools" => self.wave.script_close_tools(),
+            "wave_cursors_off" => self.wave.script_cursors_off(),
+            "wave_report" => {
+                self.wave.report_req = Some(PathBuf::from(format!("{}_{}", prefix, st.get(1).map(|s| s.as_str()).unwrap_or("report.pdf"))));
+                sc.wait = 20;
+            }
+            "export_pdf" => {
+                self.export_req = Some(PathBuf::from(format!("{}_{}", prefix, st.get(1).map(|s| s.as_str()).unwrap_or("view.pdf"))));
+                sc.wait = 20;
+            }
+            "app_settings" => self.settings = AppSettings { ui_font: num(1) as f32, label_pct: num(2) as f32, dbl_quick: num(3) != 0.0 }.clamped(),
+            "open_settings" => self.show_settings = num(1) != 0.0,
+            "place" => {
+                let typ = st.get(1).cloned().unwrap_or_default();
+                if lib().get(&typ).is_some() {
+                    let proto = self.ed.new_element(&typ, num(2), num(3), 0, false);
+                    self.ed.doc.nid -= 1;
+                    let _ = self.ed.place_element(&proto, num(2), num(3));
+                }
+            }
+            "open_props_type" => {
+                if let Some(id) = self.ed.doc.elements.iter().find(|e| Some(&e.typ) == st.get(1)).map(|e| e.id) {
+                    self.open_props(id);
+                }
+            }
+            "props_set" => {
+                if let (Some(p), Some(k)) = (self.props.as_mut(), st.get(1)) {
+                    p.vals.insert(k.clone(), st[2..].join(" "));
+                }
+            }
+            "mc" => {
+                if let Some(p) = self.props.as_mut() {
+                    p.script_mc(&self.ed, st.get(1).map(|s| s.as_str()).unwrap_or(""), &st[2.min(st.len())..].join(" "));
+                }
+            }
             "shot" => {
                 sc.wait = 15;
                 request_shot(ctx, format!("{}_{}.png", prefix, st.get(1).map(|s| s.as_str()).unwrap_or("shot")));
@@ -1656,7 +1838,15 @@ impl App {
             Mode::Place(p) => format!("place:{}", p.typ),
             Mode::Paste(_) => "paste".to_string(),
         };
-        serde_json::json!({ "elements": els, "wires": self.ed.doc.wires.len(), "sel": sel, "origin": [o.x, o.y], "scale": self.canvas.scale, "mode": mode, "props_open": self.props.is_some(), "ctx_menu": self.ctx_menu.is_some(), "undo": self.ed.can_undo(), "dirty": self.ed.dirty, "wave": self.wave.script_dump() })
+        // Monte Carlo table / results and messages (added separately: the json! macro has a recursion limit)
+        let props_mc = self.props.as_ref().and_then(|p| p.mc.as_ref().map(|m| serde_json::json!({ "rows": m.rows.iter().map(|r| r.target.clone()).collect::<Vec<_>>(), "status": m.status, "vars": p.vals.get("vars"), "err": p.err })));
+        let mc = self.mc_view.as_ref().map(|(m, open)| serde_json::json!({ "vars": m.vars, "samples": m.samples, "tols": m.tols, "open": open }));
+        let msgs: Vec<String> = self.msgs.iter().map(|m| m.text.clone()).collect();
+        let mut v = serde_json::json!({ "elements": els, "wires": self.ed.doc.wires.len(), "sel": sel, "origin": [o.x, o.y], "scale": self.canvas.scale, "mode": mode, "props_open": self.props.is_some(), "inline_open": self.inline.is_some(), "quick_open": self.quick.is_some(), "settings": { "ui_font": self.settings.ui_font, "label_pct": self.settings.label_pct, "dbl_quick": self.settings.dbl_quick, "open": self.show_settings, "applied": self.ui_font_applied }, "export_msg": self.export_msg, "label_k": self.canvas.label_k, "props_field_w": self.props.as_ref().map(|p| p.field_w), "inline_field_w": self.inline.as_ref().map(|i| i.field_w), "ctx_menu": self.ctx_menu.is_some(), "undo": self.ed.can_undo(), "dirty": self.ed.dirty, "wave": self.wave.script_dump() });
+        v["props_mc"] = props_mc.unwrap_or(serde_json::Value::Null);
+        v["mc"] = mc.unwrap_or(serde_json::Value::Null);
+        v["msgs"] = serde_json::json!(msgs);
+        v
     }
 }
 
@@ -1684,6 +1874,10 @@ impl eframe::App for App {
         storage.set_string("dark", if self.dark { "1".into() } else { "0".into() });
         storage.set_string("pin_marks", if self.canvas.pin_marks { "1".into() } else { "0".into() });
         storage.set_string("threads", self.threads.to_string());
+        storage.set_string("app_settings", serde_json::to_string(&self.settings).unwrap_or_default());
+        storage.set_string("wave_style", serde_json::to_string(&self.wave.style).unwrap_or_default());
+        let wc: std::collections::HashMap<&String, [u8; 3]> = self.wave.colors.iter().map(|(k, c)| (k, [c.r(), c.g(), c.b()])).collect();
+        storage.set_string("wave_colors", serde_json::to_string(&wc).unwrap_or_default());
         let r: Vec<String> = self.recent.iter().map(|p| p.display().to_string()).collect();
         storage.set_string("recent", serde_json::to_string(&r).unwrap_or_default());
     }

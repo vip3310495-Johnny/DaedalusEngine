@@ -60,7 +60,7 @@ impl Running {
                 match &sweep {
                     None if mc.is_some() => {
                         let m = mc.as_ref().unwrap();
-                        format!("{}；種子 {}；每次{}", m.vars.iter().map(|v| format!("{} ±{}%", v.name, v.tol * 100.0)).collect::<Vec<_>>().join("、"), m.seed, base)
+                        format!("{}；種子 {}；每次{}", m.vars.iter().map(|v| format!("{} ±{}%", v.name, daedalus_core::montecarlo::fmt_pct(v.tol))).collect::<Vec<_>>().join("、"), m.seed, base)
                     }
                     Some(s) => {
                         let lo = s.values.iter().cloned().fold(f64::INFINITY, f64::min);

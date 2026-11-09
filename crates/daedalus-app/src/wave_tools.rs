@@ -267,7 +267,7 @@ impl FftView {
         FftView { ci, hann: false, db: false, f0: String::new(), fmax: String::new(), cache: None, hover: None }
     }
     /// returns false when the window was closed
-    pub fn ui(&mut self, ctx: &egui::Context, r: &TranResult, range: (f64, f64), range_desc: &str, pal: &Pal) -> bool {
+    pub fn ui(&mut self, ctx: &egui::Context, r: &TranResult, range: (f64, f64), range_desc: &str, pal: &Pal, cols: &[egui::Color32]) -> bool {
         let mut open = true;
         egui::Window::new("FFT 頻譜分析").open(&mut open).default_size([760.0, 600.0]).resizable(true).show(ctx, |ui| {
             if r.names.is_empty() {
@@ -340,7 +340,7 @@ impl FftView {
             let painter = ui.painter_at(rect);
             ax.draw(&painter, pal, "Hz", true);
             let pc = ui.painter_at(plot);
-            let col = pal.curves[self.ci % 8];
+            let col = cols.get(self.ci).copied().unwrap_or(pal.curves[self.ci % 8]);
             let bottom = y.0;
             if (kmax as f32) < plot.width() / 3.0 {
                 for k in 0..=kmax {

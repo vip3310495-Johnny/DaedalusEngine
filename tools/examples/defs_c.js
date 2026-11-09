@@ -161,8 +161,10 @@ module.exports = (EX, H) => {
         ['LIMDVDT', 'Ld', { L: 100 }, { in: 'u1', out: 'y_ld' }], ['VP', 'Y_ld', {}, { n: 'y_ld' }],
         ['UTD', 'Ud', {}, { in: 'u2', out: 'y_ud' }], ['VP', 'Y_ud', {}, { n: 'y_ud' }],
         ['TDELAY', 'Td', { Td: '2m' }, { in: 'u2', out: 'y_td' }], ['VP', 'Y_td', {}, { n: 'y_td' }],
+        ['TDELAY', 'Tdc', { Td: '2m' }, { in: 'one', out: 'y_tdc' }], ['VP', 'Y_td_const', {}, { n: 'y_tdc' }],
+        ['VSQU', 'Usq', { Vpp: 1, f: 500, D: 0.5 }, { '+': 'sq', '-': '0' }], ['TDELAY', 'Tdq', { Td: '0.3m' }, { in: 'sq', out: 'y_tdq' }], ['VP', 'Y_td_square', {}, { n: 'y_tdq' }],
       ],
-      screens: [['Y_i', 'Y_pi', 'Y_ld'], ['Y_p', 'Y_d', 'Y_lim'], ['Y_ri'], ['Y_sub', 'Y_sum'], ['Y_ud', 'Y_td']],
+      screens: [['Y_i', 'Y_pi', 'Y_ld'], ['Y_p', 'Y_d', 'Y_lim'], ['Y_ri'], ['Y_sub', 'Y_sum'], ['Y_ud', 'Y_td'], ['Y_td_const', 'Y_td_square']],
       checks: h => {
         const frac = x => x - Math.floor(x);
         return [
@@ -177,6 +179,8 @@ module.exports = (EX, H) => {
           wave(h, 'Y_ld', t => (t < 1e-3 ? 0 : Math.min(1, 100 * (t - 1e-3))), 0, 20e-3, [1e-3, 11e-3], 2e-3, '變化率限制 100 /s'),
           wave(h, 'Y_ud', t => u2(t - dt), dt, 20e-3, [], 1e-10, '單位時間延遲 = u2(t − Δt)'),
           wave(h, 'Y_td', t => (t > 2e-3 ? u2(t - 2e-3) : 0), 0, 20e-3, [], 1e-10, '2 ms 時間延遲'),
+          wave(h, 'Y_td_const', t => (t >= 2e-3 ? 1 : 0), 0, 20e-3, [2e-3], 1e-12, '時間延遲：常數 1 延遲 2 ms（之前輸出 0）'),
+          wave(h, 'Y_td_square', t => (t >= 0.3e-3 && (t - 0.3e-3) * 500 % 1 < 0.5 ? 1 : 0), 0, 20e-3, Array.from({ length: 21 }, (_, k) => 0.3e-3 + k * 1e-3), 1e-12, '時間延遲：t = 0 即為高電位的方波延遲 0.3 ms'),
         ];
       },
     });

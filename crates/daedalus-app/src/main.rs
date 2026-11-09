@@ -8,12 +8,16 @@ mod dialogs;
 mod editor;
 mod icons;
 mod libpanel;
+mod mc_edit;
+mod pdf_export;
 mod plot;
 mod simrun;
 mod symbols;
 mod theme;
 mod script;
+mod settings;
 mod wave;
+mod wave_report;
 mod wave_tools;
 
 use std::sync::Arc;

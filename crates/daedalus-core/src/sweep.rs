@@ -11,6 +11,34 @@ use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
+/// what one run changes: a parameter-file variable, or one parameter of one element
+#[derive(Clone, Debug, PartialEq)]
+pub enum Target {
+    Var(String),
+    El { id: i64, key: String },
+}
+impl Target {
+    /// the same thing (variable names are case-insensitive)
+    pub fn same(&self, o: &Target) -> bool {
+        match (self, o) {
+            (Target::Var(a), Target::Var(b)) => a.eq_ignore_ascii_case(b),
+            _ => self == o,
+        }
+    }
+}
+
+/// a netlist with one override applied
+pub fn apply_override(n: &mut Netlist, t: &Target, v: f64) {
+    match t {
+        Target::Var(var) => n.param_text = override_param(&n.param_text, var, v),
+        Target::El { id, key } => {
+            if let Some(e) = n.elements.iter_mut().find(|e| e.id == *id) {
+                e.params.insert(key.clone(), format!("{:e}", v));
+            }
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct SweepSpec {
     pub var: String,
@@ -119,13 +147,13 @@ pub fn eng(v: f64) -> String {
 
 /// run the sweep; `progress(fraction, runs_done)` is called from worker threads
 pub fn run_sweep(net: &Netlist, sc: &SimCtrl, sw: &SweepSpec, threads: usize, progress: &(dyn Fn(f64, f64) + Sync), cancel: &AtomicBool) -> R<TranResult> {
-    let cases: Vec<(String, Vec<(String, f64)>)> = sw.values.iter().map(|&v| (format!("{}={}", sw.var, eng(v)), vec![(sw.var.clone(), v)])).collect();
+    let cases: Vec<(String, Vec<(Target, f64)>)> = sw.values.iter().map(|&v| (format!("{}={}", sw.var, eng(v)), vec![(Target::Var(sw.var.clone()), v)])).collect();
     run_cases(net, sc, &cases, &sw.var, threads, progress, cancel)
 }
 
 /// One transient per case (label, parameter overrides), in parallel on `threads` workers, merged into one
 /// result with probe-major columns "Vo [label]". Used by the parameter sweep and the Monte Carlo analysis.
-pub fn run_cases(net: &Netlist, sc: &SimCtrl, cases: &[(String, Vec<(String, f64)>)], var_desc: &str, threads: usize, progress: &(dyn Fn(f64, f64) + Sync), cancel: &AtomicBool) -> R<TranResult> {
+pub fn run_cases(net: &Netlist, sc: &SimCtrl, cases: &[(String, Vec<(Target, f64)>)], var_desc: &str, threads: usize, progress: &(dyn Fn(f64, f64) + Sync), cancel: &AtomicBool) -> R<TranResult> {
     let nv = cases.len();
     if nv == 0 {
         return Err(SimError::new("沒有任何模擬案例"));
@@ -136,8 +164,8 @@ pub fn run_cases(net: &Netlist, sc: &SimCtrl, cases: &[(String, Vec<(String, f64
     let mut nets: Vec<Netlist> = Vec::with_capacity(nv);
     for (i, (_, ov)) in cases.iter().enumerate() {
         let mut n = net.clone();
-        for (var, v) in ov {
-            n.param_text = override_param(&n.param_text, var, *v);
+        for (t, v) in ov {
+            apply_override(&mut n, t, *v);
         }
         nets.push(n.clone());
         let r = TransientRunner::new(&n, sc).map_err(|e| SimError { msg: format!("[{}] {}", labels[i], e.msg), el: e.el })?;

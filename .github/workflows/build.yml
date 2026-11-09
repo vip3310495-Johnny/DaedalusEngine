@@ -121,6 +121,8 @@ jobs:
           path: |
             out/guitest/*.png
             out/guitest/*.json
+            out/guitest/*.pdf
+            out/guitest/*.xlsx
           if-no-files-found: ignore
 
       - name: Collect programs

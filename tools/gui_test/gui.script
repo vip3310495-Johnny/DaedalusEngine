@@ -98,12 +98,109 @@ dump 17_key_G
 key Escape
 wait 3
 
+# probe copy/paste: clicked on the symbol (view reset first: the hand / right-drag tests moved it)
+fit
+wait 6
+wmove 5 -0.3
+click left
+wait 4
+key C ctrl
+key V ctrl
+wmove 12 8
+wait 6
+dump 18_probe_paste
+shot 18_probe_paste
+click left
+wait 4
+dump 18b_probe_placed
+key Escape
+key Escape
+# probe selected through its name text: the first click only selects, so Ctrl+C / Ctrl+V paste the probe
+wait 30
+textmove 5
+click left
+wait 4
+dump 19_probe_text
+key C ctrl
+key V ctrl
+wmove 16 4
+wait 6
+dump 19b_probe_text_paste
+click left
+wait 4
+key Escape
+key Escape
+# a click on the text of the element that is already selected edits it in place
+wait 30
+textmove 5
+click left
+wait 40
+textmove 5
+click left
+wait 4
+dump 19c_text_edit
+shot 19c_text_edit
+close_dialogs
+key Escape
+wait 3
+# undo the two pasted probes (unconnected probes would stop the simulation)
+key Z ctrl
+key Z ctrl
+wait 4
+dump 19d_undo_paste
+# right drag pans; no menu
+rdrag 0 -2 -3 -5
+wait 6
+dump 19e_rdrag
+# properties dialog: wide value field
+wmove 1.7 2.2
+click left
+wait 3
+key Enter
+wait 8
+shot 19f_props
+dump 19f_props
+close_dialogs
+key Escape
+wait 3
+
+# File > Settings: a double click on an empty spot opens quick add only when enabled (off by default)
+fit
+wait 10
+wmove 9 -2
+dblclick left
+wait 6
+dump 25_dbl_off
+key Escape
+wait 3
+app_settings 15 150 1
+wait 8
+wmove 9 -2
+dblclick left
+wait 6
+dump 26_dbl_on
+close_dialogs
+key Escape
+wait 4
+open_settings 1
+wait 8
+shot 27_settings
+dump 27_settings
+close_dialogs
+app_settings 13 100 0
+wait 8
+# File > Export view: the whole schematic as a vector PDF
+export_pdf schematic.pdf
+wait 4
+dump 28_export
+
 # waveform viewer: blank single screen by default, math channel, FFT
 run
 wait 80
 dump 20_wave_default
 shot 20_wave_default
 wave_add Vout
+wave_color Vout e01060
 wave_math P2 Vout*2
 wait 6
 wave_math BAD Vout+*
@@ -115,4 +212,82 @@ wave_fft Vout
 wait 12
 shot 22_fft
 dump 22_fft
+# the wheel over the FFT window must not zoom the waveform below it
+movewin FFT 頻譜分析
+scroll 240
+wait 6
+dump 23_fft_scroll
+# control: the wheel over an uncovered part of the waveform plot zooms it
+move 930 400
+scroll 240
+wait 6
+dump 24_plot_scroll
+# the signal list keeps its height when signals are added
+dump 29_sig_before
+wave_math P3 Vout*3
+wait 6
+dump 30_sig_after
+# settings (fonts, line width) and the report (PDF, Excel) with cursor readings
+wave_close_tools
+wave_style 15 16 13 2.5
+wave_settings 1
+wait 10
+shot 31_wave_settings
+dump 31_wave_settings
+wave_settings 0
+wave_report report.pdf
+wait 10
+wave_report report.xlsx
+wait 10
+dump 32_report
+# XY stretch tool: a left / right drag zooms the time axis, up / down the Y axis
+wave_cursors_off
+wave_tool stretch
+wait 4
+move 700 400
+down left
+move 720 400
+move 760 400
+move 800 400
+wait 4
+up left
+wait 6
+dump 33_stretch_x
+move 700 400
+down left
+move 700 380
+move 700 340
+move 700 300
+wait 4
+up left
+wait 6
+dump 34_stretch_y
+shot 34_stretch
+# Monte Carlo: tolerances picked in the table of the properties dialog, then run (element parameters varied directly)
+wave_close_tools
+close_dialogs
+place MONTECARLO 22 -4
+wait 4
+open_props_type MONTECARLO
+wait 8
+dump 35_mc_empty
+mc rlc
+wait 2
+mc add Vs.Vm
+wait 2
+mc push R1
+wait 8
+dump 36_mc_rows
+shot 36_mc_rows
+mc remove 3
+props_set n 4
+props_set seed 3
+wait 6
+key Enter ctrl
+wait 8
+dump 37_mc_applied
+run
+wait 150
+dump 38_mc_run
+shot 38_mc_run
 quit

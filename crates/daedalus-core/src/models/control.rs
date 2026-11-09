@@ -917,7 +917,9 @@ impl Inst for TDelay {
         let u = e.cv[self.i as usize];
         let tp = t - h;
         let up = e.cv_p[self.i as usize];
-        let y = self.at(t - self.td, u, t, up, tp);
+        // before t = Td the delayed signal does not exist yet: the output is 0 (not the input at t = 0)
+        let q = t - self.td;
+        let y = if q < -e.eps_t { 0.0 } else { self.at(q.max(0.0), u, t, up, tp) };
         let ev = e.cev[self.i as usize];
         self.pend = Some((t, u, if !ev.is_nan() && u != up { ev } else { NAN }, up));
         set_out(e, self.o, y, t);
@@ -960,6 +962,13 @@ impl Inst for TDelay {
         }
     }
     fn next_break(&self, t: f64, _e: &E) -> f64 {
+        // the output steps from 0 to the input's initial value at t = Td
+        if let (Some(&t0), Some(&v0)) = (self.bt.first(), self.bv.first()) {
+            let te = t0 + self.td;
+            if v0 != 0.0 && te > t {
+                return te;
+            }
+        }
         for i in 1..self.bt.len() {
             if self.bt[i] == self.bt[i - 1] {
                 let te = self.bt[i] + self.td;

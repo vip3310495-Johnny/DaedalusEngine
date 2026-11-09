@@ -1,6 +1,6 @@
 {
  "app": "psimweb",
- "version": "V1.2.0",
+ "version": "V1.3.0",
  "doc": {
   "elements": [
    {
@@ -958,6 +958,173 @@
     "params": {
      "text": "y_td"
     }
+   },
+   {
+    "id": 120,
+    "type": "TDELAY",
+    "x": 32,
+    "y": 94,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Tdc",
+    "params": {
+     "Td": "2m"
+    }
+   },
+   {
+    "id": 122,
+    "type": "LABEL",
+    "x": 28,
+    "y": 94,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "one"
+    }
+   },
+   {
+    "id": 124,
+    "type": "LABEL",
+    "x": 36,
+    "y": 94,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y_tdc"
+    }
+   },
+   {
+    "id": 125,
+    "type": "VP",
+    "x": -13,
+    "y": 106,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_td_const",
+    "params": {}
+   },
+   {
+    "id": 127,
+    "type": "LABEL",
+    "x": -13,
+    "y": 110,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y_tdc"
+    }
+   },
+   {
+    "id": 128,
+    "type": "VSQU",
+    "x": 1,
+    "y": 107,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Usq",
+    "params": {
+     "Vpp": "1",
+     "f": "500",
+     "D": "0.5",
+     "off": "0",
+     "ph": "0"
+    }
+   },
+   {
+    "id": 130,
+    "type": "LABEL",
+    "x": 1,
+    "y": 103,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "sq"
+    }
+   },
+   {
+    "id": 132,
+    "type": "GND",
+    "x": 1,
+    "y": 111,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 133,
+    "type": "TDELAY",
+    "x": 16,
+    "y": 106,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Tdq",
+    "params": {
+     "Td": "0.3m"
+    }
+   },
+   {
+    "id": 135,
+    "type": "LABEL",
+    "x": 12,
+    "y": 106,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "sq"
+    }
+   },
+   {
+    "id": 137,
+    "type": "LABEL",
+    "x": 20,
+    "y": 106,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y_tdq"
+    }
+   },
+   {
+    "id": 138,
+    "type": "VP",
+    "x": 31,
+    "y": 106,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Y_td_square",
+    "params": {}
+   },
+   {
+    "id": 140,
+    "type": "LABEL",
+    "x": 31,
+    "y": 110,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "y_tdq"
+    }
    }
   ],
   "wires": [
@@ -1275,9 +1442,65 @@
     "y1": 95,
     "x2": 17,
     "y2": 97
+   },
+   {
+    "id": 121,
+    "x1": 30,
+    "y1": 94,
+    "x2": 28,
+    "y2": 94
+   },
+   {
+    "id": 123,
+    "x1": 34,
+    "y1": 94,
+    "x2": 36,
+    "y2": 94
+   },
+   {
+    "id": 126,
+    "x1": -13,
+    "y1": 108,
+    "x2": -13,
+    "y2": 110
+   },
+   {
+    "id": 129,
+    "x1": 1,
+    "y1": 105,
+    "x2": 1,
+    "y2": 103
+   },
+   {
+    "id": 131,
+    "x1": 1,
+    "y1": 109,
+    "x2": 1,
+    "y2": 111
+   },
+   {
+    "id": 134,
+    "x1": 14,
+    "y1": 106,
+    "x2": 12,
+    "y2": 106
+   },
+   {
+    "id": 136,
+    "x1": 18,
+    "y1": 106,
+    "x2": 20,
+    "y2": 106
+   },
+   {
+    "id": 139,
+    "x1": 31,
+    "y1": 108,
+    "x2": 31,
+    "y2": 110
    }
   ],
-  "nid": 120
+  "nid": 141
  },
  "screens": [
   [
@@ -1300,6 +1523,10 @@
   [
    "Y_ud",
    "Y_td"
+  ],
+  [
+   "Y_td_const",
+   "Y_td_square"
   ]
  ]
 }

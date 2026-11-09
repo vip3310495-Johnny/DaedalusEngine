@@ -33,6 +33,12 @@ pub enum Icon {
     Plus,
     Minus,
     Search,
+    /// settings
+    Gear,
+    /// drag to stretch the X / Y axes
+    Stretch,
+    /// exported report
+    Report,
 }
 
 fn arc(c: Pos2, r: f32, a0: f32, a1: f32, n: usize) -> Vec<Pos2> {
@@ -173,6 +179,27 @@ pub fn paint(ui: &Ui, r: Rect, icon: Icon, col: Color32) {
             p.add(Shape::convex_polygon(vec![at(8.0, 11.5), at(4.5, 7.5), at(11.5, 7.5)], col, Stroke::NONE));
             p.add(line(&[(2.5, 10.0), (2.5, 14.0), (13.5, 14.0), (13.5, 10.0)]));
         }
+        Icon::Gear => {
+            p.circle_stroke(c, 2.2 * u, st);
+            p.circle_stroke(c, 4.8 * u, st);
+            for k in 0..8 {
+                let (sa, ca) = (k as f32 * std::f32::consts::FRAC_PI_4).sin_cos();
+                p.add(Shape::line_segment([c + vec2(ca, sa) * 4.8 * u, c + vec2(ca, sa) * 7.0 * u], Stroke::new(2.2, col)));
+            }
+        }
+        Icon::Stretch => {
+            p.add(line(&[(2.0, 2.0), (2.0, 14.0), (14.0, 14.0)]));
+            p.add(line(&[(5.5, 10.5), (13.5, 10.5)]));
+            p.add(Shape::convex_polygon(vec![at(15.0, 10.5), at(12.5, 8.7), at(12.5, 12.3)], col, Stroke::NONE));
+            p.add(Shape::convex_polygon(vec![at(4.5, 10.5), at(7.0, 8.7), at(7.0, 12.3)], col, Stroke::NONE));
+            p.add(line(&[(10.0, 2.0), (10.0, 7.5)]));
+            p.add(Shape::convex_polygon(vec![at(10.0, 0.8), at(8.2, 3.3), at(11.8, 3.3)], col, Stroke::NONE));
+            p.add(Shape::convex_polygon(vec![at(10.0, 8.7), at(8.2, 6.2), at(11.8, 6.2)], col, Stroke::NONE));
+        }
+        Icon::Report => {
+            p.add(line(&[(3.0, 1.5), (10.5, 1.5), (13.5, 4.5), (13.5, 14.5), (3.0, 14.5), (3.0, 1.5)]));
+            p.add(line(&[(5.0, 12.0), (7.0, 8.5), (9.0, 10.5), (11.5, 5.5)]));
+        }
         Icon::Plus | Icon::Minus => {
             p.rect_stroke(Rect::from_min_max(at(2.0, 3.0), at(14.0, 13.0)), 1.5, Stroke::new(1.2, col), egui::StrokeKind::Middle);
             p.add(line(&[(5.5, 8.0), (10.5, 8.0)]));
@@ -185,9 +212,11 @@ pub fn paint(ui: &Ui, r: Rect, icon: Icon, col: Color32) {
 
 /// toolbar button with an icon (and optional text)
 pub fn button(ui: &mut Ui, icon: Icon, text: &str, tip: &str, enabled: bool, selected: bool, col: Option<Color32>) -> Response {
-    let font = egui::FontId::proportional(13.0);
+    // the label follows the interface text size (File → Settings)
+    let fs = ui.style().text_styles.get(&egui::TextStyle::Button).map(|f| f.size).unwrap_or(13.0);
+    let font = egui::FontId::proportional(fs);
     let tw = if text.is_empty() { 0.0 } else { ui.painter().layout_no_wrap(text.to_string(), font.clone(), Color32::WHITE).size().x + 6.0 };
-    let (rect, resp) = ui.allocate_exact_size(vec2(28.0 + tw, 26.0), if enabled { Sense::click() } else { Sense::hover() });
+    let (rect, resp) = ui.allocate_exact_size(vec2(28.0 + tw, 26.0f32.max(fs + 12.0)), if enabled { Sense::click() } else { Sense::hover() });
     let vis = ui.visuals();
     if selected {
         ui.painter().rect_filled(rect, 4.0, vis.selection.bg_fill.gamma_multiply(0.6));
@@ -196,7 +225,7 @@ pub fn button(ui: &mut Ui, icon: Icon, text: &str, tip: &str, enabled: bool, sel
     }
     let base = col.unwrap_or(vis.text_color());
     let c = if enabled { base } else { base.gamma_multiply(0.35) };
-    let ir = Rect::from_min_size(rect.min + vec2(5.0, 4.0), vec2(18.0, 18.0));
+    let ir = Rect::from_min_size(pos2(rect.min.x + 5.0, rect.center().y - 9.0), vec2(18.0, 18.0));
     paint(ui, ir, icon, c);
     if !text.is_empty() {
         ui.painter().text(pos2(ir.max.x + 4.0, rect.center().y), egui::Align2::LEFT_CENTER, text, font, if enabled { vis.text_color() } else { vis.weak_text_color() });
