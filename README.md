@@ -150,6 +150,21 @@ daedalus-cli <電路.psimx> <輸出.csv> --ac [--threads N]   AC 掃頻（預設
 
 結束時以一行 JSON 輸出耗時、步數與警告（蒙地卡羅另含統計量與每次抽樣值）；電路錯誤時結束代碼為 2，模擬失敗為 3。
 
+## 給 AI 代理的電路繪製 Skill
+
+[`skills/daedalus-circuit-builder`](skills/daedalus-circuit-builder) 是一個 Agent Skill（`SKILL.md`＋腳本），教 AI 代理把電路圖、照片或文字描述
+畫成可直接開啟的 `.psimx`，並在交付前用 DaedalusEngine 本身驗證。每個 Release 也附上打包好的 `daedalus-circuit-builder-skill.zip`。
+
+- `scripts/psimx_builder.py`：Python 產生器（放元件、依接腳名稱取座標、畫導線），靜態檢查開路接腳、只放一側的標籤、
+  功率與控制直接相連等錯誤；接腳與參數表 `elements.json` 由元件庫自動產生（全部 221 種元件）。
+- `scripts/verify_psimx.py`：靜態檢查＋以 `daedalus-cli` 模擬，列出每支探棒的最小／最大／終值／平均，可用 `--expect` 判定。
+- `scripts/shot_psimx.py`：用 DaedalusEngine 開檔截圖（`--run` 連同波形），讓代理實際看版面。
+- `SKILL.md`：檔案格式、連線規則、建模指引、版面規範（分區、軌、介面標籤）與工作流程；`references/elements.md` 為完整元件參考。
+- 範例 `examples/buck_converter.py` 在每次建置時由 CI 實際產生、檢查並模擬（Vo、電感電流平均值須在預期範圍內）。
+
+使用方式：把資料夾放到代理的 skills 目錄（例如 Claude Code 的 `~/.claude/skills/`），代理需要能執行 Python 3；模擬驗證使用已安裝的
+`daedalus-cli.exe`（`%LOCALAPPDATA%ProgramsDaedalusEngine`）。
+
 ---
 
 ## 模擬引擎

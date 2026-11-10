@@ -103,6 +103,21 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node tools/examples/coverage.js -m
 
+      # the circuit-builder skill for agents (skills/daedalus-circuit-builder): its element tables match the library,
+      # and its example is built, checked and simulated with the same scripts an agent uses
+      - name: Circuit-builder skill
+        shell: pwsh
+        env:
+          PYTHONIOENCODING: utf-8
+        run: |
+          node tools/skill/gen.js --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          New-Item -ItemType Directory -Force out/skill | Out-Null
+          python skills/daedalus-circuit-builder/examples/buck_converter.py out/skill/buck.psimx
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python skills/daedalus-circuit-builder/scripts/verify_psimx.py out/skill/buck.psimx --cli target/release/daedalus-cli.exe --expect Vo:avg10:11.5:12.5 --expect IL:avg10:1.9:2.1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       # scripted GUI test: input events replayed by the app itself (tools/gui_test), checked from state dumps;
       # the runner has no GPU, so Mesa's software OpenGL is placed next to a test copy of the program
       - name: Cache Mesa archive
@@ -234,7 +249,9 @@ jobs:
           $dir = if ($env:SIGN -eq "true") { "out/installer-signed" } else { "out/installer" }
           New-Item -ItemType Directory -Force out/release | Out-Null
           Copy-Item "$dir/*.exe" out/release/
-          Get-ChildItem out/release/*.exe | ForEach-Object { "{0}  {1}" -f (Get-FileHash $_ -Algorithm SHA256).Hash.ToLower(), $_.Name } | Set-Content out/release/SHA256SUMS.txt -Encoding ascii
+          # the circuit-builder skill for agents, as a zip next to the installer
+          Compress-Archive -Path skills/daedalus-circuit-builder -DestinationPath out/release/daedalus-circuit-builder-skill.zip -Force
+          Get-ChildItem out/release/*.exe, out/release/*.zip | ForEach-Object { "{0}  {1}" -f (Get-FileHash $_ -Algorithm SHA256).Hash.ToLower(), $_.Name } | Set-Content out/release/SHA256SUMS.txt -Encoding ascii
           Get-Content out/release/SHA256SUMS.txt
           "signed=$env:SIGN" >> $env:GITHUB_OUTPUT
 
