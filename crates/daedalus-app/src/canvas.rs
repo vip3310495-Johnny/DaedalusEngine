@@ -705,6 +705,11 @@ impl Canvas {
                 }
                 if hover_text.is_none() {
                     if let Some(w) = w {
+                        hover_text = pin_hover(ed, w, (6.0 / self.scale as f64).max(0.25));
+                    }
+                }
+                if hover_text.is_none() {
+                    if let Some(w) = w {
                         if let Some(id) = ed.hit_element(w.0, w.1) {
                             if let Some(el) = ed.el(id) {
                                 if let Some(d) = lib().get(&el.typ) {
@@ -730,5 +735,67 @@ impl Canvas {
         } else if matches!(self.mode, Mode::Wire) || matches!(self.drag, Drag::WireFrom { .. }) {
             ui.ctx().set_cursor_icon(egui::CursorIcon::Crosshair);
         }
+    }
+}
+
+/// the pin under the pointer (within `tol` grid units): "R1 的接腳 I+：電流由此流入…"
+fn pin_hover(ed: &Editor, w: (f64, f64), tol: f64) -> Option<String> {
+    let mut best: Option<(f64, String)> = None;
+    for el in &ed.doc.elements {
+        let d = match lib().get(&el.typ) {
+            Some(d) => d,
+            None => continue,
+        };
+        if d.has("label") || d.has("text") {
+            continue;
+        }
+        for p in lib().pins_for(el) {
+            if p.k == "gnd" || p.k == "lbl" {
+                continue;
+            }
+            let (px, py) = tpt(el, p.x, p.y);
+            let dist = ((px - w.0).powi(2) + (py - w.1).powi(2)).sqrt();
+            if dist <= tol && best.as_ref().map(|b| dist < b.0).unwrap_or(true) {
+                let who = if el.name.is_empty() { d.zh.clone() } else { format!("{}（{}）", el.name, d.zh) };
+                best = Some((dist, format!("{} 的接腳「{}」：{}", who, p.n, pin_role(&el.typ, &p.n, &p.k))));
+            }
+        }
+    }
+    best.map(|b| b.1)
+}
+
+/// what a pin is for (hover text)
+pub fn pin_role(typ: &str, name: &str, kind: &str) -> String {
+    let kind_txt = match kind {
+        "p" => "功率接腳",
+        "a" => "功率或控制接腳",
+        "ci" => "控制輸入",
+        "g" => "閘極（接控制訊號）",
+        "co" => "控制輸出",
+        _ => "接腳",
+    };
+    let role = match (typ, name) {
+        ("WATT", "I+") => "電流由此流入；量測電壓為 I+ 相對 V−",
+        ("WATT", "I-") => "電流由此流出",
+        ("WATT", "V-") => "電壓的參考端（負端）",
+        ("WH3", "A+") | ("WH3", "B+") | ("WH3", "C+") => "該相電流由此流入；該相電壓為此點相對 N",
+        ("WH3", "A-") | ("WH3", "B-") | ("WH3", "C-") => "該相電流由此流出",
+        ("WH3", "N") => "電壓參考點（中性點；三相三線時可接任一點）",
+        ("DVDT", "in") => "輸入電壓（對地）",
+        ("DVDT", "out") => "輸出：輸入電壓的時間微分（對地電壓源）",
+        ("CTOP", "out") => "輸出：對地的電壓源",
+        (_, "in") | (_, "out") if kind == "p" => if name == "in" { "電流由此流入（量測方向：in → out）" } else { "電流由此流出" },
+        (_, "+") | (_, "in+") | (_, "c+") | (_, "IN+") | (_, "V+") => "正端",
+        (_, "-") | (_, "in-") | (_, "c-") | (_, "IN-") | (_, "V-") => "負端",
+        (_, "vin1") => "輸入 1",
+        (_, "vin2") => "輸入 2",
+        (_, "dot") => "注入點之後（圓點端）",
+        (_, "x") if typ == "ACP2" => "注入點之前",
+        _ => "",
+    };
+    if role.is_empty() {
+        kind_txt.to_string()
+    } else {
+        format!("{}（{}）", role, kind_txt)
     }
 }

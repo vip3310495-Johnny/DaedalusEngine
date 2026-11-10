@@ -89,6 +89,39 @@ const rx = w32 && w33 ? span(w33.wave.x) / span(w32.wave.x) : NaN;
 ok(w33 && w33.wave.tool === 'stretch' && rx > 0.45 && rx < 0.58, 'XY 縮放：向右拖曳 100 px 放大時間軸（約 1.95 倍）', `比例 ${rx.toFixed(3)}（預期 0.513）`);
 const ry = w33 && w34 && w33.wave.ys[0] && w34.wave.ys[0] ? span(w34.wave.ys[0]) / span(w33.wave.ys[0]) : NaN;
 ok(w34 && JSON.stringify(w34.wave.x) === JSON.stringify(w33.wave.x) && ry > 0.45 && ry < 0.58, 'XY 縮放：向上拖曳 100 px 只放大 Y 軸', `Y 比例 ${ry.toFixed(3)}（預期 0.513），X ${w34 && JSON.stringify(w34.wave.x) === JSON.stringify(w33.wave.x) ? '不變' : '改變'}`);
+// waveform viewer: measurement columns, every / selected screen, scrolling screens, waveform file, all-screen report
+const g39 = load('39_meas_all'), g40 = load('40_meas_one'), g41 = load('41_six_screens'), g42 = load('42_report_all'), g43 = load('43_saved'), g44 = load('44_reopened');
+const mrow = (d, n) => d && d.wave.meas.find(r => r.name === n);
+ok(g39 && JSON.stringify(g39.wave.meas_heads) === JSON.stringify(['Freq', 'DutyP', 'Rms']), '設定中選擇的量測欄位（Measure 1–3，第 4 欄不顯示）', g39 && JSON.stringify(g39.wave.meas_heads));
+const vo = mrow(g39, 'Vout'), p3 = mrow(g39, 'P3');
+ok(vo && Math.abs(vo.vals[0] / 1000 - 1) < 0.03 && Math.abs(vo.vals[1] - 50) < 5, '示波器量測：Vout 頻率 ≈ 1 kHz、正工作週期 ≈ 50 %', vo && `f = ${vo.vals[0].toFixed(2)} Hz, duty = ${vo.vals[1].toFixed(2)} %`);
+ok(vo && p3 && Math.abs(p3.vals[2] / vo.vals[2] - 3) < 1e-9, '量測：P3 = 3·Vout 的 RMS 為 3 倍', vo && p3 && `${p3.vals[2]} / ${vo.vals[2]}`);
+ok(g39 && g39.wave.meas_all && g39.wave.meas.map(r => r.name).join(',') === 'Vout,P2,P3' && g39.wave.cur_listed.join(',') === 'Vout,P2,P3', '量測、游標預設顯示所有畫面（同一訊號只列一次）', g39 && g39.wave.meas.map(r => r.name).join(','));
+ok(g40 && !g40.wave.meas_all && !g40.wave.cur_all && g40.wave.meas.map(r => r.name).join(',') === 'P3' && g40.wave.cur_listed.join(',') === 'P3', '改為只顯示目前畫面（畫面 2：P3）', g40 && `${g40.wave.meas.map(r => r.name).join(',')} / ${g40.wave.cur_listed.join(',')}`);
+const sh = g41 && g41.wave.screen_h;
+ok(g41 && g41.wave.screens.length === 6 && sh && sh[0] > 60 && Math.abs(sh[1] - 6 * sh[0]) < 1 && g41.wave.act === 5, '6 個畫面：每個保持 4 個畫面時的高度，可上下捲動', sh && `每個 ${sh[0].toFixed(1)} px，全部 ${sh[1].toFixed(1)} px`);
+const ra = pdfOk(`${pre}_report_all.pdf`, 8000);
+let xa = null; try { xa = fs.readFileSync(`${pre}_report_all.xlsx`); } catch (e) {}
+// 6 screens, 2 with signals: a chart for each of those, the 4 blank ones are only listed
+const xaOk = xa && xa.includes('xl/charts/chart2.xml') && !xa.includes('xl/charts/chart3.xml');
+ok(ra > 0 && xaOk && g42 && /已匯出報告.*report_all\.xlsx$/.test(g42.wave.report_msg), '匯出所有波形報告：PDF 與 Excel（有訊號的 2 個畫面各一張圖，空白畫面只列出）', `PDF ${ra} bytes，Excel ${xa ? xa.length : 0} bytes`);
+let wf = null; try { wf = fs.readFileSync(`${pre}_wave.dwave`); } catch (e) {}
+ok(wf && wf.slice(0, 8).toString() === 'DAEDWAVE' && g43 && /已儲存波形檔/.test(g43.wave.report_msg), '儲存波形檔（.dwave）', wf ? `${wf.length} bytes` : g43 && g43.wave.report_msg);
+ok(g44 && g43 && g44.wave.open && JSON.stringify(g44.wave.names) === JSON.stringify(g43.wave.names) && JSON.stringify(g44.wave.screens) === JSON.stringify(g43.wave.screens) && g44.wave.act === g43.wave.act && JSON.stringify(g44.wave.style) === JSON.stringify(g43.wave.style) && JSON.stringify(g44.wave.meas_heads) === JSON.stringify(g43.wave.meas_heads) && JSON.stringify(g44.wave.x) === JSON.stringify(g43.wave.x) && JSON.stringify(g44.wave.math) === JSON.stringify(g43.wave.math) && JSON.stringify(g44.wave.meas) === JSON.stringify(g43.wave.meas), '重新開啟波形檔：訊號、畫面（含空白畫面）、選取的畫面、時間範圍、運算訊號、字體與量測設定都相同', g44 && `${g44.wave.names.join(',')} | ${JSON.stringify(g44.wave.screens)}`);
+const g45 = load('45_lib_hidden'), g46 = load('46_lib_fly'), g47 = load('47_lib_closed'), g48 = load('48_lib_pinned');
+const rect = (d, n) => d && d.lib.rects.find(r => r[0] === n);
+ok(g45 && !g45.lib.pinned && !g45.lib.fly && rect(g45, 'lib_tab'), '元件庫取消釘選：隱藏成左緣的「元件庫」標籤', g45 && JSON.stringify(g45.lib));
+const fr = rect(g46, 'lib_fly');
+ok(g46 && g46.lib.fly && fr && fr[3] - fr[1] >= 280, '滑鼠移到標籤：元件庫展開在電路圖上', fr && `寬 ${(fr[3] - fr[1]).toFixed(0)} px`);
+ok(g47 && !g47.lib.fly, '滑鼠離開後元件庫自動隱藏', g47 && JSON.stringify(g47.lib.fly));
+ok(g48 && g48.lib.pinned && !rect(g48, 'lib_tab'), '重新釘選：元件庫固定在左側', g48 && JSON.stringify(g48.lib));
+let man = ''; try { man = fs.readFileSync(`${pre}_manual.html`, 'utf8'); } catch (e) {}
+const nEl = (man.match(/<article class="el"/g) || []).length, nFig = (man.match(/<figure>/g) || []).length;
+const nLib = JSON.parse(fs.readFileSync(require('path').join(__dirname, '../../crates/daedalus-core/assets/library.json'), 'utf8')).length;
+ok(/DaedalusEngine 使用說明書/.test(man) && nEl === nLib && nFig >= nLib - 4, '說明 › 使用說明書：程式內建 HTML 說明書（每個元件一張卡片與示範圖）', `${nEl} / ${nLib} 個元件、${nFig} 張圖、${(man.length / 1024).toFixed(0)} KB`);
+const g49 = load('49_two_viewers');
+const ws = g49 ? g49.waves.filter(w => w.open) : [];
+ok(ws.length >= 2 && ws.some(w => w.names.includes('I_rc')) && ws.some(w => w.names.some(n => n.startsWith('Vout'))) && new Set(ws.map(w => w.doc)).size === ws.length, '模擬另一個電路時開新的波形檢視器，原本電路的結果保留在原視窗', g49 && JSON.stringify(ws.map(w => `${w.title}: ${w.names.slice(0, 3).join(',')}`)));
 // Monte Carlo: tolerance table in the properties dialog, run with element parameters
 const m35 = load('35_mc_empty'), m36 = load('36_mc_rows'), m37 = load('37_mc_applied'), m38 = load('38_mc_run');
 ok(m35 && m35.props_mc && m35.props_mc.rows.length === 0, '蒙地卡羅屬性視窗：新元件沒有容差列（顯示加入說明）', m35 && JSON.stringify(m35.props_mc));

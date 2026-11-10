@@ -82,3 +82,43 @@ pub fn pal(dark: bool) -> &'static Pal {
         &LIGHT
     }
 }
+
+/// Refined egui visuals for both themes: rounder corners, calm panel colours, soft shadows, a blue selection
+/// and a little more room between widgets.
+pub fn style_visuals(ctx: &egui::Context) {
+    use egui::{CornerRadius, Margin, Shadow, Stroke, Theme};
+    for (theme, p) in [(Theme::Light, &LIGHT), (Theme::Dark, &DARK)] {
+        let dark = theme == Theme::Dark;
+        let pick = |d: u32, l: u32| if dark { hex(d) } else { hex(l) };
+        ctx.style_mut_of(theme, |s| {
+            let v = &mut s.visuals;
+            for w in [&mut v.widgets.noninteractive, &mut v.widgets.inactive, &mut v.widgets.hovered, &mut v.widgets.active, &mut v.widgets.open] {
+                w.corner_radius = CornerRadius::same(5);
+            }
+            v.window_corner_radius = CornerRadius::same(8);
+            v.menu_corner_radius = CornerRadius::same(6);
+            v.panel_fill = p.panel2;
+            v.window_fill = p.panel;
+            v.window_stroke = Stroke::new(1.0, p.line);
+            v.widgets.noninteractive.bg_stroke = Stroke::new(1.0, p.line);
+            v.faint_bg_color = pick(0x1d242e, 0xeef2f6);
+            v.extreme_bg_color = pick(0x0f1319, 0xffffff);
+            v.selection.bg_fill = pick(0x1f4f8f, 0xcfe2ff);
+            v.selection.stroke = Stroke::new(1.0, pick(0xd0e2ff, 0x0b4fae));
+            v.hyperlink_color = pick(0x7aa7ff, 0x1c6fd1);
+            v.widgets.inactive.weak_bg_fill = pick(0x242c37, 0xe8ecf1);
+            v.widgets.inactive.bg_fill = pick(0x242c37, 0xe8ecf1);
+            v.widgets.hovered.weak_bg_fill = pick(0x2d3745, 0xdce3eb);
+            v.widgets.hovered.bg_fill = pick(0x2d3745, 0xdce3eb);
+            v.widgets.hovered.bg_stroke = Stroke::new(1.0, pick(0x4a5a70, 0xb4c0ce));
+            v.widgets.active.weak_bg_fill = pick(0x364352, 0xccd6e2);
+            v.widgets.active.bg_fill = pick(0x364352, 0xccd6e2);
+            v.window_shadow = Shadow { offset: [0, 6], blur: 22, spread: 0, color: Color32::from_black_alpha(if dark { 110 } else { 40 }) };
+            v.popup_shadow = Shadow { offset: [0, 4], blur: 14, spread: 0, color: Color32::from_black_alpha(if dark { 100 } else { 34 }) };
+            s.spacing.item_spacing = egui::vec2(8.0, 5.0);
+            s.spacing.button_padding = egui::vec2(7.0, 3.0);
+            s.spacing.menu_margin = Margin::same(6);
+            s.spacing.window_margin = Margin::same(10);
+        });
+    }
+}

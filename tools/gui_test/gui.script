@@ -263,6 +263,63 @@ up left
 wait 6
 dump 34_stretch_y
 shot 34_stretch
+# measurement columns chosen in the settings; every screen or only the selected one; more than four screens scroll
+wave_tool zoom
+wave_fit
+wave_meas 1 Freq
+wave_meas 2 DutyP
+wave_meas 3 Rms
+wave_meas 4 None
+wave_screens 2
+wave_select 1
+wave_add P3
+wait 6
+dump 39_meas_all
+wave_all meas 0
+wave_all cur 0
+wait 4
+dump 40_meas_one
+wave_all meas 1
+wave_all cur 1
+wave_screens 6
+wave_select 5
+wait 12
+shot 41_six_screens
+dump 41_six_screens
+# report of every screen (PDF, Excel); waveform file saved, then opened again through the main window
+wave_report report_all.pdf all
+wait 10
+wave_report report_all.xlsx all
+wait 10
+dump 42_report_all
+wave_save wave
+wait 4
+dump 43_saved
+wave_reset
+wait 4
+wave_open wave.dwave
+wait 10
+dump 44_reopened
+shot 44_reopened
+# element library: unpinned it hides to a tab on the left edge and slides out under the pointer
+wave_close
+close_dialogs
+lib_pin 0
+wait 8
+dump 45_lib_hidden
+menu lib_tab
+wait 10
+dump 46_lib_fly
+shot 46_lib_fly
+move 760 450
+wait 60
+dump 47_lib_closed
+lib_pin 1
+wait 6
+dump 48_lib_pinned
+# the user manual built into the program
+manual_write manual.html
+wait 2
 # Monte Carlo: tolerances picked in the table of the properties dialog, then run (element parameters varied directly)
 wave_close_tools
 close_dialogs
@@ -290,4 +347,11 @@ run
 wait 150
 dump 38_mc_run
 shot 38_mc_run
+# a different circuit gets a waveform viewer window of its own; the first circuit keeps its results
+load_example branches
+wait 6
+run
+wait 150
+dump 49_two_viewers
+shot 49_two_viewers
 quit

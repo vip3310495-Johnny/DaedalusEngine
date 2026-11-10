@@ -33,4 +33,5 @@ pub const EXAMPLES: &[Example] = &[
     Example { key: "montecarlo_rc", name: "蒙地卡羅容差分析：RC 分壓器（兩個電阻 ±5 % 常態、電容 ±10 % 均勻）", cat: "分析功能", json: include_str!("../assets/examples/montecarlo_rc.psimx") },
     Example { key: "loop_gain", name: "迴路增益量測（AC 掃頻、迴路探棒、閉迴路 RLC 電壓控制）", cat: "分析功能", json: include_str!("../assets/examples/loop_gain.psimx") },
     Example { key: "power_gate", name: "基極／閘極接功率電路：NPN、PNP、SCR、TRIAC、GTO", cat: "功率元件", json: include_str!("../assets/examples/power_gate.psimx") },
+    Example { key: "watt_hour3", name: "三相瓦時計：平衡四線與不平衡三線負載的電能", cat: "三相系統", json: include_str!("../assets/examples/watt_hour3.psimx") },
 ];

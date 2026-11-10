@@ -323,13 +323,14 @@ checksum = "f27ae1dd37df86211c42e150270f82743308803d90a6f6e6651cd730d5e1732f"
 
 [[package]]
 name = "daedalus-app"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "daedalus-core",
  "eframe",
  "egui",
  "image",
  "krilla",
+ "miniz_oxide 0.9.1",
  "rfd",
  "rust_xlsxwriter",
  "serde",
@@ -340,7 +341,7 @@ dependencies = [
 
 [[package]]
 name = "daedalus-cli"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "daedalus-core",
  "serde_json",
@@ -348,7 +349,7 @@ dependencies = [
 
 [[package]]
 name = "daedalus-core"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "serde",
  "serde_json",
@@ -356,7 +357,7 @@ dependencies = [
 
 [[package]]
 name = "daedalus-icongen"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "ico",
  "resvg",
@@ -364,7 +365,7 @@ dependencies = [
 
 [[package]]
 name = "daedalus-installer"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "eframe",
  "egui",

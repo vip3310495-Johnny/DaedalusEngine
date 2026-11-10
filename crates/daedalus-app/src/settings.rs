@@ -1,5 +1,6 @@
 //! User settings, saved with the app settings: the schematic window (File → Settings) and the waveform viewer.
 
+use crate::measure::Meas;
 use serde::{Deserialize, Serialize};
 
 /// egui's default body text size, the reference for the interface text size
@@ -26,11 +27,13 @@ pub struct AppSettings {
     pub label_pct: f32,
     /// a double click on an empty spot of the schematic opens the quick-add box
     pub dbl_quick: bool,
+    /// element library pinned beside the schematic (else it hides to a tab on the left edge)
+    pub lib_pinned: bool,
 }
 
 impl Default for AppSettings {
     fn default() -> Self {
-        AppSettings { ui_font: BODY, label_pct: 100.0, dbl_quick: false }
+        AppSettings { ui_font: BODY, label_pct: 100.0, dbl_quick: false, lib_pinned: true }
     }
 }
 
@@ -61,6 +64,9 @@ pub fn app_settings_ui(ctx: &egui::Context, s: &mut AppSettings) -> bool {
             ui.label("空白處雙擊");
             ui.checkbox(&mut s.dbl_quick, "開啟快速加入元件");
             ui.end_row();
+            ui.label("元件庫");
+            ui.checkbox(&mut s.lib_pinned, "釘選在左側（取消時自動隱藏，滑鼠移到左緣的「元件庫」標籤才展開）");
+            ui.end_row();
         });
         ui.weak("元件文字是電路圖上元件旁的名稱與參數，會隨電路圖縮放一起變大變小。");
         ui.weak("快速加入元件也可以按 / 開啟。");
@@ -85,11 +91,16 @@ pub struct WaveStyle {
     pub axis_font: f32,
     /// curve line width
     pub line_w: f32,
+    /// measurement columns of the left column and the report (None = not shown)
+    pub meas: [Meas; 4],
+    /// measurements / cursor readings of every screen (else only of the selected screen)
+    pub meas_all: bool,
+    pub cur_all: bool,
 }
 
 impl Default for WaveStyle {
     fn default() -> Self {
-        WaveStyle { side_font: BODY, plot_font: 13.0, axis_font: 11.0, line_w: 1.4 }
+        WaveStyle { side_font: BODY, plot_font: 13.0, axis_font: 11.0, line_w: 1.4, meas: [Meas::Max, Meas::Min, Meas::Mean, Meas::Rms], meas_all: true, cur_all: true }
     }
 }
 
@@ -122,6 +133,16 @@ impl WaveStyle {
                 ui.end_row();
             });
             ui.weak("欄位：左側訊號清單、讀值與量測表；波形畫面：圖例與游標標籤。");
+            ui.separator();
+            ui.strong("左側量測欄位（最多 4 個）");
+            egui::Grid::new("wave_meas").num_columns(2).spacing([14.0, 6.0]).show(ui, |ui| {
+                for k in 0..4 {
+                    ui.label(format!("Measure {}", k + 1));
+                    meas_combo(ui, k, &mut self.meas[k]);
+                    ui.end_row();
+                }
+            });
+            ui.weak("量測範圍：開啟游標並設定 C1、C2 時為兩者之間，否則為目前顯示的時間範圍。");
             ui.weak("這些設定也會套用到匯出的報告（PDF、Excel）。");
             ui.separator();
             if ui.button("還原預設").clicked() {
@@ -131,4 +152,23 @@ impl WaveStyle {
         *self = self.clamped();
         open
     }
+}
+
+/// one measurement column: amplitude measurements, then time measurements
+fn meas_combo(ui: &mut egui::Ui, k: usize, m: &mut Meas) {
+    egui::ComboBox::from_id_salt(("wave_meas", k)).selected_text(m.name()).width(230.0).height(420.0).show_ui(ui, |ui| {
+        ui.selectable_value(m, Meas::None, Meas::None.name());
+        ui.separator();
+        ui.label(egui::RichText::new("振幅").weak());
+        for x in Meas::LEVEL {
+            ui.selectable_value(m, x, x.name()).on_hover_text(x.help());
+        }
+        ui.separator();
+        ui.label(egui::RichText::new("時間").weak());
+        for x in Meas::TIME {
+            ui.selectable_value(m, x, x.name()).on_hover_text(x.help());
+        }
+    })
+    .response
+    .on_hover_text(m.help());
 }

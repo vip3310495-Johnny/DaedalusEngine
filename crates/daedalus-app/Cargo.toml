@@ -20,6 +20,8 @@ image = { version = "0.25", default-features = false, features = ["png"] }
 # PDF (schematic export, waveform report): vector output with embedded font subsets
 krilla = { version = "0.8", default-features = false }
 skrifa = "0.44"
+# waveform files (.dwave)
+miniz_oxide = "0.9"
 # Excel waveform report
 rust_xlsxwriter = { version = "0.102", default-features = false }
 

@@ -4,11 +4,13 @@
 mod app;
 mod bode;
 mod canvas;
+mod colorpick;
 mod dialogs;
 mod editor;
 mod icons;
 mod libpanel;
 mod mc_edit;
+mod measure;
 mod pdf_export;
 mod plot;
 mod simrun;

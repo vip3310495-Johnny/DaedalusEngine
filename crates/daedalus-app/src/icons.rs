@@ -39,6 +39,9 @@ pub enum Icon {
     Stretch,
     /// exported report
     Report,
+    /// library pinned / hidden to the edge
+    Pin,
+    PinOff,
 }
 
 fn arc(c: Pos2, r: f32, a0: f32, a1: f32, n: usize) -> Vec<Pos2> {
@@ -199,6 +202,17 @@ pub fn paint(ui: &Ui, r: Rect, icon: Icon, col: Color32) {
         Icon::Report => {
             p.add(line(&[(3.0, 1.5), (10.5, 1.5), (13.5, 4.5), (13.5, 14.5), (3.0, 14.5), (3.0, 1.5)]));
             p.add(line(&[(5.0, 12.0), (7.0, 8.5), (9.0, 10.5), (11.5, 5.5)]));
+        }
+        Icon::Pin | Icon::PinOff => {
+            // a push pin, upright when pinned, lying down when it hides
+            let rot = icon == Icon::PinOff;
+            let q = |x: f32, y: f32| if rot { at(16.0 - y, x) } else { at(x, y) };
+            let ln = |pts: &[(f32, f32)]| Shape::line(pts.iter().map(|&(x, y)| q(x, y)).collect(), st);
+            p.add(ln(&[(5.5, 1.8), (10.5, 1.8)]));
+            p.add(ln(&[(6.5, 1.8), (6.5, 7.0)]));
+            p.add(ln(&[(9.5, 1.8), (9.5, 7.0)]));
+            p.add(ln(&[(4.0, 9.0), (6.5, 7.0), (9.5, 7.0), (12.0, 9.0), (4.0, 9.0)]));
+            p.add(Shape::line(vec![q(8.0, 9.0), q(8.0, 14.8)], Stroke::new(1.6, col)));
         }
         Icon::Plus | Icon::Minus => {
             p.rect_stroke(Rect::from_min_max(at(2.0, 3.0), at(14.0, 13.0)), 1.5, Stroke::new(1.2, col), egui::StrokeKind::Middle);

@@ -53,6 +53,24 @@ jobs:
       - name: Unit tests
         run: cargo test --release -p daedalus-core -p daedalus-app
 
+      - name: Build command-line simulator
+        run: cargo build --release -p daedalus-cli
+
+      # the user manual built into the program (Help > user manual): the figure of every element is simulated by
+      # daedalus-cli itself and compared with the reference engine's data (tools/manual/figdata.json);
+      # release tags fail on an unexpected difference
+      - name: User manual (figures simulated by the program)
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_REF.StartsWith("refs/tags/v")) { node tools/manual/gen.js --cli target/release/daedalus-cli.exe --strict } else { node tools/manual/gen.js --cli target/release/daedalus-cli.exe }
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Upload user manual
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: manual
+          path: crates/daedalus-app/assets/manual.html
+
       - name: Build programs
         run: cargo build --release -p daedalus-app -p daedalus-cli
 

@@ -11,6 +11,8 @@ pub struct LibPanel {
     pub search: String,
     pub hover: Option<String>,
     pub selected: Option<String>,
+    /// the search box has the keyboard focus
+    pub search_focus: bool,
 }
 
 pub fn cat_label(seg: &str) -> String {
@@ -89,18 +91,25 @@ pub fn draw_icon(ui: &Ui, rect: Rect, d: &ElDef, syms: &mut SymCache, col: Color
 
 impl LibPanel {
     pub fn new() -> Self {
-        LibPanel { search: String::new(), hover: None, selected: None }
+        LibPanel { search: String::new(), hover: None, selected: None, search_focus: false }
     }
     fn item(&mut self, ui: &mut Ui, d: &'static ElDef, syms: &mut SymCache, pal: &Pal, picked: &mut Option<String>) {
         let ctl = d.cat.starts_with("Elements/Control") || ["Switch Controllers", "Function Blocks"].iter().any(|s| d.cat.ends_with(s));
-        let (rect, resp) = ui.allocate_exact_size(vec2(ui.available_width(), 26.0), Sense::click_and_drag());
+        let fs = ui.style().text_styles.get(&egui::TextStyle::Body).map(|f| f.size).unwrap_or(13.0);
+        let (rect, resp) = ui.allocate_exact_size(vec2(ui.available_width(), (fs * 2.0).max(26.0)), Sense::click_and_drag());
         let sel = self.selected.as_deref() == Some(d.typ.as_str());
         if resp.hovered() || sel {
-            ui.painter().rect_filled(rect, 3.0, if sel { pal.accent_soft } else { ui.visuals().widgets.hovered.weak_bg_fill });
+            ui.painter().rect_filled(rect, 5.0, if sel { pal.accent_soft } else { ui.visuals().widgets.hovered.weak_bg_fill });
         }
-        let icon = Rect::from_min_size(rect.min + vec2(4.0, 2.0), vec2(30.0, 22.0));
+        if sel {
+            ui.painter().rect_filled(Rect::from_min_size(rect.min + vec2(0.0, 4.0), vec2(3.0, rect.height() - 8.0)), 1.5, pal.accent);
+        }
+        let icon = Rect::from_min_size(pos2(rect.min.x + 6.0, rect.center().y - 11.0), vec2(30.0, 22.0));
         draw_icon(ui, icon, d, syms, if ctl { pal.ctl } else { pal.sym });
-        ui.painter().text(pos2(icon.max.x + 6.0, rect.center().y), egui::Align2::LEFT_CENTER, format!("{}  {}", d.name, d.zh), egui::FontId::proportional(13.0), ui.visuals().text_color());
+        // Chinese name first, the English name in a lighter colour
+        let p = ui.painter_at(rect);
+        let r = p.text(pos2(icon.max.x + 8.0, rect.center().y), egui::Align2::LEFT_CENTER, &d.zh, egui::FontId::proportional(fs), ui.visuals().strong_text_color());
+        p.text(pos2(r.max.x + 8.0, rect.center().y), egui::Align2::LEFT_CENTER, &d.name, egui::FontId::proportional(fs * 0.88), ui.visuals().weak_text_color());
         if resp.hovered() {
             self.hover = Some(d.typ.clone());
         }
@@ -118,7 +127,8 @@ impl LibPanel {
         ui.horizontal(|ui| {
             let (r, _) = ui.allocate_exact_size(egui::vec2(18.0, 18.0), egui::Sense::hover());
             crate::icons::paint(ui, r, crate::icons::Icon::Search, ui.visuals().weak_text_color());
-            ui.add(egui::TextEdit::singleline(&mut self.search).hint_text("搜尋元件：mosfet、比較器、PWM…").desired_width(f32::INFINITY));
+            let r = ui.add(egui::TextEdit::singleline(&mut self.search).hint_text("搜尋元件：mosfet、比較器、PWM…").desired_width(f32::INFINITY));
+            self.search_focus = r.has_focus();
         });
         ui.separator();
         let desc_h = 150.0;

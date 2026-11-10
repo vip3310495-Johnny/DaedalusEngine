@@ -224,4 +224,47 @@ module.exports = (EX, H) => {
       },
     });
   }
+
+  // =================================================================== 27
+  {
+    // three-phase watt-hour meter: a balanced four-wire load and an unbalanced three-wire load
+    const fr = 60, w = 2 * PI * fr, Vm = 380 * Math.SQRT2 / Math.sqrt(3), T = 0.1;
+    const phs = [0, -2 * PI / 3, 2 * PI / 3];
+    const Rb = 10, Ru = [10, 20, 40];
+    const P1 = 3 * (Vm * Vm / 2) / Rb;
+    // unbalanced star: the star point by Millman, instantaneous (resistive load)
+    const v = (k, t) => Vm * Math.sin(w * t + phs[k]);
+    const g = Ru.map(r => 1 / r), gs = g[0] + g[1] + g[2];
+    const p2 = t => { const vy = (v(0, t) * g[0] + v(1, t) * g[1] + v(2, t) * g[2]) / gs; return [0, 1, 2].reduce((a, k) => a + (v(k, t) - vy) ** 2 * g[k], 0); };
+    const E2 = t => { const n = 4000 * Math.max(1, Math.round(t * fr)); const hh = t / n; let a = p2(0) + p2(t); for (let i = 1; i < n; i++) a += (i % 2 ? 4 : 2) * p2(i * hh); return a * hh / 3; };
+    // average power from phasors (RMS)
+    const V = phs.map(a => C(Vm / Math.SQRT2 * Math.sin(a + PI / 2), -Vm / Math.SQRT2 * Math.cos(a + PI / 2)));
+    let num = C(0);
+    V.forEach((x, k) => { num = add(num, mul(x, C(g[k]))); });
+    const Vy = div(num, C(gs));
+    const P2 = V.reduce((a, x, k) => a + cabs(add(x, mul(Vy, C(-1)))) ** 2 * g[k], 0);
+    EX.push({
+      key: 'watt_hour3', cat: '三相系統', name: '三相瓦時計：平衡四線與不平衡三線負載的電能',
+      text: '380 V、60 Hz 三相電源。平衡 Y 接 10 Ω（中性點接地，四線）：瞬時功率固定 3·Vph²/R = 14.44 kW，E = P·t。\n不平衡 Y 接 10／20／40 Ω（星點浮接，三線）：兩個瓦時計串接，N 分別接電源中性點與負載星點，讀值應相同（三相電流和為零）；\n整數個週期的電能 = 平均功率（相量 Millman 求星點電壓）× t，任一時刻也與 ∫p dt 的數值積分比較。讀值單位 J 與 Wh（初始讀值 1.5 Wh）。',
+      sc: { dt: '10u', tt: '0.1' },
+      parts: [
+        ['VSIN3', 'S1', { V: 380, f: fr }, { n: '0', a: 'a', b: 'b', c: 'c' }],
+        ['WH3', 'E_bal', { unit: 'J' }, { 'A+': 'a', 'A-': 'a1', 'B+': 'b', 'B-': 'b1', 'C+': 'c', 'C-': 'c1', N: '0' }],
+        ['R3', 'Rbal', { R: Rb }, { A: 'a1', B: 'b1', C: 'c1', a: '0', b: '0', c: '0' }],
+        ['WH3', 'E_unbal', { unit: 'Wh', e0: 1.5 }, { 'A+': 'a', 'A-': 'a2', 'B+': 'b', 'B-': 'b2', 'C+': 'c', 'C-': 'c2', N: '0' }],
+        ['WH3', 'E_unbal_y', { unit: 'Wh', e0: 1.5 }, { 'A+': 'a2', 'A-': 'a3', 'B+': 'b2', 'B-': 'b3', 'C+': 'c2', 'C-': 'c3', N: 'y' }],
+        ['R', 'Ra', { R: Ru[0] }, { 1: 'a3', 2: 'y' }], ['R', 'Rb', { R: Ru[1] }, { 1: 'b3', 2: 'y' }], ['R', 'Rc', { R: Ru[2] }, { 1: 'c3', 2: 'y' }],
+      ],
+      screens: [['E_bal'], ['E_unbal', 'E_unbal_y']],
+      checks: h => {
+        const r = [];
+        for (const t of [T / 4, T / 2, T]) r.push(row(`平衡負載 E(${(t * 1e3).toFixed(0)} ms) = P·t（J）`, P1 * t, h.at('E_bal', t), h.near(h.at('E_bal', t), P1 * t, 1e-6)));
+        r.push(row('不平衡三線：整數週期 E(T) = 1.5 Wh + P·T/3600', 1.5 + P2 * T / 3600, h.at('E_unbal', T), h.near(h.at('E_unbal', T) - 1.5, P2 * T / 3600, 1e-6), `P = ${P2.toFixed(3)} W`));
+        for (const t of [0.0123, 0.0571]) r.push(row(`不平衡三線：E(${t * 1e3} ms) = ∫p dt（數值積分）`, 1.5 + E2(t) / 3600, h.at('E_unbal', t), h.near(h.at('E_unbal', t) - 1.5, E2(t) / 3600, 2e-5)));
+        let dmax = 0; h.t.forEach((t, i) => { dmax = Math.max(dmax, Math.abs(h.col('E_unbal')[i] - h.col('E_unbal_y')[i])); });
+        r.push(row('N 接中性點或負載星點，讀值相同（Wh 差的最大值）', 0, dmax, dmax < 1e-9 * (1.5 + P2 * T / 3600)));
+        return r;
+      },
+    });
+  }
 };

@@ -2636,6 +2636,103 @@ pub fn meter(ctx: &mut ElCtx, typ: &str) -> R<Vec<Box<dyn Inst>>> {
     Ok(out)
 }
 
+/// Three-phase watt-hour meter: energy ∫ Σ (v(Xk+) − v(N))·ik dt over the accepted steps (trapezoid rule, exact
+/// for the piecewise-linear solution between points); each phase current flows through a zero-volt ammeter
+/// Xk+ → Xk−. The output is the energy in Wh, kWh or J plus an initial reading. In a three-wire system N may be
+/// any node: the phase currents add to zero, so the reference does not change the total.
+#[derive(Clone)]
+pub struct WhMeter {
+    name: String,
+    k: [i32; 3],
+    p: [i32; 3],
+    n: i32,
+    o: i32,
+    scale: f64,
+    e0: f64,
+    /// energy (J) and power at the last accepted point; this evaluation's values until committed
+    e: f64,
+    pw: f64,
+    pend: Option<(f64, f64)>,
+}
+impl WhMeter {
+    fn power(&self, x: &[f64]) -> f64 {
+        (0..3).map(|j| x[self.k[j] as usize] * (vx(x, self.p[j]) - vx(x, self.n))).sum()
+    }
+}
+impl Inst for WhMeter {
+    clone_box!();
+    fn caps(&self) -> Caps {
+        Caps { c: true, probe: true, ac: true, ..Default::default() }
+    }
+    fn fix_vars(&mut self, n: i32) {
+        for k in self.k.iter_mut() {
+            fix(k, n);
+        }
+    }
+    fn outs(&self) -> Vec<i32> {
+        vec![self.o]
+    }
+    fn init(&mut self, _e: &mut E) -> R<()> {
+        self.e = 0.0;
+        self.pw = 0.0;
+        self.pend = None;
+        Ok(())
+    }
+    fn eval(&mut self, t: f64, h: f64, e: &mut E, x: &[f64]) -> R<()> {
+        let p = self.power(x);
+        // h = 0: the starting point, or the right-hand limit at a discontinuity (the energy does not jump)
+        let en = if h == 0.0 && t == 0.0 {
+            0.0
+        } else if h == 0.0 {
+            self.e
+        } else {
+            self.e + 0.5 * h * (p + self.pw)
+        };
+        self.pend = Some((en, p));
+        e.cv[self.o as usize] = self.e0 + en * self.scale;
+        Ok(())
+    }
+    fn commit(&mut self, _t: f64, _h: f64, _e: &mut E) {
+        if let Some((en, p)) = self.pend {
+            self.e = en;
+            self.pw = p;
+        }
+    }
+    fn pname(&self) -> String {
+        self.name.clone()
+    }
+    fn value(&self, e: &E, _x: &[f64]) -> f64 {
+        e.cv[self.o as usize]
+    }
+    fn stamp_ac(&self, c: &mut AcCtx, _s: bool, _e: &E) -> R<()> {
+        let r = c.ci(self.o);
+        c.a(r, r, 1.0, 0.0);
+        Ok(())
+    }
+}
+/// pins: A+, A−, B+, B−, C+, C−, N
+pub fn wh_meter(ctx: &mut ElCtx) -> R<Vec<Box<dyn Inst>>> {
+    let mut out: Vec<Box<dyn Inst>> = Vec::new();
+    let (mut k, mut p) = ([0i32; 3], [0i32; 3]);
+    for j in 0..3 {
+        let (a, b) = (ctx.p(2 * j)?, ctx.p(2 * j + 1)?);
+        let am = Amm::new(ctx.b, a, b);
+        k[j] = am.k;
+        p[j] = a;
+        out.push(Box::new(am));
+    }
+    let n = ctx.p(6)?;
+    let scale = match ctx.raw("unit", "Wh").as_str() {
+        "J" => 1.0,
+        "kWh" => 1.0 / 3.6e6,
+        _ => 1.0 / 3600.0,
+    };
+    let e0 = ctx.numd("e0", 0.0)?;
+    let o = ctx.b.cnode();
+    out.push(Box::new(WhMeter { name: ctx.name.clone(), k, p, n, o, scale, e0, e: 0.0, pw: 0.0, pend: None }));
+    Ok(out)
+}
+
 /// AC sweep probes
 #[derive(Clone)]
 pub struct AcProbe {

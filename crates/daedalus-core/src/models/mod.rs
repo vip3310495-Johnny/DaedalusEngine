@@ -126,7 +126,7 @@ pub fn make(ctx: &mut ElCtx) -> Out {
         "LED" => {
             let (a, k) = (ctx.p(0)?, ctx.p(1)?);
             if phys(ctx, "ideal") {
-                devices::dev_diode(ctx, a, k, None)?
+                devices::dev_led(ctx, a, k)?
             } else {
                 let o = SwO { vf: ctx.numd("vf", 2.0)?, ron: ron(ctx)?, roff: roff(ctx)?, ..Default::default() };
                 vec![sw(ctx, a, k, SwT::D, o)]
@@ -368,6 +368,7 @@ pub fn make(ctx: &mut ElCtx) -> Out {
         "VP2" => vprobe(ctx, true)?,
         "IP" => iprobe(ctx)?,
         "VDCM" | "VACM" | "ADCM" | "AACM" | "WATT" => meter(ctx, &t)?,
+        "WH3" => wh_meter(ctx)?,
         "ACP" => acprobe(ctx, false)?,
         "ACP2" => acprobe(ctx, true)?,
         _ => return control::make(ctx),

@@ -390,7 +390,14 @@ impl SymCache {
                 let h = n.max(m) / 2.0 + 0.4;
                 let ins: Vec<[f32; 2]> = pins.iter().filter(|p| p.k == "ci").map(|p| [p.x as f32, p.y as f32]).collect();
                 let outs: Vec<[f32; 2]> = pins.iter().filter(|p| p.k == "co").map(|p| [p.x as f32, p.y as f32]).collect();
-                Symbol { prims: blk(h, &ins, &outs), texts: vec![SymText { x: 0.0, y: 0.3, s: "C".into(), sz: 0.9, a: "middle".into() }] }
+                let mut texts = vec![SymText { x: 0.0, y: 0.3, s: "C".into(), sz: 0.9, a: "middle".into() }];
+                for (k, p) in ins.iter().enumerate() {
+                    texts.push(SymText { x: -1.2, y: p[1] as f64 + 0.15, s: format!("x{}", k + 1), sz: 0.36, a: "start".into() });
+                }
+                for (k, p) in outs.iter().enumerate() {
+                    texts.push(SymText { x: 1.2, y: p[1] as f64 + 0.15, s: format!("y{}", k + 1), sz: 0.36, a: "end".into() });
+                }
+                Symbol { prims: blk(h, &ins, &outs), texts }
             }
             _ => self.get(d).clone(),
         }

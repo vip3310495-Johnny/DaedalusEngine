@@ -1719,7 +1719,7 @@ pub fn presets(kind: &str) -> &'static [(&'static str, &'static str)] {
             ("1N4148", "IS=2.52n RS=0.568 N=1.752 CJO=4p M=0.4 TT=20n BV=100 IBV=100u"),
             ("1N4007", "IS=7.02767n RS=0.0341512 N=1.80803 BV=1100 IBV=0.1 CJO=39p VJ=0.7 M=0.5 FC=0.5 TT=100n"),
             ("1N5819", "IS=31.7u RS=0.051 N=1.373 CJO=259p M=0.35 VJ=0.38 BV=40 IBV=1m"),
-            ("LEDRED", "IS=93.2p RS=42m N=3.73 BV=4 IBV=10u CJO=2.97p VJ=0.75 M=0.333 TT=4.32u"),
+            ("LEDRED", "IS=93.2p RS=42m N=3.73 CJO=2.97p VJ=0.75 M=0.333 TT=4.32u"),
             ("ZENER", "IS=5n N=1.2 RS=2 CJO=100p VJ=0.75 M=0.33 IBV=5m"),
         ],
         "NPN" => &[
@@ -1835,6 +1835,18 @@ pub fn dev_diode(ctx: &mut ElCtx, a: i32, k: i32, bv: Option<f64>) -> R<Vec<Box<
     ignored_warn(ctx.b, &name, &p, D_KNOWN);
     Ok(vec![Box::new(SpDiode::new(ctx.b, &name, ctx.id, a, k, &p, bv)?)])
 }
+/// LED as a SPICE diode without reverse breakdown: the LED is assumed never to be damaged, so it does not
+/// conduct in reverse at any voltage (BV = ∞); a BV of a pasted model is ignored with a warning
+pub fn dev_led(ctx: &mut ElCtx, a: i32, k: i32) -> R<Vec<Box<dyn Inst>>> {
+    let mut p = spice_params(ctx, "D")?;
+    let name = ctx.name.clone();
+    if p.get("BV").is_some() {
+        p.0.retain(|(key, _)| !matches!(key.as_str(), "BV" | "IBV" | "NBV"));
+        ctx.b.warn(format!("{}：發光二極體不模擬逆向崩潰（BV 視為無限大），已忽略 BV、IBV。", name));
+    }
+    ignored_warn(ctx.b, &name, &p, D_KNOWN);
+    Ok(vec![Box::new(SpDiode::new(ctx.b, &name, ctx.id, a, k, &p, None)?)])
+}
 pub fn dev_bjt(ctx: &mut ElCtx, pol: f64) -> R<Vec<Box<dyn Inst>>> {
     let p = spice_params(ctx, if pol > 0.0 { "NPN" } else { "PNP" })?;
     let name = ctx.name.clone();
@@ -1919,5 +1931,60 @@ mod tests {
         assert!((spice_num("4.292K") - 4292.0).abs() < 1e-9);
         let (_, bad) = parse_spice_model("IS=1n foo");
         assert_eq!(bad.len(), 1);
+    }
+
+    /// three-phase source (100 V line-to-line, 50 Hz) into a balanced 10 Ω star: the watt-hour meter reads
+    /// P·t with P = 100² / 10 = 1 kW (J and Wh, with an initial reading)
+    #[test]
+    fn three_phase_watt_hour_meter() {
+        use crate::netlist::{NetElement, Netlist};
+        use crate::runner::{SimCtrl, TransientRunner};
+        let el = |id: i64, typ: &str, name: &str, params: &[(&str, &str)], pins: &[i64]| NetElement { id, typ: typ.into(), name: name.into(), params: params.iter().map(|(k, v)| (k.to_string(), v.to_string())).collect(), pins: pins.to_vec() };
+        // nets: 0 ground (source neutral), 1-3 phases, 4-6 after the meter, 7 load star
+        let mut els = vec![el(1, "VSIN3", "S1", &[("V", "100"), ("f", "50"), ("ph", "0")], &[0, 1, 2, 3])];
+        els.push(el(2, "WH3", "Wh", &[("unit", "J"), ("e0", "0")], &[1, 4, 2, 5, 3, 6, 0]));
+        els.push(el(3, "WH3", "Wh2", &[("unit", "Wh"), ("e0", "2")], &[4, 8, 5, 9, 6, 10, 7]));
+        for (j, a) in [8i64, 9, 10].iter().enumerate() {
+            els.push(el(10 + j as i64, "R", &format!("R{}", j), &[("R", "10")], &[*a, 7]));
+        }
+        let net = Netlist { nets: vec!['G', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'], elements: els, param_text: String::new() };
+        let sc = SimCtrl { dt: 10e-6, t_total: 0.1, t_print: 0.0, print_step: 1, interp: true, damp: true, lte: true, lte_tol: 1e-3, acc: false, etol: 1e-6, max_lv: 8 };
+        let mut r = TransientRunner::new(&net, &sc).expect("netlist");
+        while !r.run_steps(1_000_000).expect("run") {}
+        let res = r.result();
+        let col = |n: &str| res.data[res.names.iter().position(|x| x == n).expect(n)].clone();
+        let (e, e2) = (col("Wh"), col("Wh2"));
+        let t = |i: usize| res.t0 + i as f64 * res.dt;
+        // whole cycles: exactly 1000 W · t (the star point at 0 V, so the meter referred to it reads the same)
+        for i in [res.n / 2, res.n - 1] {
+            assert!((e[i] - 1000.0 * t(i)).abs() < 1e-6 * 1000.0 * t(i).max(1e-3), "J at {}: {} vs {}", t(i), e[i], 1000.0 * t(i));
+            assert!((e2[i] - (2.0 + 1000.0 * t(i) / 3600.0)).abs() < 1e-6, "Wh at {}: {}", t(i), e2[i]);
+        }
+        assert_eq!(e[0], 0.0);
+    }
+
+    /// 10 V across 1 kΩ and a reversed LED: the LED blocks (node at 10 V), for the ideal model, the red-LED
+    /// preset and a pasted model with BV = 4 V
+    #[test]
+    fn led_never_breaks_down() {
+        use crate::netlist::{NetElement, Netlist};
+        use crate::runner::{SimCtrl, TransientRunner};
+        let el = |id: i64, typ: &str, name: &str, params: &[(&str, &str)], pins: &[i64]| NetElement { id, typ: typ.into(), name: name.into(), params: params.iter().map(|(k, v)| (k.to_string(), v.to_string())).collect(), pins: pins.to_vec() };
+        for model in [vec![("model", "ideal")], vec![("model", "LEDRED")], vec![("model", "custom"), ("spice", "IS=93.2p RS=42m N=3.73 BV=4 IBV=10u")]] {
+            let mut led = vec![("vf", "2"), ("ron", "10u"), ("roff", "1M")];
+            led.extend(model);
+            let net = Netlist {
+                nets: vec!['G', 'P', 'P'],
+                elements: vec![el(1, "VDC", "V1", &[("V", "10")], &[1, 0]), el(2, "R", "R1", &[("R", "1k")], &[1, 2]), el(3, "LED", "D1", &led, &[0, 2]), el(4, "VP", "Vk", &[], &[2])],
+                param_text: String::new(),
+            };
+            let sc = SimCtrl { dt: 1e-6, t_total: 1e-4, t_print: 0.0, print_step: 1, interp: true, damp: true, lte: true, lte_tol: 1e-3, acc: false, etol: 1e-6, max_lv: 8 };
+            let mut r = TransientRunner::new(&net, &sc).expect("netlist");
+            while !r.run_steps(1_000_000).expect("run") {}
+            let res = r.result();
+            let k = res.names.iter().position(|n| n == "Vk").expect("probe");
+            let v = res.data[k][res.n - 1];
+            assert!(v > 9.9, "{:?}: reverse-biased LED conducts (cathode at {} V)", led, v);
+        }
     }
 }
