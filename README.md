@@ -7,7 +7,7 @@
 
 ## 下載
 
-**[⬇ 下載安裝檔 DaedalusEngine-Setup-V1.4.0.exe](https://github.com/vip3310495-Johnny/DaedalusEngine/releases/download/v1.4.0/DaedalusEngine-Setup-V1.4.0.exe)**（11.7 MB，Windows 10／11，不需要系統管理員權限）
+**[⬇ 下載安裝檔 DaedalusEngine-Setup-V1.4.0.exe](https://github.com/vip3310495-Johnny/DaedalusEngine/releases/download/v1.4.0/DaedalusEngine-Setup-V1.4.0.exe)**（12.3 MB，Windows 10／11，不需要系統管理員權限）
 
 - 下載後按兩下執行，依畫面按「安裝」即可；已安裝舊版時會自動提供「更新」。
 - 最新版與所有舊版：[Releases 頁面](https://github.com/vip3310495-Johnny/DaedalusEngine/releases/latest)。安裝檔只放在 Releases，不放在程式碼清單中。
@@ -163,7 +163,7 @@ daedalus-cli <電路.psimx> <輸出.csv> --ac [--threads N]   AC 掃頻（預設
 - 範例 `examples/buck_converter.py` 在每次建置時由 CI 實際產生、檢查並模擬（Vo、電感電流平均值須在預期範圍內）。
 
 使用方式：把資料夾放到代理的 skills 目錄（例如 Claude Code 的 `~/.claude/skills/`），代理需要能執行 Python 3；模擬驗證使用已安裝的
-`daedalus-cli.exe`（`%LOCALAPPDATA%ProgramsDaedalusEngine`）。
+`daedalus-cli.exe`（`%LOCALAPPDATA%\Programs\DaedalusEngine`）。
 
 ---
 
@@ -356,6 +356,61 @@ powershell -ExecutionPolicy Bypass -File tools\package.ps1   # 產生 dist\Daeda
 <https://sourceforge.net/projects/ngspice/files/ng-spice-rework/47/> 下載 `ngspice-47_64.7z`，解壓縮到 `tools/ngspice`。
 
 正式版由 GitHub Actions（`.github/workflows/build.yml`）建置、測試並簽章，步驟見 [docs/signpath-setup.md](docs/signpath-setup.md)。
+
+## 致謝
+
+DaedalusEngine 建立在許多開源專案與公開資料之上，謹向這些專案的作者、維護者與貢獻者致上誠摯的感謝。
+
+### 程式使用的開源函式庫
+
+程式以 [Rust](https://www.rust-lang.org) 撰寫，連同間接相依共使用 314 個來自 [crates.io](https://crates.io) 的開源 crate，
+全部採用與 GPL-3.0 相容的寬鬆授權（MIT、Apache-2.0、BSD、Zlib、ISC、Unicode-3.0 等；完整清單可用 `cargo tree` 列出）。
+主要的直接相依：
+
+| 專案 | 在本程式中的用途 | 授權 |
+|---|---|---|
+| [egui / eframe](https://github.com/emilk/egui) | 整個圖形介面（編輯器、波形檢視器、安裝程式） | MIT OR Apache-2.0 |
+| [winit](https://github.com/rust-windowing/winit)、[glow](https://github.com/grovesNL/glow) | 視窗、輸入與 OpenGL 繪圖（經由 eframe） | Apache-2.0；MIT OR Apache-2.0 OR Zlib |
+| [krilla](https://github.com/LaurenzV/krilla) | 電路圖與波形報告的 PDF 輸出 | MIT OR Apache-2.0 |
+| [skrifa（fontations）](https://github.com/googlefonts/fontations) | 讀取字型，供 PDF 嵌入中文字 | MIT OR Apache-2.0 |
+| [rust_xlsxwriter](https://github.com/jmcnamara/rust_xlsxwriter) | Excel 波形報告與圖表 | MIT OR Apache-2.0 |
+| [rfd](https://github.com/PolyMeilex/rfd) | 開啟／儲存檔案對話框 | MIT |
+| [image](https://github.com/image-rs/image) | 截圖與 PNG 圖片 | MIT OR Apache-2.0 |
+| [serde](https://github.com/serde-rs/serde)、[serde_json](https://github.com/serde-rs/json) | `.psimx` 電路檔與設定檔讀寫 | MIT OR Apache-2.0 |
+| [miniz_oxide](https://github.com/Frommi/miniz_oxide) | 波形檔 `.dwave` 與安裝檔內容的壓縮 | MIT OR Zlib OR Apache-2.0 |
+| [windows-rs](https://github.com/microsoft/windows-rs)、[winreg](https://github.com/gentoo90/winreg-rs) | 安裝程式的捷徑、登錄與 Windows API | MIT OR Apache-2.0；MIT |
+| [winresource](https://github.com/BenjaminRi/winresource) | 執行檔的圖示與版本資訊 | MIT |
+| [resvg](https://github.com/linebender/resvg)、[ico](https://github.com/mdsteele/rust-ico) | 由 SVG 產生程式圖示 | Apache-2.0 OR MIT；MIT |
+
+介面的英文與符號字型使用 egui 內建字型（Hack、Ubuntu Light、Noto Emoji；OFL-1.1／Ubuntu Font License），
+中文則直接使用 Windows 內建的微軟正黑體，不隨程式散布。
+
+### 驗證與比對使用的工具與模型
+
+本程式的準確度以下列開源工具與公開資料交叉驗證（只用於測試，不隨程式發布）：
+
+- **[ngspice](https://ngspice.sourceforge.io)**（ngspice 47，BSD 授權）：開源 SPICE 模擬器。每次建置都在 CI 中以同一組模型卡
+  比對本程式的二極體、齊納、LED、BJT、MOSFET 方程式與開關暫態，並計算資料手冊比對用的直流工作點；SPICE 電晶體範例電路的波形也逐點對照 ngspice。
+- **元件 SPICE 模型卡**：預設元件 1N4148、1N4007、1N5819、2N3904、2N4401、2N2222A、2N3906 的模型參數，
+  取自元件廠商與 SPICE 社群長年公開的模型卡。
+- **元件資料手冊**：以 [Vishay](https://www.vishay.com)（1N4148、1N4001–1N4007、1N5817–1N5819）與
+  [onsemi](https://www.onsemi.com)（2N3904、2N4401、2N3906）的規格驗證預設元件（37 項全部在規格內）；
+  TL431、LM393 行為模型依 [Texas Instruments](https://www.ti.com) 資料手冊的典型值建模並以其測試電路驗證，光耦合器參考 PC817 類規格。
+- **PSIM**：理想開關、分段線性模型與介面操作以 PSIM 的行為為參考，使兩者的模擬結果可互相對照
+  （PSIM 為 Altair Engineering 的產品與商標，本專案與其無任何關聯）。
+- **網頁版「電力電子電路模擬器 V3.2.1」**：本程式的起點；其 JavaScript 引擎（`reference/`）是逐點回歸比對與使用說明書圖例的參考解。
+
+### 建置與測試基礎設施
+
+- **[GitHub Actions](https://github.com/features/actions)**（[checkout](https://github.com/actions/checkout)、
+  [cache](https://github.com/actions/cache)、[upload-artifact](https://github.com/actions/upload-artifact)、
+  [download-artifact](https://github.com/actions/download-artifact)）：每個版本的建置、測試與發布。
+- **[Mesa 3D](https://www.mesa3d.org)**（MIT 授權），使用 [pal1000/mesa-dist-win](https://github.com/pal1000/mesa-dist-win) 的 Windows 版：
+  讓沒有顯示卡的 CI 機器以軟體 OpenGL 執行圖形介面自動測試。
+- **[RustSec 安全公告資料庫](https://rustsec.org)** 與 [cargo-audit](https://github.com/rustsec/rustsec)：每次建置檢查相依套件的已知漏洞。
+- **[SignPath Foundation](https://signpath.org)**：為開源專案提供免費程式碼簽章（申請中），以及其
+  [GitHub Action](https://github.com/SignPath/github-action-submit-signing-request)。
+- **[Node.js](https://nodejs.org)**、**[7-Zip](https://www.7-zip.org)**：測試腳本、使用說明書產生器與 CI 中的解壓縮。
 
 ## 授權
 
