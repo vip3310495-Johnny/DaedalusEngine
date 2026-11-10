@@ -1,4 +1,4 @@
-# DaedalusEngine V1.4.0
+# DaedalusEngine V1.4.1
 
 電力電子電路模擬器（Windows 11，Rust 原生程式）。
 以網頁版「電力電子電路模擬器 V3.2.1」為參考重新實作，包含其全部元件模型，`.psimx` 電路檔兩邊通用。
@@ -7,11 +7,11 @@
 
 ## 下載
 
-**[⬇ 下載安裝檔 DaedalusEngine-Setup-V1.4.0.exe](https://github.com/vip3310495-Johnny/DaedalusEngine/releases/download/v1.4.0/DaedalusEngine-Setup-V1.4.0.exe)**（12.3 MB，Windows 10／11，不需要系統管理員權限）
+**[⬇ 下載安裝檔 DaedalusEngine-Setup-V1.4.1.exe](https://github.com/vip3310495-Johnny/DaedalusEngine/releases/download/v1.4.1/DaedalusEngine-Setup-V1.4.1.exe)**（12.3 MB，Windows 10／11，不需要系統管理員權限）
 
 - 下載後按兩下執行，依畫面按「安裝」即可；已安裝舊版時會自動提供「更新」。
 - 最新版與所有舊版：[Releases 頁面](https://github.com/vip3310495-Johnny/DaedalusEngine/releases/latest)。安裝檔只放在 Releases，不放在程式碼清單中。
-- SHA-256 見各 Release 的 `SHA256SUMS.txt`（驗證：`certutil -hashfile DaedalusEngine-Setup-V1.4.0.exe SHA256`）
+- SHA-256 見各 Release 的 `SHA256SUMS.txt`（驗證：`certutil -hashfile DaedalusEngine-Setup-V1.4.1.exe SHA256`）
 - 目前版本尚未經程式碼簽章（SignPath 申請中）：Windows 可能顯示「Windows 已保護您的電腦」，請按「其他資訊 › 仍要執行」；
   開啟「智慧型應用程式控制」（Smart App Control）的電腦會直接封鎖，需等簽章版。
 
@@ -19,9 +19,12 @@
 
 ## 安裝與解除安裝
 
-- 執行 `DaedalusEngine-Setup-V1.4.0.exe`。**不需要系統管理員權限**：程式安裝於
+- 執行 `DaedalusEngine-Setup-V1.4.1.exe`。**不需要系統管理員權限**：程式安裝於
   `%LOCALAPPDATA%\Programs\DaedalusEngine`，捷徑與檔案關聯只寫入目前使用者（HKCU）。
-- 安裝內容：`DaedalusEngine.exe`（圖形介面）、`daedalus-cli.exe`（命令列批次模擬）、`uninstall.exe`、本說明。
+- 安裝前須閱讀並勾選同意**授權條款與免責聲明**（GPL-3.0、附加條款與免責聲明，全文見 [NOTICE.txt](NOTICE.txt)）；
+  更新、修復與降級也會先顯示條款，解除安裝則不需要。
+- 安裝內容：`DaedalusEngine.exe`（圖形介面）、`daedalus-cli.exe`（命令列批次模擬）、`uninstall.exe`、本說明，以及
+  `LICENSE`（GPL-3.0 全文）、`NOTICE.txt`（版權、授權與免責聲明）、`THIRD-PARTY-NOTICES.txt`（第三方元件授權）。
 - **更新／修復**：已安裝時再執行安裝程式（或「設定 › 應用程式 › 已安裝的應用程式 › DaedalusEngine › 修改」）會進入維護畫面，
   依版本自動提供：
   - 安裝程式較新 → **更新**（建議）；
@@ -38,14 +41,16 @@
 ### 命令列（自動化部署）
 
 ```
-DaedalusEngine-Setup-V1.4.0.exe --silent [--dir <資料夾>] [--no-desktop|--desktop] [--no-assoc|--assoc] [--launch]   安裝或更新
-DaedalusEngine-Setup-V1.4.0.exe --silent --repair    修復已安裝的程式（uninstall.exe 亦可）
+DaedalusEngine-Setup-V1.4.1.exe --silent [--dir <資料夾>] [--no-desktop|--desktop] [--no-assoc|--assoc] [--launch]   安裝或更新
+DaedalusEngine-Setup-V1.4.1.exe --silent --repair    修復已安裝的程式（uninstall.exe 亦可）
 uninstall.exe --maintain                             開啟維護畫面（更新／修復／解除安裝）
 uninstall.exe --uninstall --silent [--purge]
 ```
 
 未指定捷徑／關聯選項時沿用已安裝版本的選擇（全新安裝則預設建立）。`--purge` 會一併刪除使用者設定；
 `--repair` 會把檢查到並修復的項目逐行寫入紀錄。靜默模式的紀錄寫在 `%TEMP%\DaedalusEngine-Setup.log`，結束代碼 0 表示成功。
+**以 `--silent` 安裝、更新或修復，即表示執行者同意 [NOTICE.txt](NOTICE.txt) 中的授權條款與免責聲明**（紀錄中會寫入一行說明）；
+代他人大量部署時，請先讓使用者知悉這些條款。
 
 ---
 
@@ -321,6 +326,13 @@ Simulation Control 的「高精度模式」設為 1、填入目標誤差（預�
     波形顏色加入常用色塊，顏色視窗縮小。
   - 發光二極體不模擬逆向崩潰（假設元件不會損壞，崩潰電壓視為無限大）：內建紅光 LED 型號原本 BV = 4 V，逆偏超過 4 V 會導通
     → 已移除；自行貼上的 SPICE 模型中的 BV、IBV 也會被忽略並提示。
+- **V1.4.1**（修正）：版權與授權聲明
+  - 新增 [NOTICE.txt](NOTICE.txt)：著作權、GPL-3.0 授權、依 GPL-3.0 第 7 條的附加條款（保留著作權與作者標示、修改版須標示不同、
+    不授予名稱與圖示的商標權）與免責聲明（不提供擔保、模擬結果僅供工程參考、責任限制）。
+  - 安裝程式新增「授權條款與免責聲明」頁，須勾選同意才能安裝、更新、修復或降級；靜默安裝視為同意並寫入紀錄。
+  - 安裝資料夾加入 `NOTICE.txt` 與 `THIRD-PARTY-NOTICES.txt`：程式實際包含的 148 個開源套件的著作權聲明與授權全文
+    （`tools/notices.js` 由套件原始碼產生，每次建置自動更新）。
+  - 「說明 › 關於」加入免責聲明與「版權、授權與免責聲明全文」按鈕；使用說明書新增「版權與免責聲明」章節。
 
 ---
 
@@ -345,7 +357,7 @@ node tools/examples/gen.js                        # 由 defs*.js 產生 26 個�
 node tools/examples/verify.js                     # 執行並比對全部範例（269 項，AC 範例自動加 --ac）
 node tools/examples/coverage.js -m                # 範例的元件涵蓋率
 # 圖形介面自動測試（CI 執行；本機需 --shot 前綴）：DAEDALUS_SCRIPT=tools/gui_test/gui.script DaedalusEngine tools/gui_test/gui.psimx --shot out/gui
-powershell -ExecutionPolicy Bypass -File tools\package.ps1   # 產生 dist\DaedalusEngine-Setup-V1.4.0.exe
+powershell -ExecutionPolicy Bypass -File tools\package.ps1   # 產生 dist\DaedalusEngine-Setup-V1.4.1.exe
 ```
 
 專案結構：`crates/daedalus-core`（模擬引擎）、`daedalus-app`（GUI）、`daedalus-cli`（命令列）、
@@ -363,8 +375,9 @@ DaedalusEngine 建立在許多開源專案與公開資料之上，謹向這些�
 
 ### 程式使用的開源函式庫
 
-程式以 [Rust](https://www.rust-lang.org) 撰寫，連同間接相依共使用 314 個來自 [crates.io](https://crates.io) 的開源 crate，
-全部採用與 GPL-3.0 相容的寬鬆授權（MIT、Apache-2.0、BSD、Zlib、ISC、Unicode-3.0 等；完整清單可用 `cargo tree` 列出）。
+程式以 [Rust](https://www.rust-lang.org) 撰寫，Windows 版程式實際包含 148 個來自 [crates.io](https://crates.io) 的開源 crate
+（`Cargo.lock` 共 314 個，含其他平台與建置工具），全部採用與 GPL-3.0 相容的寬鬆授權（MIT、Apache-2.0、BSD、Zlib、ISC、
+Unicode-3.0 等）。每個套件的著作權聲明與授權全文見 [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt)（隨程式安裝）。
 主要的直接相依：
 
 | 專案 | 在本程式中的用途 | 授權 |
@@ -418,6 +431,14 @@ Copyright (C) 2026 Johnny.ch.Tsai
 
 本程式為自由軟體：您可以依自由軟體基金會發布的 GNU 通用公共授權條款第 3 版（GPL-3.0）再散布或修改它。
 本程式希望能有所助益，但**不提供任何擔保**，亦無適售性或特定目的適用性的默示擔保。授權全文見 [LICENSE](LICENSE)。
+
+版權、授權與免責聲明的完整內容見 [NOTICE.txt](NOTICE.txt)（安裝時須同意），重點如下：
+
+- **附加條款（依 GPL-3.0 第 7 條）**：散布時須保留著作權聲明、作者標示與 NOTICE.txt；修改版須以合理方式標示與原版不同，
+  不得使人誤認為原作者發布；不授予以「DaedalusEngine」名稱與圖示作為商標的權利。
+- **免責聲明**：模擬結果僅供工程參考，元件模型是簡化的數學模型；任何設計在製作、量產或用於安全相關用途前，須以實際量測、
+  原型測試及適用的法規與安全標準驗證。在法律允許的最大範圍內，著作權人不對使用本程式所生的任何損害負責。
+- 第三方元件依其各自授權散布，見 [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt)。
 
 本專案由 Johnny.ch.Tsai 以 AI（Anthropic Claude）輔助開發，每個版本都以 `tools/` 中的測試驗證。
 

@@ -18,4 +18,4 @@ pub mod sparse;
 pub mod sweep;
 pub mod util;
 
-pub const VERSION: &str = "V1.4.0";
+pub const VERSION: &str = "V1.4.1";

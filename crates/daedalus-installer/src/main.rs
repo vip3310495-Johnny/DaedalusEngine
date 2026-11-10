@@ -6,6 +6,9 @@
 //!   DaedalusEngine-Setup.exe --silent --repair     re-write the installed copy in place (keeps its choices)
 //!   uninstall.exe --maintain                       maintenance page (Settings › Apps › 修改)
 //!   uninstall.exe --uninstall [--silent] [--purge] [--dir P]
+//!
+//! The wizard asks the user to accept the license terms and disclaimer (NOTICE.txt, LICENSE) before installing;
+//! a silent install accepts them on behalf of whoever runs it (logged), as documented in the README.
 #![windows_subsystem = "windows"]
 
 mod setup;
@@ -124,6 +127,7 @@ fn run_silent(a: &Args) -> i32 {
         }
         let dir = if a.repair { existing.as_ref().map(|x| x.0.clone()).unwrap_or_default() } else { a.dir.clone().unwrap_or_else(setup::default_dir) };
         let o = setup::Options { dir, desktop, assoc };
+        setup::log("terms: license and disclaimer (NOTICE.txt, LICENSE) accepted by the silent install");
         match &existing {
             Some((_, v)) if a.repair => {
                 setup::log(&format!("repair {} (installed {}) {}", setup::VERSION, setup::ver_label(v), o.dir.display()));
@@ -170,7 +174,7 @@ fn run_fallback(a: &Args, err: &str) -> i32 {
         return 0;
     }
     let dir = a.dir.clone().unwrap_or_else(setup::default_dir);
-    let q = format!("無法開啟安裝畫面（{}）。\n\n要以預設設定將 DaedalusEngine 安裝到\n{}\n嗎？（含開始功能表與桌面捷徑、.psimx 檔案關聯）", err, dir.display());
+    let q = format!("無法開啟安裝畫面（{}）。\n\n要以預設設定將 DaedalusEngine 安裝到\n{}\n嗎？（含開始功能表與桌面捷徑、.psimx 檔案關聯）\n\n按「是」即表示您同意本程式的授權條款與免責聲明：依 GPL-3.0 授權、不提供任何擔保，模擬結果僅供工程參考，著作權人不對使用本程式所生的任何損害負責。全文見安裝資料夾中的 NOTICE.txt 與 LICENSE。", err, dir.display());
     if !win::msg_yes_no(&title, &q) {
         return 2;
     }

@@ -184,6 +184,18 @@ jobs:
           wait-for-completion: true
           output-artifact-directory: out/programs-signed
 
+      # third-party license notices packed into the installer, regenerated from the crate sources of this build;
+      # a stale copy in the repository is only a warning, so a dependency update still builds
+      - name: Third-party notices
+        shell: pwsh
+        run: |
+          node tools/notices.js --check
+          if ($LASTEXITCODE -ne 0) {
+            node tools/notices.js
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            echo "::warning title=THIRD-PARTY-NOTICES.txt::out of date in the repository; regenerated for this build (run node tools/notices.js)"
+          }
+
       - name: Build installer
         shell: pwsh
         run: |
@@ -194,6 +206,39 @@ jobs:
           $ver = (Select-String -Path Cargo.toml -Pattern '^version = "(.+)"').Matches[0].Groups[1].Value
           New-Item -ItemType Directory -Force out/installer | Out-Null
           Copy-Item target/release/DaedalusEngine-Setup.exe "out/installer/DaedalusEngine-Setup-V$ver.exe"
+          cargo test --release -p daedalus-installer
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      # screenshots of the installer's license and start pages with Mesa software OpenGL (as the GUI test); the
+      # shipped installer only loads System32 DLLs, so this uses a screenshot build without that link flag
+      - name: Installer screenshots
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $dir = if ($env:SIGN -eq "true") { "out/programs-signed" } else { "out/programs" }
+          $env:DAEDALUS_APP_EXE = (Resolve-Path "$dir/DaedalusEngine.exe").Path
+          $env:DAEDALUS_SHOT_BUILD = "1"
+          cargo build --release -p daedalus-installer
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $gl = Get-ChildItem mesa -Recurse -Filter opengl32.dll | Where-Object { $_.FullName -match "x64" } | Select-Object -First 1
+          $d = (New-Item -ItemType Directory -Force out/setupshot).FullName
+          Copy-Item target/release/DaedalusEngine-Setup.exe "$d/setup.exe"
+          Copy-Item (Join-Path $gl.DirectoryName "*.dll") $d
+          $env:GALLIUM_DRIVER = "llvmpipe"
+          foreach ($pg in "license", "start") {
+            $env:DAEDALUS_SETUP_PAGE = $pg
+            $p = Start-Process "$d/setup.exe" -ArgumentList "--shot", "$d/setup_$pg.png" -PassThru
+            if (-not $p.WaitForExit(120000)) { $p.Kill(); throw "installer screenshot timed out" }
+            if (-not (Test-Path "$d/setup_$pg.png")) { throw "no screenshot of the $pg page" }
+          }
+
+      - name: Upload installer screenshots
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: installer-screenshots
+          path: out/setupshot/*.png
+          if-no-files-found: ignore
 
       # install → run → repair → refuse a foreign non-empty folder → uninstall, with the installer just built
       - name: Installer smoke test
@@ -203,7 +248,7 @@ jobs:
           $dir = Join-Path $env:RUNNER_TEMP "smoke\DaedalusEngine"
           $p = Start-Process $setup -ArgumentList "--silent","--no-desktop","--no-assoc","--dir",$dir -Wait -PassThru
           if ($p.ExitCode -ne 0) { throw "install failed: $($p.ExitCode)" }
-          foreach ($f in "DaedalusEngine.exe","daedalus-cli.exe","README.md","LICENSE","uninstall.exe") { if (-not (Test-Path "$dir\$f")) { throw "missing $f" } }
+          foreach ($f in "DaedalusEngine.exe","daedalus-cli.exe","README.md","LICENSE","NOTICE.txt","THIRD-PARTY-NOTICES.txt","uninstall.exe") { if (-not (Test-Path "$dir\$f")) { throw "missing $f" } }
           & "$dir\daedalus-cli.exe" crates/daedalus-app/assets/examples/rlc.psimx "$env:RUNNER_TEMP\smoke.csv"
           if ($LASTEXITCODE -ne 0) { throw "installed CLI failed" }
           Remove-Item "$dir\daedalus-cli.exe"

@@ -23,6 +23,8 @@ enum Action {
 }
 
 enum Page {
+    /// license terms and disclaimer: must be accepted before installing, updating, repairing or downgrading
+    License,
     Start,
     Busy,
     Done(Vec<String>),
@@ -49,6 +51,9 @@ pub struct Wizard {
     running: bool,
     checked: Option<Instant>,
     close_after: bool,
+    /// the license terms and disclaimer were accepted on the License page
+    accepted: bool,
+    notice: Vec<(bool, String)>,
     /// development aid: save a PNG of the first page, then exit
     pub shot: Option<String>,
     shot_frame: u32,
@@ -88,7 +93,8 @@ impl Wizard {
         };
         Wizard {
             mode,
-            page: Page::Start,
+            // a new installation starts with the terms; the maintenance page shows them after the choice
+            page: if mode == Mode::Install && existing.is_none() { Page::License } else { Page::Start },
             dir: dir.display().to_string(),
             desktop,
             assoc,
@@ -103,9 +109,62 @@ impl Wizard {
             running: false,
             checked: None,
             close_after: false,
+            accepted: false,
+            notice: notice_paragraphs(),
             shot: None,
             shot_frame: 0,
         }
+    }
+
+    /// install / update / repair / downgrade only after the terms were accepted; uninstalling needs no acceptance
+    fn proceed(&mut self, ctx: &egui::Context) {
+        if self.mode == Mode::Install && self.action != Action::Uninstall && !self.accepted {
+            self.page = Page::License;
+        } else {
+            self.start(ctx);
+        }
+    }
+
+    /// license terms and disclaimer (the Chinese part of NOTICE.txt) with an acceptance check box
+    fn page_license(&mut self, ui: &mut egui::Ui) -> Option<bool> {
+        let mut go = None;
+        ui.heading(RichText::new("授權條款與免責聲明").strong());
+        ui.label(RichText::new("請閱讀以下條款。安裝後，全文另見安裝資料夾中的 NOTICE.txt、LICENSE（GPL-3.0）與 THIRD-PARTY-NOTICES.txt。").weak().size(13.0));
+        let h = (ui.available_height() - 92.0).max(80.0);
+        egui::Frame::new().fill(Color32::WHITE).stroke(egui::Stroke::new(1.0, Color32::from_gray(200))).corner_radius(6.0).inner_margin(egui::Margin::symmetric(10, 8)).show(ui, |ui| {
+            egui::ScrollArea::vertical().max_height(h).auto_shrink([false, false]).show(ui, |ui| {
+                ui.spacing_mut().item_spacing.y = 5.0;
+                for (i, (head, t)) in self.notice.iter().enumerate() {
+                    let rt = RichText::new(t).size(13.0);
+                    let rt = if *head || i == 0 { rt.strong().color(Color32::from_rgb(0x1d, 0x2b, 0x6b)) } else { rt };
+                    if *head && i > 0 {
+                        ui.add_space(4.0);
+                    }
+                    ui.add(egui::Label::new(rt).wrap());
+                }
+            });
+        });
+        ui.checkbox(&mut self.accepted, "我已閱讀並同意上述授權條款與免責聲明");
+        let fresh = self.existing.is_none();
+        let label = match self.action {
+            _ if fresh => "下一步",
+            Action::Update => "同意並更新",
+            Action::Downgrade => "同意並降級",
+            _ => "同意並修復",
+        };
+        let ok = self.accepted;
+        bottom_buttons(ui, |ui| {
+            if Self::primary(ui, label, ok) {
+                go = Some(true);
+            }
+            if Self::secondary(ui, "取消") {
+                go = Some(false);
+            }
+            if !fresh && Self::secondary(ui, "上一步") {
+                self.page = Page::Start;
+            }
+        });
+        go
     }
 
     fn dir(&self) -> PathBuf {
@@ -281,6 +340,7 @@ impl Wizard {
                     Self::note(ui, "DaedalusEngine 正在執行中。建議先關閉程式；若不關閉，新版本會在下次啟動時生效。", true);
                 }
                 let ok = !self.dir.trim().is_empty();
+                let mut back = false;
                 bottom_buttons(ui, |ui| {
                     if Self::primary(ui, "安裝", ok) {
                         go = Some(true);
@@ -288,7 +348,11 @@ impl Wizard {
                     if Self::secondary(ui, "取消") {
                         go = Some(false);
                     }
+                    back = Self::secondary(ui, "上一步");
                 });
+                if back {
+                    self.page = Page::License;
+                }
             }
             Mode::Uninstall => {
                 ui.heading(RichText::new("解除安裝 DaedalusEngine").strong());
@@ -315,6 +379,22 @@ impl Wizard {
         let _ = ctx;
         go
     }
+}
+
+/// NOTICE.txt (copyright, license, additional terms, disclaimer): its Chinese part, one paragraph per line;
+/// (true, text) for section headings such as 「一、著作權」
+const NOTICE: &str = include_str!("../../../NOTICE.txt");
+
+fn notice_paragraphs() -> Vec<(bool, String)> {
+    let zh = NOTICE.split("\n=====").next().unwrap_or(NOTICE);
+    zh.lines()
+        .map(str::trim)
+        .filter(|l| !l.is_empty())
+        .map(|l| {
+            let head = l.chars().next().map(|c| "一二三四五六七八九十".contains(c)).unwrap_or(false) && l.contains('、');
+            (head, l.to_string())
+        })
+        .collect()
 }
 
 /// lay buttons out right-to-left at the bottom of the remaining space
@@ -352,6 +432,7 @@ impl eframe::App for Wizard {
                             Page::Busy
                         }
                         "done" => Page::Done(vec![]),
+                        "license" => Page::License,
                         "failed" => Page::Failed(r"無法寫入 C:\Program Files\DaedalusEngine：此位置需要系統管理員權限。".into()),
                         _ => Page::Start,
                     };
@@ -398,8 +479,14 @@ impl eframe::App for Wizard {
         let ui = &mut child;
         let mut close = false;
         match &self.page {
-            Page::Start => match self.page_start(ui, &ctx) {
+            Page::License => match self.page_license(ui) {
+                Some(true) if self.existing.is_none() => self.page = Page::Start,
                 Some(true) => self.start(&ctx),
+                Some(false) => close = true,
+                None => {}
+            },
+            Page::Start => match self.page_start(ui, &ctx) {
+                Some(true) => self.proceed(&ctx),
                 Some(false) => close = true,
                 None => {}
             },
@@ -516,5 +603,20 @@ impl eframe::App for Wizard {
         if self.mode == Mode::Uninstall && self.close_after {
             setup::schedule_self_delete(&self.dir());
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn notice_page_text() {
+        let p = notice_paragraphs();
+        assert!(p[0].1.contains("DaedalusEngine") && !p[0].0);
+        let heads: Vec<&str> = p.iter().filter(|x| x.0).map(|x| x.1.as_str()).collect();
+        assert_eq!(heads, ["一、著作權", "二、授權", "三、附加條款（依 GPL-3.0 第 7 條）", "四、免責聲明", "五、第三方元件", "六、其他"]);
+        assert!(p.iter().any(|x| x.1.contains("模擬結果僅供工程參考")));
+        assert!(!p.iter().any(|x| x.1.contains("English") || x.1.starts_with("====")));
     }
 }

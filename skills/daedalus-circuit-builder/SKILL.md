@@ -23,7 +23,7 @@ description: "Build a .psimx circuit file for DaedalusEngine (Windows power-elec
 `.psimx` 是 UTF-8 JSON：
 
 ```json
-{ "app": "psimweb", "version": "V1.4.0",
+{ "app": "psimweb", "version": "V1.4.1",
   "doc": { "elements": [ ... ], "wires": [ ... ], "nid": 123 },
   "screens": [["Vo"], ["IL", "Iout"]] }
 ```

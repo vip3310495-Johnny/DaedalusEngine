@@ -1,7 +1,32 @@
 // Guide chapters of the user manual (tools/manual/gen.js). HTML fragments in Traditional Chinese.
 'use strict';
+const fs = require('fs');
+const path = require('path');
 
-const kbd = s => s.split(' / ').map(k => `<span class="kbd">${k}</span>`).join(' / ');
+// the copyright, license and disclaimer chapter: the Chinese part of NOTICE.txt (one paragraph per line;
+// 「一、…」 lines are headings, 「1. …」 lines list items), so the manual and the installer show the same text
+function noticeHtml() {
+  const s = fs.readFileSync(path.join(__dirname, '..', '..', 'NOTICE.txt'), 'utf8').replace(/\r\n/g, '\n');
+  const lines = s.split('\n=====')[0].split('\n').map(l => l.trim()).filter(Boolean).slice(1);
+  const esc = t => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/https?:\/\/[^\s，。）]+/g, u => `<a href="${u}">${u}</a>`);
+  let html = '';
+  let list = false;
+  for (const l of lines) {
+    const item = /^\d+\.\s+(.*)$/.exec(l);
+    if (item) {
+      html += (list ? '' : '<ol>') + `<li>${esc(item[1])}</li>`;
+      list = true;
+      continue;
+    }
+    if (list) html += '</ol>';
+    list = false;
+    html += /^[一二三四五六七八九十]+、/.test(l) ? `<h3>${esc(l)}</h3>` : `<p>${esc(l)}</p>`;
+  }
+  return html + (list ? '</ol>' : '');
+}
+
+const kbd =s => s.split(' / ').map(k => `<span class="kbd">${k}</span>`).join(' / ');
 const table = (head, rows) => `<table><thead><tr>${head.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
 
 // the measurement functions of the waveform viewer (definitions as in crates/daedalus-app/src/measure.rs)
@@ -188,6 +213,11 @@ y1 = u;</pre>`,
         ['<code>.pdf</code> 電路圖', '「檔案 › 匯出畫面（PDF）」：整張電路圖的向量 PDF。'],
       ])}
 <p>程式設定（介面文字大小、元件庫釘選、波形顏色、波形檢視器設定、最近開啟的檔案）會自動保存在使用者資料夾中。</p>`,
+    },
+    {
+      id: 'legal', title: '版權與免責聲明',
+      html: `<p class="note">安裝程式會要求同意以下條款；全文另見安裝資料夾中的 <code>NOTICE.txt</code>、<code>LICENSE</code>（GPL-3.0）與 <code>THIRD-PARTY-NOTICES.txt</code>，程式中「說明 › 關於」也可開啟。</p>
+${noticeHtml()}`,
     },
   ];
 }

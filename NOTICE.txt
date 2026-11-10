@@ -1,0 +1,64 @@
+DaedalusEngine 電力電子電路模擬器 — 版權、授權與免責聲明
+
+Copyright (C) 2026 Johnny.ch.Tsai
+原始碼：https://github.com/vip3310495-Johnny/DaedalusEngine
+
+一、著作權
+本程式（包括原始碼、執行檔、安裝程式、元件庫、範例電路、使用說明書與圖示）的著作權屬於 Johnny.ch.Tsai。
+
+二、授權
+本程式為自由軟體，依 GNU 通用公共授權條款第 3 版（GPL-3.0-only）授權：您可以使用、複製、再散布及修改本程式，但須遵守該授權的條件，例如散布本程式或其修改版時，須以相同授權提供對應的原始碼。
+授權全文見同資料夾中的 LICENSE 檔，或 https://www.gnu.org/licenses/gpl-3.0.html。
+
+三、附加條款（依 GPL-3.0 第 7 條）
+1. 散布本程式或其修改版時，須保留上述著作權聲明、原作者姓名標示與本聲明。
+2. 修改版須以合理方式標示與原版不同（例如在名稱或版本號註明為修改版及修改者），不得使人誤認為由原作者發布或經原作者認可。
+3. 本授權不授予使用「DaedalusEngine」名稱與程式圖示作為商標或服務標章的權利；以文字如實指稱本程式（例如說明修改版源自 DaedalusEngine）不在此限。
+
+四、免責聲明
+1. 本程式依「現狀」提供。在法律允許的範圍內，不提供任何明示或默示的擔保，包括但不限於適售性、特定目的適用性、正確性及不侵害第三人權利的擔保。
+2. 模擬結果僅供工程參考。元件模型是簡化的數學模型，可能與實際元件、溫度、製程差異、佈線寄生效應及量測條件有所出入。任何設計在製作、量產、上市或用於安全相關用途之前，使用者應自行以實際量測、原型測試及適用的法規與安全標準驗證。
+3. 本程式不得作為醫療、航太、核能、車輛安全或其他一旦失效可能造成人身傷亡或重大財產損失之系統的唯一設計或驗證依據。
+4. 在法律允許的最大範圍內，著作權人及貢獻者對於因使用或無法使用本程式所生的任何損害，包括依模擬結果所做的設計決定、資料遺失、硬體損壞、人身傷害、營業中斷或利益損失，不論為直接、間接、附帶、特殊或衍生性損害，均不負賠償責任，即使已被告知發生此等損害的可能性。
+5. 電路檔中的 C 程式方塊會在模擬時於本程式的受限直譯器中執行；請只開啟與模擬可信來源的電路檔。
+6. 在公司或其他機構內安裝與使用本程式前，請確認符合該單位的資訊安全與軟體使用規範。
+
+五、第三方元件
+本程式包含的開源函式庫依其各自的授權條款散布，其著作權聲明與授權全文見 THIRD-PARTY-NOTICES.txt。
+
+六、其他
+本聲明與 LICENSE（GPL-3.0）不一致時，以 LICENSE 為準；除第三條所列的附加條款外，本聲明不限制 GPL-3.0 賦予您的任何權利。安裝或使用本程式，即表示您已閱讀並同意上述條款。
+
+==============================================================================
+English
+
+DaedalusEngine power-electronics circuit simulator — copyright, license and disclaimer
+Copyright (C) 2026 Johnny.ch.Tsai
+Source code: https://github.com/vip3310495-Johnny/DaedalusEngine
+
+1. Copyright. This program (source code, executables, installer, element library, example circuits, user manual
+   and icons) is copyright of Johnny.ch.Tsai.
+2. License. This program is free software under the GNU General Public License version 3 (GPL-3.0-only); see the
+   LICENSE file or https://www.gnu.org/licenses/gpl-3.0.html.
+3. Additional terms under section 7 of the GPL-3.0: (a) the above copyright notice, the author attribution and this
+   notice must be preserved in all copies and modified versions; (b) modified versions must be marked in reasonable
+   ways as different from the original version and must not be presented as released or endorsed by the original
+   author; (c) no rights are granted to use the name "DaedalusEngine" or the program icon as a trademark or service
+   mark, except for truthful references to the program.
+4. Disclaimer. The program is provided "as is", without warranty of any kind, express or implied, to the extent
+   permitted by law. Simulation results are an engineering aid only: device models are simplified mathematical
+   models and can differ from real components, temperature, process spread, layout parasitics and measurement
+   conditions. Verify every design by measurement, prototype tests and the applicable regulations and safety
+   standards before it is built, produced, sold or used in a safety-related application. Do not use the program as
+   the sole basis for designing or verifying medical, aerospace, nuclear, vehicle-safety or other systems whose
+   failure could cause injury, death or serious damage to property.
+5. Limitation of liability. To the maximum extent permitted by law, the copyright holder and contributors are not
+   liable for any direct, indirect, incidental, special or consequential damages arising from the use of, or the
+   inability to use, the program, including design decisions based on simulation results, loss of data, damage to
+   hardware, personal injury, business interruption or lost profits, even if advised of the possibility of such
+   damages.
+6. Circuit files. C program blocks in a circuit file run in the program's restricted interpreter during a
+   simulation; open and simulate circuit files from trusted sources only.
+7. Third-party components are distributed under their own licenses; see THIRD-PARTY-NOTICES.txt.
+8. If this notice conflicts with the LICENSE (GPL-3.0), the LICENSE prevails; apart from the additional terms in
+   item 3, this notice does not restrict any right granted by the GPL-3.0.

@@ -1,4 +1,5 @@
-//! Packs the release build of the application (and documents) into a compressed payload.
+//! Packs the release build of the application and its documents (README, LICENSE, the copyright notice and
+//! disclaimer NOTICE.txt, THIRD-PARTY-NOTICES.txt) into a compressed payload.
 use std::io::Write;
 use std::path::PathBuf;
 
@@ -16,7 +17,7 @@ fn main() {
         Ok(b) => files.push(("daedalus-cli.exe".into(), b)),
         Err(_) => println!("cargo:warning=daedalus-cli.exe not found; installer will not include the command-line runner"),
     }
-    for doc in ["README.md", "LICENSE"] {
+    for doc in ["README.md", "LICENSE", "NOTICE.txt", "THIRD-PARTY-NOTICES.txt"] {
         if let Ok(b) = std::fs::read(root.join(doc)) {
             files.push((doc.into(), b));
         }
@@ -40,7 +41,10 @@ fn main() {
     println!("cargo:rerun-if-env-changed=DAEDALUS_APP_EXE");
     println!("cargo:rerun-if-changed=assets/icon.ico");
 
-    if std::env::var("CARGO_CFG_TARGET_ENV").as_deref() == Ok("msvc") {
+    // dependent DLLs only from System32 (no DLL planting from the download folder); a CI-only screenshot build
+    // (DAEDALUS_SHOT_BUILD) leaves it out so that Mesa's software opengl32.dll next to the exe is used
+    println!("cargo:rerun-if-env-changed=DAEDALUS_SHOT_BUILD");
+    if std::env::var("CARGO_CFG_TARGET_ENV").as_deref() == Ok("msvc") && std::env::var("DAEDALUS_SHOT_BUILD").is_err() {
         println!("cargo:rustc-link-arg-bins=/DEPENDENTLOADFLAG:0x800");
     }
     if std::env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("windows") {
