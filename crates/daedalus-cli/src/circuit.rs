@@ -1224,6 +1224,19 @@ fn disconnect(c: &mut Circuit, pin: &str) -> Result<String, String> {
     }
     let ch = chain_from(&c.doc, at);
     if ch.shared {
+        // a one-pin element (a probe) sitting on a wire: move it off the wire
+        let el = c.doc.elements[i].clone();
+        let one_pin = lib().pins_for(&el).len() == 1;
+        let on_wire = c.doc.wires.iter().any(|w| on_open_segment(at.0, at.1, w));
+        let ends_here = c.doc.wires.iter().any(|w| (w.x1, w.y1) == at || (w.x2, w.y2) == at);
+        if one_pin && on_wire && !ends_here {
+            let d = pin_dir(&el, &p);
+            c.doc.elements[i].x -= 2.0 * d.0;
+            c.doc.elements[i].y -= 2.0 * d.1;
+            let after = c.analyze();
+            check_partition(&before, &after, &[], false, Some(&pr))?;
+            return Ok(format!("{} 移離導線（原本在節點 {}）", pr, before.net_of(&pr).map(|n| n.name.clone()).unwrap_or_default()));
+        }
         return Err(format!("{} 位在導線的交會點或導線中間，與其他連線共用同一點，無法只拆這隻接腳；請移動元件（set 的 x、y）後再連接", pr));
     }
     let marks: Vec<i64> = c.doc.elements.iter().filter(|e| matches!(e.typ.as_str(), "LABEL" | "GND") && (e.x, e.y) == at).map(|e| e.id).collect();
@@ -1359,6 +1372,84 @@ fn set(c: &mut Circuit, op: &Value) -> Result<String, String> {
     Ok(format!("{}：{}", el_name(&c.doc.elements[i]), msgs.join("，")))
 }
 
+/// symbol boxes of every element with its name and parameter texts
+fn text_boxes(doc: &Doc) -> Vec<[f64; 4]> {
+    doc.elements
+        .iter()
+        .map(|e| {
+            let mut b = world_box(e);
+            let lines = label_lines(e);
+            if !lines.is_empty() && !matches!(e.typ.as_str(), "LABEL" | "TEXT") {
+                if b[2] - b[0] >= b[3] - b[1] {
+                    b[1] -= 0.6 + lines.len() as f64 * 0.95;
+                } else {
+                    b[2] += 0.6 + lines.iter().map(|l| text_w(l)).fold(0.0, f64::max) * 0.8;
+                }
+            }
+            b
+        })
+        .collect()
+}
+
+/// where a one-pin probe can sit with its pin on a wire of `net` (a T junction) and its body and name clear of
+/// everything else; nearest to the net's pins first, beside a wire rather than below it
+fn tap_spot(c: &Circuit, typ: &str, params: &BTreeMap<String, String>, name: &str, pin: &PinDef, net: &str) -> Option<(f64, f64, i64)> {
+    let a = c.analyze();
+    let ti = if net.contains('.') { a.pin_net.get(net).copied() } else { a.net_named(net) }?;
+    let els: Vec<&Element> = c.doc.elements.iter().filter(|e| !e.dis).collect();
+    let conn = connectivity(&c.doc, &els);
+    let mine: Vec<usize> = (0..c.doc.wires.len()).filter(|&k| conn.root(c.doc.wires[k].x1, c.doc.wires[k].y1).and_then(|r| a.root_net.get(&r)) == Some(&ti)).collect();
+    if mine.is_empty() {
+        return None;
+    }
+    let pts: Vec<(f64, f64)> = a.nets[ti].pins.iter().filter_map(|p| pin_of(&c.doc, p).ok().map(|x| x.2)).collect();
+    let (cx, cy) = if pts.is_empty() { (c.doc.wires[mine[0]].x1, c.doc.wires[mine[0]].y1) } else { (pts.iter().map(|p| p.0).sum::<f64>() / pts.len() as f64, pts.iter().map(|p| p.1).sum::<f64>() / pts.len() as f64) };
+    let boxes = text_boxes(&c.doc);
+    let pin_pts: HashSet<(i64, i64)> = c.doc.elements.iter().flat_map(|e| wpins(e).into_iter().map(|p| kp(p.x, p.y))).collect();
+    let mut best: Option<(f64, (f64, f64, i64))> = None;
+    for &k in &mine {
+        let w = &c.doc.wires[k];
+        let horiz = w.y1 == w.y2;
+        let rots: [i64; 2] = if horiz { [0, 2] } else { [1, 3] };
+        let (lo, hi) = if horiz { (w.x1.min(w.x2), w.x1.max(w.x2)) } else { (w.y1.min(w.y2), w.y1.max(w.y2)) };
+        let mut t = lo.ceil();
+        while t <= hi {
+            let p = if horiz { (t, w.y1) } else { (w.x1, t) };
+            t += 1.0;
+            if pin_pts.contains(&kp(p.0, p.1)) {
+                continue;
+            }
+            for r in rots {
+                let mut el = Element { id: 0, typ: typ.into(), x: 0.0, y: 0.0, rot: r, mir: false, dis: false, name: name.into(), params: params.clone(), disp: None };
+                let (lx, ly) = tpt(&el, pin.x, pin.y);
+                el.x = p.0 - lx;
+                el.y = p.1 - ly;
+                let mut b = world_box(&el);
+                let lines = label_lines(&el);
+                if !lines.is_empty() {
+                    if b[2] - b[0] >= b[3] - b[1] {
+                        b[1] -= 0.6 + lines.len() as f64 * 0.95;
+                    } else {
+                        b[2] += 0.6 + lines.iter().map(|l| text_w(l)).fold(0.0, f64::max) * 0.8;
+                    }
+                }
+                let bb = [b[0] - 0.3, b[1] - 0.3, b[2] + 0.3, b[3] + 0.3];
+                if boxes.iter().any(|o| o[0] < bb[2] && bb[0] < o[2] && o[1] < bb[3] && bb[1] < o[3]) {
+                    continue;
+                }
+                if c.doc.wires.iter().enumerate().any(|(j, o)| j != k && o.x1.max(o.x2) >= bb[0] && o.x1.min(o.x2) <= bb[2] && o.y1.max(o.y2) >= bb[1] && o.y1.min(o.y2) <= bb[3]) {
+                    continue;
+                }
+                let score = ((p.0 - cx).powi(2) + (p.1 - cy).powi(2)).sqrt() + if r == 2 || r == 3 { 2.0 } else { 0.0 };
+                if best.map(|b| score < b.0).unwrap_or(true) {
+                    best = Some((score, (el.x, el.y, r)));
+                }
+            }
+        }
+    }
+    best.map(|b| b.1)
+}
+
 fn add(c: &mut Circuit, op: &Value, spot: &mut Spot) -> Result<String, String> {
     let typ = op.get("type").and_then(|x| x.as_str()).ok_or("add 需要 type")?.trim().to_string();
     let d = def(&typ).ok_or_else(|| format!("未知的元件類型「{}」", typ))?;
@@ -1396,6 +1487,24 @@ fn add(c: &mut Circuit, op: &Value, spot: &mut Spot) -> Result<String, String> {
                 .find(|p| p.n == *pn || p.n.eq_ignore_ascii_case(pn))
                 .ok_or_else(|| format!("{}（{}）沒有接腳「{}」。接腳：{}", who, typ, pn, pins.iter().map(|p| p.n.as_str()).collect::<Vec<_>>().join("、")))?;
             nets.insert(p.n.clone(), nv.as_str().map(|s| s.trim().to_string()).filter(|s| !s.is_empty()));
+        }
+    }
+    // a probe with one pin: straight onto a wire of its net (T junction), its body beside the wire
+    if op.get("x").is_none() && pins.len() == 1 && d.has("probe") && !name.is_empty() {
+        if let Some(Some(n)) = nets.get(&pins[0].n) {
+            if !is_ground(n) {
+                if let Some((px, py, r)) = tap_spot(c, &typ, &params, &name, &pins[0], n) {
+                    let before = c.analyze();
+                    c.add_element(&typ, &name, px, py, r, false, &params);
+                    let after = c.analyze();
+                    let pr = format!("{}.{}", name, pins[0].n);
+                    let tname = before.net_named(n).or_else(|| before.pin_net.get(n.as_str()).copied()).map(|i| before.nets[i].name.clone()).unwrap_or_default();
+                    if after.net_of(&pr).map(|x| x.name.clone()) == Some(tname.clone()) && check_partition(&before, &after, &[], false, None).is_ok() {
+                        return Ok(format!("新增 {}（{}）於 ({}, {})，接腳直接接在節點 {} 的導線上", who, typ, px, py, tname));
+                    }
+                    c.doc.elements.pop();
+                }
+            }
         }
     }
     // nets given by pin reference ("Q1.S") become the target's label
