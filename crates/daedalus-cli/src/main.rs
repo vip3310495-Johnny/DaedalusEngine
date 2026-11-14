@@ -3,7 +3,9 @@
 //!   daedalus-cli <case.json> <out.csv>          (regression case: {net, sc, ac})
 //!   daedalus-cli mcp                            (Model Context Protocol server on stdio, for AI agents)
 //!   daedalus-cli skill install [folder]         (circuit-builder skill for Claude Code)
+//!   daedalus-cli new <netlist.json> <out.psimx> | inspect <file> | render <file> <out.png> | tool <name> <args>
 mod circuit;
+mod layout;
 mod mcp;
 mod render;
 mod run;
@@ -114,6 +116,7 @@ fn main() {
     match args.get(1).map(String::as_str) {
         Some("mcp") => std::process::exit(mcp::serve()),
         Some("skill") => std::process::exit(skill::cmd(&args[2..])),
+        Some("tool") | Some("new") | Some("inspect") | Some("render") => std::process::exit(tools::cli(&args[1..])),
         Some("--version") | Some("-V") => {
             println!("daedalus-cli {}", daedalus_core::VERSION);
             return;

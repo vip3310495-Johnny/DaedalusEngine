@@ -10,8 +10,6 @@ use std::path::Path;
 
 /// length of the wire from a pin to its net label or ground symbol
 pub const STUB: f64 = 2.0;
-/// width of a row of the automatic layout (grid units)
-const ROW_W: f64 = 64.0;
 const GROUND: [&str; 5] = ["0", "gnd", "GND", "Gnd", "地"];
 
 pub fn is_ground(n: &str) -> bool {
@@ -21,6 +19,9 @@ pub fn is_ground(n: &str) -> bool {
 pub struct Circuit {
     pub doc: Doc,
     pub screens: Option<Vec<Vec<String>>>,
+    /// net names given by the AI that have no label in the drawing (name -> pins of the net); kept in the file
+    /// as "nets" so later edits can still say "SW"; the program itself does not keep it when it saves
+    pub nets: BTreeMap<String, Vec<String>>,
 }
 
 fn fix_nid(doc: &mut Doc) {
@@ -32,13 +33,28 @@ fn fix_nid(doc: &mut Doc) {
 
 impl Circuit {
     pub fn empty() -> Circuit {
-        Circuit { doc: Doc { elements: vec![], wires: vec![], nid: 1 }, screens: None }
+        Circuit { doc: Doc { elements: vec![], wires: vec![], nid: 1 }, screens: None, nets: BTreeMap::new() }
     }
     pub fn load(path: &Path) -> Result<Circuit, String> {
         let txt = std::fs::read_to_string(path).map_err(|e| format!("無法讀取 {}：{}", path.display(), e))?;
         let (mut doc, screens) = Doc::from_json(&txt).map_err(|e| format!("{} 不是有效的電路檔：{}", path.display(), e))?;
         fix_nid(&mut doc);
-        Ok(Circuit { doc, screens })
+        let mut nets = BTreeMap::new();
+        if let Ok(v) = serde_json::from_str::<Value>(&txt) {
+            if let Some(o) = v.get("nets").and_then(|x| x.as_object()) {
+                for (k, p) in o {
+                    let pins: Vec<String> = match p {
+                        Value::Array(a) => a.iter().filter_map(|x| x.as_str().map(String::from)).collect(),
+                        Value::String(s) => vec![s.clone()],
+                        _ => vec![],
+                    };
+                    if !pins.is_empty() {
+                        nets.insert(k.clone(), pins);
+                    }
+                }
+            }
+        }
+        Ok(Circuit { doc, screens, nets })
     }
     /// written to a temporary file first, so a DaedalusEngine window that reloads the file never sees half of it
     pub fn save(&self, path: &Path) -> Result<(), String> {
@@ -47,13 +63,33 @@ impl Circuit {
                 std::fs::create_dir_all(dir).map_err(|e| format!("無法建立資料夾 {}：{}", dir.display(), e))?;
             }
         }
-        let txt = self.doc.to_json(daedalus_core::VERSION, self.screens.clone());
+        let mut txt = self.doc.to_json(daedalus_core::VERSION, self.screens.clone());
+        // the AI's net names, refreshed to the pins the nets have now
+        let a = self.analyze();
+        let mut names: BTreeMap<String, Vec<String>> = BTreeMap::new();
+        for (name, pins) in &self.nets {
+            if let Some(i) = pins.iter().find_map(|p| a.pin_net.get(p).copied()) {
+                if a.nets[i].labels.is_empty() && !a.nets[i].ground {
+                    names.insert(name.clone(), a.nets[i].pins.clone());
+                }
+            }
+        }
+        if !names.is_empty() {
+            if let Ok(mut v) = serde_json::from_str::<Value>(&txt) {
+                v["nets"] = serde_json::json!(names);
+                txt = serde_json::to_string_pretty(&v).unwrap_or(txt);
+            }
+        }
         let tmp = path.with_extension("psimx.tmp");
         if std::fs::write(&tmp, &txt).is_ok() && std::fs::rename(&tmp, path).is_ok() {
             return Ok(());
         }
         let _ = std::fs::remove_file(&tmp);
         std::fs::write(path, txt).map_err(|e| format!("無法寫入 {}：{}", path.display(), e))
+    }
+    /// the analysis with the AI's net names for nets that have no label
+    pub fn analyze(&self) -> Analysis {
+        analyze_named(&self.doc, &self.nets)
     }
     fn new_id(&mut self) -> i64 {
         let id = self.doc.nid;
@@ -255,6 +291,8 @@ pub struct Net {
 pub struct Analysis {
     pub nets: Vec<Net>,
     pub pin_net: BTreeMap<String, usize>,
+    /// connectivity root (netlist::connectivity) -> net index
+    pub root_net: HashMap<usize, usize>,
     pub problems: Vec<String>,
     pub warnings: Vec<String>,
 }
@@ -329,6 +367,7 @@ pub fn analyze(doc: &Doc) -> Analysis {
             }
         }
     }
+    a.root_net = by_root;
     for n in a.nets.iter_mut() {
         n.name = if n.ground {
             "0".into()
@@ -400,6 +439,19 @@ pub fn analyze(doc: &Doc) -> Analysis {
         }
         if let Some(o) = seen.insert(k(e.x, e.y), el_name(e)) {
             a.warnings.push(format!("{} 與 {} 放在同一個位置 ({}, {})", o, el_name(e), e.x, e.y));
+        }
+    }
+    a
+}
+
+/// the analysis, with names from `names` (name -> pins) for nets that have no label
+pub fn analyze_named(doc: &Doc, names: &BTreeMap<String, Vec<String>>) -> Analysis {
+    let mut a = analyze(doc);
+    for (name, pins) in names {
+        if let Some(i) = pins.iter().find_map(|p| a.pin_net.get(p).copied()) {
+            if a.nets[i].labels.is_empty() && !a.nets[i].ground && a.nets[i].name.starts_with('~') {
+                a.nets[i].name = name.clone();
+            }
         }
     }
     a
@@ -768,24 +820,6 @@ fn cell_box(el: &Element, nets: &BTreeMap<String, Option<String>>) -> [f64; 4] {
     [b[0] - 0.5, b[1] - 0.5, b[2] + 0.5, b[3] + 0.5]
 }
 
-/// places cells left to right in rows; returns the origins and the bottom edge
-fn flow(cells: &[[f64; 4]], x0: f64, y0: f64, row_w: f64) -> (Vec<(f64, f64)>, f64) {
-    let mut out = vec![];
-    let (mut x, mut y, mut row_h) = (x0, y0, 0.0f64);
-    for b in cells {
-        let (w, h) = (b[2] - b[0], b[3] - b[1]);
-        if x > x0 && x + w > x0 + row_w {
-            x = x0;
-            y += row_h + 2.0;
-            row_h = 0.0;
-        }
-        out.push(((x - b[0]).ceil(), (y - b[1]).ceil()));
-        x += w + 2.0;
-        row_h = row_h.max(h + 1.0);
-    }
-    (out, y + row_h)
-}
-
 pub struct Built {
     pub circuit: Circuit,
     pub notes: Vec<String>,
@@ -794,7 +828,6 @@ pub struct Built {
 /// a circuit from a netlist: every element is placed on its own, each connected pin gets a short wire to a net
 /// label (or a ground symbol for net "0"); the result is checked against the requested connections
 pub fn from_netlist(v: &Value) -> Result<Built, String> {
-    let mut c = Circuit::empty();
     let mut notes = vec![];
     let els = v.get("elements").and_then(|x| x.as_array()).ok_or("netlist.elements 必須是元件陣列")?;
     struct Item {
@@ -879,103 +912,40 @@ pub fn from_netlist(v: &Value) -> Result<Built, String> {
         }
         items.push(Item { typ, name, params, rot: rot_of(e.get("rot")), mir: e.get("mir").and_then(|x| x.as_bool()).unwrap_or(false), nets });
     }
-    // simulation control, parameter file and title
-    let mut header: Vec<Item> = vec![];
+    // simulation control and parameter file
+    let mut header: Vec<crate::layout::Item> = vec![];
     let sim = str_map(v.get("sim"), "netlist.sim")?;
     check_params("SIMCTRL", &sim, "sim")?;
     if !items.iter().any(|i| i.typ == "SIMCTRL") {
         if sim.is_empty() {
             notes.push("沒有給 sim：模擬控制使用預設值 dt = 10 µs、tt = 0.1 s".into());
         }
-        header.push(Item { typ: "SIMCTRL".into(), name: String::new(), params: sim, rot: 0, mir: false, nets: BTreeMap::new() });
+        header.push(crate::layout::Item { typ: "SIMCTRL".into(), name: String::new(), params: sim, rot: 0, mir: false, nets: BTreeMap::new() });
     }
     if let Some(t) = v.get("params").and_then(|x| x.as_str()) {
         let mut p = BTreeMap::new();
         p.insert("text".to_string(), t.to_string());
-        header.push(Item { typ: "PARAMS".into(), name: String::new(), params: p, rot: 0, mir: false, nets: BTreeMap::new() });
+        header.push(crate::layout::Item { typ: "PARAMS".into(), name: String::new(), params: p, rot: 0, mir: false, nets: BTreeMap::new() });
     }
-    let (pinless, with_pins): (Vec<Item>, Vec<Item>) = items.into_iter().partition(|i| {
-        let e = Element { id: 0, typ: i.typ.clone(), x: 0.0, y: 0.0, rot: 0, mir: false, dis: false, name: String::new(), params: i.params.clone(), disp: None };
-        lib().pins_for(&e).is_empty()
-    });
-    header.extend(pinless);
-    // power or control: elements with power pins, and sources / probes on power nets, form the power stage
-    let mut net_power: HashSet<String> = HashSet::new();
-    for it in &with_pins {
-        let e = Element { id: 0, typ: it.typ.clone(), x: 0.0, y: 0.0, rot: 0, mir: false, dis: false, name: String::new(), params: it.params.clone(), disp: None };
-        for p in lib().pins_for(&e) {
-            if p.k == "p" {
-                if let Some(Some(n)) = it.nets.get(&p.n) {
-                    net_power.insert(n.clone());
-                }
+    // what the drawing must connect
+    let mut want: BTreeMap<String, Vec<String>> = BTreeMap::new();
+    for it in &items {
+        for (pn, net) in &it.nets {
+            if let Some(net) = net {
+                let key = if is_ground(net) { "0".to_string() } else { net.clone() };
+                want.entry(key).or_default().push(format!("{}.{}", it.name, pn));
             }
         }
     }
-    let is_power = |it: &Item| -> bool {
-        let e = Element { id: 0, typ: it.typ.clone(), x: 0.0, y: 0.0, rot: 0, mir: false, dis: false, name: String::new(), params: it.params.clone(), disp: None };
-        lib().pins_for(&e).iter().any(|p| p.k == "p" || (p.k == "a" && it.nets.get(&p.n).and_then(|n| n.as_ref()).map(|n| !is_ground(n) && net_power.contains(n)).unwrap_or(false)))
-    };
-    let (power, control): (Vec<Item>, Vec<Item>) = with_pins.into_iter().partition(|it| is_power(it));
-    // place: title, header row, power stage, control
-    let mut y = 1.0;
-    if let Some(t) = v.get("title").and_then(|x| x.as_str()).filter(|t| !t.trim().is_empty()) {
-        let mut p = BTreeMap::new();
-        p.insert("text".to_string(), t.to_string());
-        c.add_element("TEXT", "", 2.0, y + 0.8, 0, false, &p);
-        y += 2.0 + t.matches('\n').count() as f64 * 1.1;
-    }
-    let mk = |it: &Item| Element { id: 0, typ: it.typ.clone(), x: 0.0, y: 0.0, rot: it.rot, mir: it.mir, dis: false, name: it.name.clone(), params: it.params.clone(), disp: None };
-    let hc: Vec<[f64; 4]> = header.iter().map(|it| cell_box(&mk(it), &BTreeMap::new())).collect();
-    let (hpos, hy) = flow(&hc, 2.0, y, ROW_W);
-    for (it, (x, yy)) in header.iter().zip(hpos) {
-        c.add_element(&it.typ, &it.name, x, yy, it.rot, it.mir, &it.params);
-    }
-    y = hy + 2.0;
-    let zones = [(power, "【功率電路】"), (control, "【控制電路】")];
-    let both = zones.iter().all(|z| !z.0.is_empty());
-    let mut occ_pins: Vec<(usize, Vec<(PinDef, String)>)> = vec![];
-    for (zone, title) in zones.iter() {
-        if zone.is_empty() {
-            continue;
-        }
-        if both {
-            let mut p = BTreeMap::new();
-            p.insert("text".to_string(), title.to_string());
-            c.add_element("TEXT", "", 2.0, y + 0.8, 0, false, &p);
-            y += 2.0;
-        }
-        let cells: Vec<[f64; 4]> = zone.iter().map(|it| cell_box(&mk(it), &it.nets)).collect();
-        let (pos, zy) = flow(&cells, 2.0, y, ROW_W);
-        for (it, (x, yy)) in zone.iter().zip(pos) {
-            let i = c.add_element(&it.typ, &it.name, x, yy, it.rot, it.mir, &it.params);
-            let pins = lib().pins_for(&c.doc.elements[i]);
-            let list: Vec<(PinDef, String)> = pins.into_iter().filter_map(|p| it.nets.get(&p.n).cloned().flatten().map(|n| (p, n))).collect();
-            occ_pins.push((i, list));
-        }
-        y = zy + 3.0;
-    }
-    // stubs, after every element is placed
-    let mut occ = Occupancy::of(&c.doc);
-    for (i, list) in &occ_pins {
-        for (p, net) in list {
-            let e = c.doc.elements[*i].clone();
-            let at = tpt(&e, p.x, p.y);
-            add_stub(&mut c, &mut occ, at, pin_dir(&e, p), net).map_err(|m| format!("{}.{}：{}", el_name(&e), p.n, m))?;
-        }
-    }
-    // screens of the waveform viewer
+    let title = v.get("title").and_then(|x| x.as_str());
+    let laid = crate::layout::build(title, header, items.into_iter().map(|i| crate::layout::Item { typ: i.typ, name: i.name, params: i.params, rot: i.rot, mir: i.mir, nets: i.nets }).collect());
+    let mut c = laid.circuit;
+    notes.extend(laid.notes);
     if let Some(s) = v.get("screens") {
         c.screens = Some(screens_of(s)?);
     }
     // the drawing must connect exactly what was asked
     let a = analyze(&c.doc);
-    let mut want: BTreeMap<String, Vec<String>> = BTreeMap::new();
-    for (i, list) in &occ_pins {
-        for (p, net) in list {
-            let key = if is_ground(net) { "0".to_string() } else { net.clone() };
-            want.entry(key).or_default().push(format!("{}.{}", el_name(&c.doc.elements[*i]), p.n));
-        }
-    }
     let mut seen_nets: HashMap<usize, String> = HashMap::new();
     for (net, pins) in &want {
         let ids: HashSet<usize> = pins.iter().filter_map(|p| a.pin_net.get(p).copied()).collect();
@@ -987,6 +957,7 @@ pub fn from_netlist(v: &Value) -> Result<Built, String> {
             return Err(format!("內部錯誤：節點 {} 與 {} 被接在一起", o, net));
         }
     }
+    c.nets = want.iter().filter(|(n, _)| *n != "0").map(|(n, p)| (n.clone(), p.clone())).collect();
     for (net, pins) in &want {
         if pins.len() == 1 && net != "0" {
             notes.push(format!("節點 {} 只接了 {}：這隻接腳等於沒有連接", net, pins[0]));
@@ -1097,8 +1068,9 @@ fn fresh_label(a: &Analysis, base: &str) -> String {
 }
 
 /// connect a pin to a net: by name (a label, or ground for "0"), or to the net of another pin
-fn connect(c: &mut Circuit, pin: &str, target: &str) -> Result<String, String> {
-    let before = analyze(&c.doc);
+/// `via`: "auto" (a wire when a short clean path exists, else a label), "wire" or "label"
+fn connect(c: &mut Circuit, pin: &str, target: &str, via: &str) -> Result<String, String> {
+    let before = c.analyze();
     let (i, p, at) = pin_of(&c.doc, pin)?;
     let el = c.doc.elements[i].clone();
     let pr = format!("{}.{}", el_name(&el), p.n);
@@ -1120,6 +1092,35 @@ fn connect(c: &mut Circuit, pin: &str, target: &str) -> Result<String, String> {
             return Ok(format!("{} 已經在節點 {}", pr, cur.name));
         }
     }
+    let old = before.net_of(&pr).map(|n| n.name.clone()).unwrap_or_default();
+    // a wire to the target net when a short clean path exists (ground keeps its symbol)
+    let target = match &other {
+        Some(q) => before.pin_net.get(q).copied(),
+        None => before.net_named(&name),
+    };
+    if let (Some(ti), false, true) = (target, is_ground(&name), via != "label") {
+        if let Some(path) = crate::layout::route_existing(&c.doc, &before, at, ti) {
+            let n0 = c.doc.wires.len();
+            for s in path.windows(2) {
+                c.add_wire(s[0], s[1]);
+            }
+            let after = c.analyze();
+            let tname = before.nets[ti].name.clone();
+            if check_partition(&before, &after, &[(old.clone(), tname.clone())], false, None).is_ok() {
+                let joined = after.net_of(&pr).map(|n| n.name.clone()).unwrap_or(tname);
+                return Ok(format!("{} 以導線接到節點 {}", pr, joined));
+            }
+            c.doc.wires.truncate(n0);
+        }
+    }
+    if via == "wire" {
+        return Err(format!("{} 到節點 {} 沒有可行的導線路徑（會碰到其他接腳或導線）；可改用 via=\"label\"", pr, name));
+    }
+    // a net known only by name (no label in the drawing): its label goes on both ends
+    let (name, other) = match (target, &other) {
+        (Some(ti), None) if !before.nets[ti].ground && before.nets[ti].labels.is_empty() && !before.nets[ti].pins.is_empty() => (name.clone(), Some(before.nets[ti].pins[0].clone())),
+        _ => (name, other),
+    };
     let mut occ = Occupancy::of(&c.doc);
     add_stub(c, &mut occ, at, pin_dir(&el, &p), &name)?;
     if let Some(q) = &other {
@@ -1127,8 +1128,7 @@ fn connect(c: &mut Circuit, pin: &str, target: &str) -> Result<String, String> {
         let qe = c.doc.elements[j].clone();
         add_stub(c, &mut occ, qat, pin_dir(&qe, &qp), &name)?;
     }
-    let after = analyze(&c.doc);
-    let old = before.net_of(&pr).map(|n| n.name.clone()).unwrap_or_default();
+    let after = c.analyze();
     let mut merge = vec![];
     if before.net_named(&name).is_some() {
         merge.push((old.clone(), name.clone()));
@@ -1144,7 +1144,7 @@ fn connect(c: &mut Circuit, pin: &str, target: &str) -> Result<String, String> {
 }
 
 fn wire(c: &mut Circuit, from: &str, to: &str) -> Result<String, String> {
-    let before = analyze(&c.doc);
+    let before = c.analyze();
     let (i, p, a) = pin_of(&c.doc, from)?;
     let (j, q, b) = pin_of(&c.doc, to)?;
     let (pa, pb) = (format!("{}.{}", el_name(&c.doc.elements[i]), p.n), format!("{}.{}", el_name(&c.doc.elements[j]), q.n));
@@ -1199,7 +1199,7 @@ fn wire(c: &mut Circuit, from: &str, to: &str) -> Result<String, String> {
     for s in route.windows(2) {
         c.add_wire(s[0], s[1]);
     }
-    let after = analyze(&c.doc);
+    let after = c.analyze();
     if let Err(e) = check_partition(&before, &after, &[(na.clone(), nb.clone())], false, None) {
         return Err(format!("拉線失敗：{}。請改用 connect 以節點標籤連接。", e));
     }
@@ -1207,7 +1207,7 @@ fn wire(c: &mut Circuit, from: &str, to: &str) -> Result<String, String> {
 }
 
 fn disconnect(c: &mut Circuit, pin: &str) -> Result<String, String> {
-    let before = analyze(&c.doc);
+    let before = c.analyze();
     let (i, p, at) = pin_of(&c.doc, pin)?;
     let pr = format!("{}.{}", el_name(&c.doc.elements[i]), p.n);
     // another element's pin on the very same point: only moving one of them separates them
@@ -1232,7 +1232,7 @@ fn disconnect(c: &mut Circuit, pin: &str) -> Result<String, String> {
     }
     remove_chain(&mut c.doc, &ch);
     c.doc.elements.retain(|e| !marks.contains(&e.id));
-    let after = analyze(&c.doc);
+    let after = c.analyze();
     // only this pin may leave its net; every other pin keeps its connections
     check_partition(&before, &after, &[], false, Some(&pr))?;
     Ok(format!("拆掉 {} 的連線（原本在節點 {}）", pr, before.net_of(&pr).map(|n| n.name.clone()).unwrap_or_default()))
@@ -1241,7 +1241,7 @@ fn disconnect(c: &mut Circuit, pin: &str) -> Result<String, String> {
 /// removes an element; unless `keep_wires`, also the wires that served only its pins (label stubs, the wire
 /// up to the next junction); wires shared with other pins stay
 fn remove(c: &mut Circuit, name: &str, wires_too: bool) -> Result<String, String> {
-    let before = analyze(&c.doc);
+    let before = c.analyze();
     let i = find_el(&c.doc, name)?;
     let e = c.doc.elements[i].clone();
     let mut n_w = 0;
@@ -1255,7 +1255,7 @@ fn remove(c: &mut Circuit, name: &str, wires_too: bool) -> Result<String, String
         }
     }
     c.doc.elements.retain(|x| x.id != e.id);
-    let after = analyze(&c.doc);
+    let after = c.analyze();
     check_partition(&before, &after, &[], false, None).map_err(|m| format!("刪除 {} 時：{}", el_name(&e), m))?;
     if let Some(sc) = c.screens.as_mut() {
         for s in sc.iter_mut() {
@@ -1284,6 +1284,14 @@ fn set(c: &mut Circuit, op: &Value) -> Result<String, String> {
             return Err(format!("名稱 {} 已經被使用", n));
         }
         c.doc.elements[i].name = n.to_string();
+        let (oldp, newp) = (format!("{}.", old.name), format!("{}.", n));
+        for pins in c.nets.values_mut() {
+            for p in pins.iter_mut() {
+                if let Some(rest) = p.strip_prefix(&oldp) {
+                    *p = format!("{}{}", newp, rest);
+                }
+            }
+        }
         if let Some(sc) = c.screens.as_mut() {
             for s in sc.iter_mut() {
                 for x in s.iter_mut() {
@@ -1301,7 +1309,7 @@ fn set(c: &mut Circuit, op: &Value) -> Result<String, String> {
     }
     let geo = op.get("x").is_some() || op.get("y").is_some() || op.get("rot").is_some() || op.get("mir").is_some();
     if geo {
-        let before = analyze(&c.doc);
+        let before = c.analyze();
         let cur = el_name(&c.doc.elements[i]);
         let mut chains = vec![];
         let mut relabel: Vec<(PinDef, String)> = vec![];
@@ -1341,7 +1349,7 @@ fn set(c: &mut Circuit, op: &Value) -> Result<String, String> {
         for (p, net) in relabel.iter().filter(|x| !x.1.is_empty()) {
             add_stub(c, &mut occ, tpt(&e, p.x, p.y), pin_dir(&e, p), net)?;
         }
-        let after = analyze(&c.doc);
+        let after = c.analyze();
         check_partition(&before, &after, &[], false, None)?;
         msgs.push(format!("位置 ({}, {})、旋轉 {}°{}", e.x, e.y, e.rot * 90, if e.mir { "、鏡像" } else { "" }));
     }
@@ -1395,7 +1403,28 @@ fn add(c: &mut Circuit, op: &Value, spot: &mut Spot) -> Result<String, String> {
         (Some(x), Some(y)) => (x.round(), y.round()),
         _ => {
             let label_nets: BTreeMap<String, Option<String>> = nets.iter().map(|(k, v)| (k.clone(), v.clone().map(|s| if s.contains('.') { "N_xxxxxxxx".into() } else { s }))).collect();
-            spot.take(cell_box(&probe, &label_nets))
+            let cell = cell_box(&probe, &label_nets);
+            // next to the nets it joins, so that wires can reach them; else to the right of the drawing
+            let a = c.analyze();
+            let mut pts: Vec<(f64, f64)> = vec![];
+            for n in nets.values().flatten() {
+                if is_ground(n) {
+                    continue;
+                }
+                let idx = if n.contains('.') { a.pin_net.get(n.as_str()).copied() } else { a.net_named(n) };
+                if let Some(ni) = idx {
+                    for pr in &a.nets[ni].pins {
+                        if let Ok((_, _, pt)) = pin_of(&c.doc, pr) {
+                            pts.push(pt);
+                        }
+                    }
+                }
+            }
+            let near = if pts.is_empty() { None } else { Some((pts.iter().map(|p| p.0).sum::<f64>() / pts.len() as f64, pts.iter().map(|p| p.1).sum::<f64>() / pts.len() as f64)) };
+            match near.and_then(|n| crate::layout::free_spot(&c.doc, cell, n)) {
+                Some(p) => p,
+                None => spot.take(cell),
+            }
         }
     };
     let i = c.add_element(&typ, &name, x, y, rot, mir, &params);
@@ -1403,7 +1432,7 @@ fn add(c: &mut Circuit, op: &Value, spot: &mut Spot) -> Result<String, String> {
     if !name.is_empty() {
         for (pn, net) in nets {
             if let Some(n) = net {
-                let r = connect(c, &format!("{}.{}", name, pn), &n)?;
+                let r = connect(c, &format!("{}.{}", name, pn), &n, op.get("via").and_then(|x| x.as_str()).unwrap_or("auto"))?;
                 msg += &format!("；{}", r);
             }
         }
@@ -1427,7 +1456,7 @@ pub fn apply_ops(c: &mut Circuit, ops: &[Value]) -> Result<EditLog, String> {
             "connect" => {
                 let pin = op.get("pin").and_then(|x| x.as_str()).ok_or("connect 需要 pin")?;
                 let t = op.get("net").or_else(|| op.get("to")).and_then(|x| x.as_str()).ok_or("connect 需要 net（節點名稱、\"0\" 接地）或 to（另一隻接腳，例如 \"L1.1\"）")?;
-                connect(c, pin, t)
+                connect(c, pin, t, op.get("via").and_then(|x| x.as_str()).unwrap_or("auto"))
             }
             "disconnect" => op.get("pin").and_then(|x| x.as_str()).ok_or("disconnect 需要 pin".to_string()).and_then(|p| disconnect(c, p)),
             "wire" => {
@@ -1560,7 +1589,10 @@ pub mod tests {
     #[test]
     fn netlist_layout_connects_exactly_what_was_asked() {
         let b = from_netlist(&buck_netlist()).expect("layout");
-        let a = analyze(&b.circuit.doc);
+        // the AI's net names survive although the rails carry no labels
+        let a = b.circuit.analyze();
+        let labels = b.circuit.doc.elements.iter().filter(|e| e.typ == "LABEL").count();
+        assert!(labels <= 2, "{} labels: only the gate signal crosses between power and control", labels);
         assert!(a.problems.is_empty(), "{:?}", a.problems);
         let net = |p: &str| a.net_of(p).map(|n| n.name.clone()).unwrap_or_default();
         assert_eq!(net("Q1.S"), "SW");
@@ -1600,7 +1632,7 @@ pub mod tests {
     fn example_buck() -> Circuit {
         let txt = include_str!("../../daedalus-app/assets/examples/buck.psimx");
         let (doc, screens) = Doc::from_json(txt).unwrap();
-        let mut c = Circuit { doc, screens };
+        let mut c = Circuit { doc, screens, nets: BTreeMap::new() };
         fix_nid(&mut c.doc);
         c
     }

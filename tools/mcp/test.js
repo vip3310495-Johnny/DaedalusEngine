@@ -113,6 +113,9 @@ const buck = {
   const P = f => path.join(OUT, f);
   r = await call('daedalus_new', { path: P('buck.psimx'), netlist: buck, render: true }, 'new');
   check(!r.isError && /問題：無/.test(r.text) && isPng(r.images[0]), 'new: built, no problems, picture', r.text);
+  const nb = JSON.parse(fs.readFileSync(P('buck.psimx'), 'utf8'));
+  const nlab = nb.doc.elements.filter(e => e.type === 'LABEL').length;
+  check(nlab <= 2 && nb.nets && nb.nets.SW, `new: drawn with wires (${nlab} labels), net names kept in the file`, JSON.stringify(nb.nets));
   r = await call('daedalus_new', { path: P('buck.psimx'), netlist: buck }, 'new_again');
   check(r.isError && /overwrite/.test(r.text), 'new refuses to overwrite', r.text);
   r = await call('daedalus_inspect', { path: P('buck.psimx') });
@@ -166,6 +169,16 @@ const buck = {
   const nf = await rpc('no/such', {});
   check(nf.error && nf.error.code === -32601, 'unknown method', JSON.stringify(nf));
   check(stray.length === 0, 'stdout carries only JSON-RPC responses', stray.join('\n'));
+
+  // the same tools on the command line (for the skill)
+  const { spawnSync } = require('child_process');
+  fs.writeFileSync(P('nl.json'), JSON.stringify(buck));
+  let c = spawnSync(CLI, ['new', P('nl.json'), P('cli_buck.psimx')], { encoding: 'utf8' });
+  check(c.status === 0 && /問題：無/.test(c.stdout), 'cli: new from a netlist file', c.stdout + c.stderr);
+  c = spawnSync(CLI, ['render', P('cli_buck.psimx'), P('cli_buck.png'), '--pins'], { encoding: 'utf8' });
+  check(c.status === 0 && fs.existsSync(P('cli_buck.png')) && fs.readFileSync(P('cli_buck.png')).slice(0, 4).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47])), 'cli: render to png', c.stdout + c.stderr);
+  c = spawnSync(CLI, ['inspect', P('cli_buck.psimx')], { encoding: 'utf8' });
+  check(c.status === 0 && /SW：/.test(c.stdout), 'cli: inspect', c.stdout + c.stderr);
 
   srv.stdin.end();
   const code = await new Promise(res => srv.on('exit', res));

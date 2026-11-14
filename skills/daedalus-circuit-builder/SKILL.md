@@ -9,7 +9,12 @@ description: "Build a .psimx circuit file for DaedalusEngine (Windows power-elec
 
 > **有 MCP 時優先用 MCP。** 環境若有 DaedalusEngine 的 MCP 工具（`daedalus_new`、`daedalus_edit`、`daedalus_inspect`、`daedalus_simulate`、`daedalus_render`…），直接用它們建立、修改、檢查與模擬電路：網表以節點名稱連線、修改經程式的連線規則驗證、可看電路圖與波形圖，不需要 Python。先讀 `daedalus_guide`（topic=workflow、modeling）。設定方式（Claude Code）：
 > `claude mcp add daedalus -- "%LOCALAPPDATA%\Programs\DaedalusEngine\daedalus-cli.exe" mcp`（程式內「說明 › AI 與 MCP」可複製）。
-> 以下 Python 腳本是沒有 MCP 時的替代方案；第 3、4 節的建模與版面規則兩者都適用。
+> **沒有 MCP 時，優先用 daedalus-cli 由網表自動排版**（與 MCP 相同的排版器，以導線直連、只有跨功率／控制的訊號用標籤）：
+> 1. 讀網表格式：`daedalus-cli tool daedalus_guide "{\"topic\":\"netlist\"}"`；查元件：`daedalus-cli tool daedalus_elements "{\"type\":\"MOSFET\"}"`。
+> 2. 寫網表 JSON（每隻接腳寫節點名稱，接地 `"0"`）→ `daedalus-cli new netlist.json circuit.psimx`（輸出節點表與問題清單）。
+> 3. `daedalus-cli render circuit.psimx circuit.png --pins` 產生電路圖（PNG 或 SVG，不需要開程式）並實際看圖；`daedalus-cli inspect circuit.psimx` 看節點。
+> 4. `scripts/verify_psimx.py` 或 `daedalus-cli tool daedalus_simulate "{\"path\":\"…\"}"` 模擬驗證。
+> 需要手工控制每個座標時才用以下 Python 腳本；第 3、4 節的建模與版面規則都適用。
 
 本資料夾：
 

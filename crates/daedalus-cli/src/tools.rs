@@ -89,7 +89,7 @@ pub fn list() -> Vec<Value> {
         tool(
             "daedalus_new",
             "由網表建立電路",
-            "由網表建立新的電路檔：每個元件給 type、name、params，pins 以節點名稱指定連線（同名相連，接地寫 \"0\"，不接寫 null）。程式自動排版（功率區、控制區），每隻接腳拉短線到節點標籤或接地符號，並以程式本身的連線規則驗證結果與網表一致。格式見 daedalus_guide topic=netlist。回傳節點表與問題清單。",
+            "由網表建立新的電路檔：每個元件給 type、name、params，pins 以節點名稱指定連線（同名相連，接地寫 \"0\"，不接寫 null）。程式以導線自動排版成易讀的電路圖：功率級主電流路徑沿上方的軌、並聯元件垂直掛到下方地線，兩個以上半橋臂時以直流母線與橋臂排列，控制區依訊號流向分欄；只有跨功率／控制的訊號（閘極、感測器輸出）用一對節點標籤。結果以程式本身的連線規則驗證與網表一致，節點名稱存在檔案中供之後的修改使用。格式見 daedalus_guide topic=netlist。回傳節點表與問題清單。",
             json!({"type": "object", "required": ["path", "netlist"], "properties": {
                 "path": path.clone(),
                 "netlist": {"type": "object", "description": "{title?, sim?{dt, tt,…}, params?（參數檔文字）, elements[{type, name?, params?, rot?, mir?, pins{接腳: 節點}}], screens?}",
@@ -345,7 +345,7 @@ fn problems_text(a: &Analysis) -> String {
 
 fn summary(c: &Circuit, path: &Path) -> String {
     let doc = &c.doc;
-    let a = analyze(doc);
+    let a = c.analyze();
     let real: Vec<&daedalus_core::doc::Element> = doc.elements.iter().filter(|e| !matches!(e.typ.as_str(), "LABEL" | "GND" | "TEXT")).collect();
     let mut out = String::new();
     let _ = writeln!(out, "{}", path.display());
@@ -394,7 +394,7 @@ fn element_detail(c: &Circuit, name: &str) -> Result<String, String> {
     let i = circuit::find_el(&c.doc, name)?;
     let e = &c.doc.elements[i];
     let d = lib().get(&e.typ).ok_or_else(|| format!("未知的元件類型 {}", e.typ))?;
-    let a = analyze(&c.doc);
+    let a = c.analyze();
     let mut out = format!("{}：{}（{}，{}）@({},{}) rot{}{}{}\n", el_name(e), d.zh, e.typ, d.name, e.x, e.y, e.rot & 3, if e.mir { " mir" } else { "" }, if e.dis { " ［停用］" } else { "" });
     out += "接腳：\n";
     for p in lib().pins_for(e) {
@@ -909,9 +909,9 @@ impl Server {
         let p = path_arg(a)?;
         let ops = a.get("ops").and_then(|v| v.as_array()).ok_or("需要 ops（操作陣列）")?;
         let mut c = Circuit::load(&p)?;
-        let before = analyze(&c.doc);
+        let before = c.analyze();
         let log = circuit::apply_ops(&mut c, ops)?;
-        let after = analyze(&c.doc);
+        let after = c.analyze();
         let mut txt = String::new();
         let target = match s(a, "save_as") {
             Some(x) => {
@@ -1016,7 +1016,15 @@ impl Server {
     fn render(&mut self, a: &Value) -> Result<Reply, String> {
         let p = path_arg(a)?;
         let c = Circuit::load(&p)?;
-        let o = render::SchOpts { highlight: s(a, "highlight").map(String::from), pin_names: b(a, "pins", false), max_px: a.get("max_px").and_then(|v| v.as_f64()).unwrap_or(1400.0).clamp(400.0, 4000.0) };
+        // a net known by the AI's name only: highlight it by one of its pins
+        let hl = s(a, "highlight").map(|h| {
+            let an = c.analyze();
+            match an.net_named(h) {
+                Some(i) if !h.contains('.') && an.nets[i].labels.is_empty() && !an.nets[i].ground => an.nets[i].pins.first().cloned().unwrap_or_else(|| h.to_string()),
+                _ => h.to_string(),
+            }
+        });
+        let o = render::SchOpts { highlight: hl, pin_names: b(a, "pins", false), max_px: a.get("max_px").and_then(|v| v.as_f64()).unwrap_or(1400.0).clamp(400.0, 4000.0) };
         let svg = render::schematic_svg(&c.doc, &o);
         let png = render::png(&svg)?;
         let mut txt = format!("{} 的電路圖（深色：功率線；藍色：控制線；紅圈：未接的接腳；邊緣數字：座標）", p.display());
@@ -1115,4 +1123,119 @@ fn write_csv(out: &Outcome, q: &Path) -> Result<(), String> {
         }
     }
     Ok(())
+}
+
+/* ------------------------------------------------------------------ the same tools on the command line */
+
+/// `daedalus-cli tool <name> [args.json | '{...}' | -] [--image out.png]` and the shortcuts
+/// `new <netlist.json> <out.psimx>`, `inspect <file> [element]`, `render <file> <out.png|svg> [--pins] [--highlight X]`
+pub fn cli(args: &[String]) -> i32 {
+    let opt = |k: &str| args.iter().position(|a| a == k).and_then(|i| args.get(i + 1)).cloned();
+    let flag = |k: &str| args.iter().any(|a| a == k);
+    let pos: Vec<&String> = {
+        let mut v = vec![];
+        let mut skip = false;
+        for a in args.iter().skip(1) {
+            if skip {
+                skip = false;
+                continue;
+            }
+            if a == "--image" || a == "--highlight" {
+                skip = true;
+                continue;
+            }
+            if a.starts_with("--") {
+                continue;
+            }
+            v.push(a);
+        }
+        v
+    };
+    let read = |p: &str| -> Result<Value, String> {
+        let txt = if p == "-" {
+            let mut s = String::new();
+            std::io::Read::read_to_string(&mut std::io::stdin(), &mut s).map_err(|e| e.to_string())?;
+            s
+        } else if p.trim_start().starts_with('{') {
+            p.to_string()
+        } else {
+            std::fs::read_to_string(p).map_err(|e| format!("無法讀取 {}：{}", p, e))?
+        };
+        serde_json::from_str(&txt).map_err(|e| format!("JSON 格式錯誤：{}", e))
+    };
+    let (name, a): (String, Result<Value, String>) = match args.first().map(String::as_str) {
+        Some("tool") => match pos.first() {
+            Some(n) => (n.to_string(), pos.get(1).map(|p| read(p)).unwrap_or(Ok(json!({})))),
+            None => ("".into(), Err("usage: daedalus-cli tool <daedalus_name> [args.json | '{...}' | -] [--image out.png]".into())),
+        },
+        Some("new") => match (pos.first(), pos.get(1)) {
+            (Some(nl), Some(out)) => ("daedalus_new".into(), read(nl).map(|n| json!({"path": out, "netlist": n, "overwrite": true}))),
+            _ => ("".into(), Err("usage: daedalus-cli new <netlist.json> <out.psimx>".into())),
+        },
+        Some("inspect") => match pos.first() {
+            Some(f) => ("daedalus_inspect".into(), Ok(json!({"path": f, "element": pos.get(1)}))),
+            None => ("".into(), Err("usage: daedalus-cli inspect <circuit.psimx> [element]".into())),
+        },
+        Some("render") => match (pos.first(), pos.get(1)) {
+            (Some(f), Some(out)) => ("daedalus_render".into(), Ok(json!({"path": f, "save": out, "pins": flag("--pins"), "highlight": opt("--highlight")}))),
+            _ => ("".into(), Err("usage: daedalus-cli render <circuit.psimx> <out.png|out.svg> [--pins] [--highlight NET]".into())),
+        },
+        _ => ("".into(), Err("unknown command".into())),
+    };
+    let a = match a {
+        Ok(v) => v,
+        Err(e) => {
+            eprintln!("{}", e);
+            return 1;
+        }
+    };
+    let mut srv = Server::new();
+    let rep = srv.call(&name, &a);
+    for c in &rep.content {
+        if let Some(t) = c.get("text").and_then(|t| t.as_str()) {
+            println!("{}", t);
+        }
+    }
+    if let (Some(out), Some(img)) = (opt("--image"), rep.content.iter().find(|c| c["type"] == "image")) {
+        let data = img["data"].as_str().unwrap_or("");
+        match base64_decode(data) {
+            Some(b) => {
+                if let Err(e) = std::fs::write(&out, b) {
+                    eprintln!("無法寫入 {}：{}", out, e);
+                    return 1;
+                }
+            }
+            None => eprintln!("圖片資料錯誤"),
+        }
+    }
+    if rep.error { 1 } else { 0 }
+}
+
+fn base64_decode(s: &str) -> Option<Vec<u8>> {
+    let val = |c: u8| -> Option<u32> {
+        Some(match c {
+            b'A'..=b'Z' => (c - b'A') as u32,
+            b'a'..=b'z' => (c - b'a' + 26) as u32,
+            b'0'..=b'9' => (c - b'0' + 52) as u32,
+            b'+' => 62,
+            b'/' => 63,
+            _ => return None,
+        })
+    };
+    let b: Vec<u8> = s.bytes().filter(|c| *c != b'=' && !c.is_ascii_whitespace()).collect();
+    let mut out = Vec::with_capacity(b.len() * 3 / 4);
+    for ch in b.chunks(4) {
+        let mut n = 0u32;
+        for (i, &c) in ch.iter().enumerate() {
+            n |= val(c)? << (18 - 6 * i);
+        }
+        out.push((n >> 16) as u8);
+        if ch.len() > 2 {
+            out.push((n >> 8) as u8);
+        }
+        if ch.len() > 3 {
+            out.push(n as u8);
+        }
+    }
+    Some(out)
 }
