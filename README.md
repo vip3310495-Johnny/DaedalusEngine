@@ -7,7 +7,7 @@
 
 ## 下載
 
-**[⬇ 下載安裝檔 DaedalusEngine-Setup-V1.5.0.exe](https://github.com/vip3310495-Johnny/DaedalusEngine/releases/download/v1.5.0/DaedalusEngine-Setup-V1.5.0.exe)**（12.3 MB，Windows 10／11，不需要系統管理員權限）
+**[⬇ 下載安裝檔 DaedalusEngine-Setup-V1.5.0.exe](https://github.com/vip3310495-Johnny/DaedalusEngine/releases/download/v1.5.0/DaedalusEngine-Setup-V1.5.0.exe)**（14.0 MB，Windows 10／11，不需要系統管理員權限）
 
 - 下載後按兩下執行，依畫面按「安裝」即可；已安裝舊版時會自動提供「更新」。
 - 最新版與所有舊版：[Releases 頁面](https://github.com/vip3310495-Johnny/DaedalusEngine/releases/latest)。安裝檔只放在 Releases，不放在程式碼清單中。
