@@ -23,7 +23,7 @@ with open(os.path.join(_HERE, 'elements.json'), encoding='utf-8') as _f:
 
 # probes and meters: their names are the waveform names
 PROBES = {'VP', 'VP2', 'IP', 'VDCM', 'VACM', 'ADCM', 'AACM', 'WATT', 'WH3', 'DEVP', 'ACP', 'ACP2'}
-VERSION = 'V1.5.0'
+VERSION = 'V1.5.1'
 
 
 def cblock_pins(nin, nout):

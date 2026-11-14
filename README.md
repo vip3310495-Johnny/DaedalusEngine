@@ -1,4 +1,4 @@
-# DaedalusEngine V1.5.0
+# DaedalusEngine V1.5.1
 
 電力電子電路模擬器（Windows 11，Rust 原生程式）。
 以網頁版「電力電子電路模擬器 V3.2.1」為參考重新實作，包含其全部元件模型，`.psimx` 電路檔兩邊通用。
@@ -7,11 +7,11 @@
 
 ## 下載
 
-**[⬇ 下載安裝檔 DaedalusEngine-Setup-V1.5.0.exe](https://github.com/vip3310495-Johnny/DaedalusEngine/releases/download/v1.5.0/DaedalusEngine-Setup-V1.5.0.exe)**（14.0 MB，Windows 10／11，不需要系統管理員權限）
+**[⬇ 下載安裝檔 DaedalusEngine-Setup-V1.5.1.exe](https://github.com/vip3310495-Johnny/DaedalusEngine/releases/download/v1.5.1/DaedalusEngine-Setup-V1.5.1.exe)**（14.0 MB，Windows 10／11，不需要系統管理員權限）
 
 - 下載後按兩下執行，依畫面按「安裝」即可；已安裝舊版時會自動提供「更新」。
 - 最新版與所有舊版：[Releases 頁面](https://github.com/vip3310495-Johnny/DaedalusEngine/releases/latest)。安裝檔只放在 Releases，不放在程式碼清單中。
-- SHA-256 見各 Release 的 `SHA256SUMS.txt`（驗證：`certutil -hashfile DaedalusEngine-Setup-V1.5.0.exe SHA256`）
+- SHA-256 見各 Release 的 `SHA256SUMS.txt`（驗證：`certutil -hashfile DaedalusEngine-Setup-V1.5.1.exe SHA256`）
 - 目前版本尚未經程式碼簽章（SignPath 申請中）：Windows 可能顯示「Windows 已保護您的電腦」，請按「其他資訊 › 仍要執行」；
   開啟「智慧型應用程式控制」（Smart App Control）的電腦會直接封鎖，需等簽章版。
 
@@ -19,7 +19,7 @@
 
 ## 安裝與解除安裝
 
-- 執行 `DaedalusEngine-Setup-V1.5.0.exe`。**不需要系統管理員權限**：程式安裝於
+- 執行 `DaedalusEngine-Setup-V1.5.1.exe`。**不需要系統管理員權限**：程式安裝於
   `%LOCALAPPDATA%\Programs\DaedalusEngine`，捷徑與檔案關聯只寫入目前使用者（HKCU）。
 - 安裝前須閱讀並勾選同意**授權條款與免責聲明**（GPL-3.0、附加條款與免責聲明，全文見 [NOTICE.txt](NOTICE.txt)）；
   更新、修復與降級也會先顯示條款，解除安裝則不需要。
@@ -41,8 +41,8 @@
 ### 命令列（自動化部署）
 
 ```
-DaedalusEngine-Setup-V1.5.0.exe --silent [--dir <資料夾>] [--no-desktop|--desktop] [--no-assoc|--assoc] [--launch]   安裝或更新
-DaedalusEngine-Setup-V1.5.0.exe --silent --repair    修復已安裝的程式（uninstall.exe 亦可）
+DaedalusEngine-Setup-V1.5.1.exe --silent [--dir <資料夾>] [--no-desktop|--desktop] [--no-assoc|--assoc] [--launch]   安裝或更新
+DaedalusEngine-Setup-V1.5.1.exe --silent --repair    修復已安裝的程式（uninstall.exe 亦可）
 uninstall.exe --maintain                             開啟維護畫面（更新／修復／解除安裝）
 uninstall.exe --uninstall --silent [--purge]
 ```
@@ -178,7 +178,7 @@ Claude Desktop：在 `%APPDATA%\Claude\claude_desktop_config.json` 加入
 |---|---|
 | `daedalus_guide` | 使用指引：流程、網表格式、編輯操作、建模規則（功率／控制介面、開關、SPICE 模型、步長）、量測定義、常見錯誤 |
 | `daedalus_elements` | 查詢 221 種元件：接腳名稱與類型（功率／控制輸入／控制輸出…）、參數預設值、單位、說明與選項 |
-| `daedalus_new` | 由網表建立電路：每隻接腳寫節點名稱（同名相連、接地 `"0"`），自動排版成功率區與控制區，以節點標籤連線，並以程式的連線規則驗證與網表一致 |
+| `daedalus_new` | 由網表建立電路：每隻接腳寫節點名稱（同名相連、接地 `"0"`），以導線自動排版成 PSIM 慣用畫法（主電流路徑在上方軌、並聯元件掛到地線、橋式電路以母線與橋臂排列、控制區依訊號流向），只有跨功率／控制的訊號用節點標籤；以程式的連線規則驗證與網表一致 |
 | `daedalus_inspect` | 讀取電路（包括使用者畫的）：元件、每隻接腳的節點、每個節點的接腳、問題清單（未接、功率與控制直接相連、名稱重複…） |
 | `daedalus_edit` | 修改電路：新增、刪除、改參數、移動旋轉、連接、拆線、拉線、模擬設定、波形畫面；每個操作都驗證不會誤接或斷開其他接腳，整批成功才存檔 |
 | `daedalus_simulate` | 暫態（含參數掃描、蒙地卡羅、高精度）或 AC 掃頻：每支探棒的平均、RMS、最小、最大、峰對峰、終值與示波器量測；AC 的頻寬、穿越頻率、相位與增益裕度 |
@@ -194,6 +194,7 @@ Claude Desktop：在 `%APPDATA%\Claude\claude_desktop_config.json` 加入
 
 [`skills/daedalus-circuit-builder`](skills/daedalus-circuit-builder) 是一個 Agent Skill（`SKILL.md`＋Python 腳本），教 AI 代理畫出版面清楚的 `.psimx`
 （分區、軌、介面標籤）並在交付前用 DaedalusEngine 驗證；有 MCP 時以 MCP 為主，沒有 MCP 的環境用它的腳本。
+沒有 MCP 時，Skill 以 `daedalus-cli new <網表.json> <電路.psimx>`（同一套自動排版）、`daedalus-cli render <電路.psimx> <圖.png>`、`daedalus-cli inspect` 建立與檢查電路。
 安裝到 Claude Code：`daedalus-cli skill install`（或「說明 › AI 與 MCP › 安裝到 Claude Code」）；每個 Release 也附上 `daedalus-circuit-builder-skill.zip`。
 
 - `scripts/psimx_builder.py`：Python 產生器與靜態檢查；接腳與參數表 `elements.json` 由元件庫自動產生（全部 221 種元件）。
@@ -370,6 +371,12 @@ Simulation Control 的「高精度模式」設為 1、填入目標誤差（預�
   - 程式開著的電路檔在外部被修改（例如 AI 存檔）時自動重新載入，Ctrl+Z 可復原；有未儲存的變更時先詢問。
   - 「說明 › AI 與 MCP」：Claude Code／Claude Desktop 的設定指令（可複製）、安裝 Claude Code Skill（`daedalus-cli skill install`）。
   - 示波器量測移到模擬核心，波形檢視器與 MCP 共用同一套定義；使用說明書新增「AI 與 MCP」章節。
+- **V1.5.1**（改進）：AI 產生的電路圖可讀性
+  - 由網表建立電路時以導線直連：功率級主電流路徑沿上方的軌，並聯元件（電源、電容、負載、低側開關、二極體、感測器）垂直掛到下方地線，
+    探棒接在軌上，反並聯二極體等放在所並聯的元件上方；有兩個以上半橋臂時以直流母線與橋臂排列，負載接在兩臂中點之間；
+    控制區依訊號流向分欄；只有跨功率／控制的訊號（閘極、感測器輸出）用節點標籤（Buck 範例由每隻接腳一個標籤降為 2 個）。
+  - 修改電路時 connect 先嘗試拉導線（via 可指定），新元件放在要連的節點旁；網表的節點名稱存在檔案（`nets`）中，之後仍可用名稱指定。
+  - `daedalus-cli new／inspect／render／tool`：沒有 MCP 的環境（Skill）也能用同一套自動排版、檢查與電路圖。
 
 ---
 

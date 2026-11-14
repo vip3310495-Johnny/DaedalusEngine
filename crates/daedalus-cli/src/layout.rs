@@ -1092,22 +1092,47 @@ pub fn route_existing(doc: &daedalus_core::doc::Doc, a: &crate::circuit::Analysi
 
 /// a free spot near `near` for an element whose extents (relative to its origin) are `ext`
 pub fn free_spot(doc: &daedalus_core::doc::Doc, ext: [f64; 4], near: (f64, f64)) -> Option<(f64, f64)> {
-    let boxes: Vec<[f64; 4]> = doc.elements.iter().filter(|e| e.typ != "TEXT").map(world_box).collect();
-    for r in 0..40i64 {
-        for dx in -r..=r {
-            for dy in [-r, r] {
-                for (ox, oy) in [(dx, dy), (dy, dx)] {
-                    let (x, y) = ((near.0 + ox as f64 * 2.0).round(), (near.1 + oy as f64 * 2.0).round());
-                    let bb = [x + ext[0] - 1.5, y + ext[1] - 1.5, x + ext[2] + 1.5, y + ext[3] + 1.5];
-                    if boxes.iter().any(|o| o[0] < bb[2] && bb[0] < o[2] && o[1] < bb[3] && bb[1] < o[3]) {
-                        continue;
-                    }
-                    if doc.wires.iter().any(|w| w.x1.max(w.x2) >= bb[0] && w.x1.min(w.x2) <= bb[2] && w.y1.max(w.y2) >= bb[1] && w.y1.min(w.y2) <= bb[3]) {
-                        continue;
-                    }
-                    return Some((x, y));
+    // element symbols with their name and parameter texts, and notes
+    let boxes: Vec<[f64; 4]> = doc
+        .elements
+        .iter()
+        .map(|e| {
+            let mut b = world_box(e);
+            let n = label_lines(e).len() as f64;
+            if n > 0.0 && !matches!(e.typ.as_str(), "LABEL" | "TEXT") {
+                if b[2] - b[0] >= b[3] - b[1] {
+                    b[1] -= 0.6 + n * 0.95;
+                } else {
+                    b[2] += 0.6 + label_lines(e).iter().map(|l| text_w(l)).fold(0.0, f64::max) * 0.8;
                 }
             }
+            b
+        })
+        .collect();
+    let free = |x: f64, y: f64| {
+        let bb = [x + ext[0] - 1.5, y + ext[1] - 1.5, x + ext[2] + 1.5, y + ext[3] + 1.5];
+        !boxes.iter().any(|o| o[0] < bb[2] && bb[0] < o[2] && o[1] < bb[3] && bb[1] < o[3]) && !doc.wires.iter().any(|w| w.x1.max(w.x2) >= bb[0] && w.x1.min(w.x2) <= bb[2] && w.y1.max(w.y2) >= bb[1] && w.y1.min(w.y2) <= bb[3])
+    };
+    // ring by ring outwards; in the first ring with room, the nearest spot (above before below)
+    for r in 0..40i64 {
+        let mut best: Option<(f64, (f64, f64))> = None;
+        for dx in -r..=r {
+            for dy in -r..=r {
+                if dx.abs().max(dy.abs()) != r {
+                    continue;
+                }
+                let (x, y) = ((near.0 + dx as f64 * 2.0).round(), (near.1 + dy as f64 * 2.0).round());
+                if !free(x, y) {
+                    continue;
+                }
+                let d = ((x - near.0).powi(2) + (y - near.1).powi(2)).sqrt() + if y > near.1 { 0.5 } else { 0.0 };
+                if best.map(|b| d < b.0).unwrap_or(true) {
+                    best = Some((d, (x, y)));
+                }
+            }
+        }
+        if let Some((_, p)) = best {
+            return Some(p);
         }
     }
     None
