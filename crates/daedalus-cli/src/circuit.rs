@@ -212,20 +212,29 @@ pub fn label_lines(el: &Element) -> Vec<String> {
     out
 }
 
+/// rotation of a net label whose flag points along `d` (right 0, down 1, left 2, up 3); note f64::signum(0.0) is
+/// +1, so the components are compared, not their signs
 fn dir_rot_label(d: (f64, f64)) -> i64 {
-    match (d.0.signum() as i32, d.1.signum() as i32) {
-        (1, _) => 0,
-        (_, 1) => 1,
-        (-1, _) => 2,
-        _ => 3,
+    if d.0 > 0.5 {
+        0
+    } else if d.1 > 0.5 {
+        1
+    } else if d.0 < -0.5 {
+        2
+    } else {
+        3
     }
 }
+/// rotation of a ground symbol drawn along `d` (down 0, left 1, up 2, right 3)
 fn dir_rot_gnd(d: (f64, f64)) -> i64 {
-    match (d.0.signum() as i32, d.1.signum() as i32) {
-        (_, 1) => 0,
-        (-1, _) => 1,
-        (_, -1) => 2,
-        _ => 3,
+    if d.1 > 0.5 {
+        0
+    } else if d.0 < -0.5 {
+        1
+    } else if d.1 < -0.5 {
+        2
+    } else {
+        3
     }
 }
 
@@ -1633,5 +1642,16 @@ pub mod tests {
         apply_ops(&mut c, &[json!({"op": "add", "type": "R", "name": "Rb", "params": {"R": "1k"}}), json!({"op": "wire", "from": "Rb.1", "to": "Rb.2"})]).expect("wire");
         let a = analyze(&c.doc);
         assert_eq!(a.pin_net.get("Rb.1"), a.pin_net.get("Rb.2"));
+    }
+}
+
+#[cfg(test)]
+mod rot_tests {
+    use super::*;
+    #[test]
+    fn label_and_ground_follow_the_stub() {
+        // f64::signum(0.0) is +1: the rotations must not depend on the sign of a zero component
+        assert_eq!([(1.0, 0.0), (0.0, 1.0), (-1.0, 0.0), (0.0, -1.0)].map(dir_rot_label), [0, 1, 2, 3]);
+        assert_eq!([(0.0, 1.0), (-1.0, 0.0), (0.0, -1.0), (1.0, 0.0)].map(dir_rot_gnd), [0, 1, 2, 3]);
     }
 }

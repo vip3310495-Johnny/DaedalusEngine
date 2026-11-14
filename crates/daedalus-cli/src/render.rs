@@ -287,7 +287,8 @@ pub fn plot_svg(title: &str, panels: &[Panel], ax: &Axis, width: f64) -> String 
     } else {
         nice_ticks(ax.lo, ax.hi, 8)
     };
-    let mut ci = 0;
+    // one colour per signal name, the same in every panel (gain and phase of one curve)
+    let mut seen: Vec<String> = vec![];
     for (pi, p) in panels.iter().enumerate() {
         let top = mt + pi as f64 * (ph + gap);
         let (mut lo, mut hi) = (f64::INFINITY, f64::NEG_INFINITY);
@@ -322,8 +323,11 @@ pub fn plot_svg(title: &str, panels: &[Panel], ax: &Axis, width: f64) -> String 
         }
         let mut legend_x = ml + 8.0;
         for t in &p.traces {
+            let ci = seen.iter().position(|n| *n == t.name).unwrap_or_else(|| {
+                seen.push(t.name.clone());
+                seen.len() - 1
+            });
             let col = COLORS[ci % COLORS.len()];
-            ci += 1;
             let mut up = String::new();
             let mut dn = String::new();
             let mut band = false;
@@ -347,6 +351,8 @@ pub fn plot_svg(title: &str, panels: &[Panel], ax: &Axis, width: f64) -> String 
             } else {
                 let _ = write!(out, r##"<path d="{}" fill="none" stroke="{}" stroke-width="1.5" stroke-linejoin="round"/>"##, up, col);
             }
+            let lw = 22.0 + crate::circuit::text_w(&t.name) * 7.5;
+            let _ = write!(out, r##"<rect x="{}" y="{}" width="{}" height="17" rx="3" fill="#ffffff" fill-opacity="0.85"/>"##, f(legend_x - 3.0), top + 2.0, f(lw));
             let _ = write!(out, r##"<rect x="{}" y="{}" width="12" height="3" fill="{}"/><text x="{}" y="{}" font-size="12" fill="{}">{}</text>"##, f(legend_x), top + 9.0, col, f(legend_x + 16.0), top + 14.0, col, esc(&t.name));
             legend_x += 30.0 + crate::circuit::text_w(&t.name) * 7.5;
         }
