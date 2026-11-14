@@ -7,6 +7,10 @@ description: "Build a .psimx circuit file for DaedalusEngine (Windows power-elec
 
 用途：把使用者給的電路（Altium／PSIM 截圖、手繪、文字描述、規格）轉成 DaedalusEngine 可直接「檔案 › 開啟」或拖曳載入的 `.psimx`，交付前**用程式本身模擬一次**確認可模擬、數值合理，**且圖面可讀**（分區、區內直連、跨區介面清楚）。`.psimx` 與網頁版「電力電子電路模擬器」通用。
 
+> **有 MCP 時優先用 MCP。** 環境若有 DaedalusEngine 的 MCP 工具（`daedalus_new`、`daedalus_edit`、`daedalus_inspect`、`daedalus_simulate`、`daedalus_render`…），直接用它們建立、修改、檢查與模擬電路：網表以節點名稱連線、修改經程式的連線規則驗證、可看電路圖與波形圖，不需要 Python。先讀 `daedalus_guide`（topic=workflow、modeling）。設定方式（Claude Code）：
+> `claude mcp add daedalus -- "%LOCALAPPDATA%\Programs\DaedalusEngine\daedalus-cli.exe" mcp`（程式內「說明 › AI 與 MCP」可複製）。
+> 以下 Python 腳本是沒有 MCP 時的替代方案；第 3、4 節的建模與版面規則兩者都適用。
+
 本資料夾：
 
 | 檔案 | 用途 |
@@ -23,7 +27,7 @@ description: "Build a .psimx circuit file for DaedalusEngine (Windows power-elec
 `.psimx` 是 UTF-8 JSON：
 
 ```json
-{ "app": "psimweb", "version": "V1.4.1",
+{ "app": "psimweb", "version": "V1.5.0",
   "doc": { "elements": [ ... ], "wires": [ ... ], "nid": 123 },
   "screens": [["Vo"], ["IL", "Iout"]] }
 ```

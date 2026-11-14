@@ -11,7 +11,7 @@ use winreg::RegKey;
 pub const APP: &str = "DaedalusEngine";
 pub const APP_EXE: &str = "DaedalusEngine.exe";
 pub const UNINSTALLER: &str = "uninstall.exe";
-pub const VERSION: &str = "V1.4.1";
+pub const VERSION: &str = "V1.5.0";
 pub const VERSION_NUM: &str = env!("CARGO_PKG_VERSION");
 pub const PUBLISHER: &str = "Johnny.ch.Tsai";
 pub const DESC: &str = "DaedalusEngine 電力電子電路模擬器";

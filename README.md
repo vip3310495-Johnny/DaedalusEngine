@@ -1,4 +1,4 @@
-# DaedalusEngine V1.4.1
+# DaedalusEngine V1.5.0
 
 電力電子電路模擬器（Windows 11，Rust 原生程式）。
 以網頁版「電力電子電路模擬器 V3.2.1」為參考重新實作，包含其全部元件模型，`.psimx` 電路檔兩邊通用。
@@ -7,11 +7,11 @@
 
 ## 下載
 
-**[⬇ 下載安裝檔 DaedalusEngine-Setup-V1.4.1.exe](https://github.com/vip3310495-Johnny/DaedalusEngine/releases/download/v1.4.1/DaedalusEngine-Setup-V1.4.1.exe)**（12.3 MB，Windows 10／11，不需要系統管理員權限）
+**[⬇ 下載安裝檔 DaedalusEngine-Setup-V1.5.0.exe](https://github.com/vip3310495-Johnny/DaedalusEngine/releases/download/v1.5.0/DaedalusEngine-Setup-V1.5.0.exe)**（12.3 MB，Windows 10／11，不需要系統管理員權限）
 
 - 下載後按兩下執行，依畫面按「安裝」即可；已安裝舊版時會自動提供「更新」。
 - 最新版與所有舊版：[Releases 頁面](https://github.com/vip3310495-Johnny/DaedalusEngine/releases/latest)。安裝檔只放在 Releases，不放在程式碼清單中。
-- SHA-256 見各 Release 的 `SHA256SUMS.txt`（驗證：`certutil -hashfile DaedalusEngine-Setup-V1.4.1.exe SHA256`）
+- SHA-256 見各 Release 的 `SHA256SUMS.txt`（驗證：`certutil -hashfile DaedalusEngine-Setup-V1.5.0.exe SHA256`）
 - 目前版本尚未經程式碼簽章（SignPath 申請中）：Windows 可能顯示「Windows 已保護您的電腦」，請按「其他資訊 › 仍要執行」；
   開啟「智慧型應用程式控制」（Smart App Control）的電腦會直接封鎖，需等簽章版。
 
@@ -19,7 +19,7 @@
 
 ## 安裝與解除安裝
 
-- 執行 `DaedalusEngine-Setup-V1.4.1.exe`。**不需要系統管理員權限**：程式安裝於
+- 執行 `DaedalusEngine-Setup-V1.5.0.exe`。**不需要系統管理員權限**：程式安裝於
   `%LOCALAPPDATA%\Programs\DaedalusEngine`，捷徑與檔案關聯只寫入目前使用者（HKCU）。
 - 安裝前須閱讀並勾選同意**授權條款與免責聲明**（GPL-3.0、附加條款與免責聲明，全文見 [NOTICE.txt](NOTICE.txt)）；
   更新、修復與降級也會先顯示條款，解除安裝則不需要。
@@ -41,8 +41,8 @@
 ### 命令列（自動化部署）
 
 ```
-DaedalusEngine-Setup-V1.4.1.exe --silent [--dir <資料夾>] [--no-desktop|--desktop] [--no-assoc|--assoc] [--launch]   安裝或更新
-DaedalusEngine-Setup-V1.4.1.exe --silent --repair    修復已安裝的程式（uninstall.exe 亦可）
+DaedalusEngine-Setup-V1.5.0.exe --silent [--dir <資料夾>] [--no-desktop|--desktop] [--no-assoc|--assoc] [--launch]   安裝或更新
+DaedalusEngine-Setup-V1.5.0.exe --silent --repair    修復已安裝的程式（uninstall.exe 亦可）
 uninstall.exe --maintain                             開啟維護畫面（更新／修復／解除安裝）
 uninstall.exe --uninstall --silent [--purge]
 ```
@@ -151,24 +151,55 @@ uninstall.exe --uninstall --silent [--purge]
 ```
 daedalus-cli <電路.psimx> <輸出.csv>             暫態分析（含參數掃描或蒙地卡羅元件時自動執行全部次數）
 daedalus-cli <電路.psimx> <輸出.csv> --ac [--threads N]   AC 掃頻（預設使用全部核心平行運算）
+daedalus-cli mcp                                 MCP 伺服器（給 AI 代理，見下節）
+daedalus-cli skill install [資料夾]              安裝電路繪製 Skill（預設 %USERPROFILE%\.claude\skills\daedalus-circuit-builder）
 ```
 
 結束時以一行 JSON 輸出耗時、步數與警告（蒙地卡羅另含統計量與每次抽樣值）；電路錯誤時結束代碼為 2，模擬失敗為 3。
 
-## 給 AI 代理的電路繪製 Skill
+## AI 代理：MCP 伺服器與 Skill
 
-[`skills/daedalus-circuit-builder`](skills/daedalus-circuit-builder) 是一個 Agent Skill（`SKILL.md`＋腳本），教 AI 代理把電路圖、照片或文字描述
-畫成可直接開啟的 `.psimx`，並在交付前用 DaedalusEngine 本身驗證。每個 Release 也附上打包好的 `daedalus-circuit-builder-skill.zip`。
+### MCP 伺服器
 
-- `scripts/psimx_builder.py`：Python 產生器（放元件、依接腳名稱取座標、畫導線），靜態檢查開路接腳、只放一側的標籤、
-  功率與控制直接相連等錯誤；接腳與參數表 `elements.json` 由元件庫自動產生（全部 221 種元件）。
-- `scripts/verify_psimx.py`：靜態檢查＋以 `daedalus-cli` 模擬，列出每支探棒的最小／最大／終值／平均，可用 `--expect` 判定。
-- `scripts/shot_psimx.py`：用 DaedalusEngine 開檔截圖（`--run` 連同波形），讓代理實際看版面。
-- `SKILL.md`：檔案格式、連線規則、建模指引、版面規範（分區、軌、介面標籤）與工作流程；`references/elements.md` 為完整元件參考。
-- 範例 `examples/buck_converter.py` 在每次建置時由 CI 實際產生、檢查並模擬（Vo、電感電流平均值須在預期範圍內）。
+`daedalus-cli mcp` 是內建的 [Model Context Protocol](https://modelcontextprotocol.io) 伺服器（stdio），讓 Claude Code、Claude Desktop 等
+AI 代理直接操作 DaedalusEngine：查元件、由網表建立電路、修改使用者畫的電路、檢查節點、模擬與量測、看電路圖與波形圖。
+不需要 Python 或其他執行環境，模擬結果與程式按 F5 完全相同。
 
-使用方式：把資料夾放到代理的 skills 目錄（例如 Claude Code 的 `~/.claude/skills/`），代理需要能執行 Python 3；模擬驗證使用已安裝的
-`daedalus-cli.exe`（`%LOCALAPPDATA%\Programs\DaedalusEngine`）。
+設定（路徑為預設安裝位置；程式中「說明 › AI 與 MCP」可直接複製已填好路徑的指令與設定）：
+
+```
+claude mcp add daedalus -- "%LOCALAPPDATA%\Programs\DaedalusEngine\daedalus-cli.exe" mcp
+```
+
+Claude Desktop：在 `%APPDATA%\Claude\claude_desktop_config.json` 加入
+`{"mcpServers": {"daedalus": {"command": "<安裝資料夾>\\daedalus-cli.exe", "args": ["mcp"]}}}`。
+
+| 工具 | 用途 |
+|---|---|
+| `daedalus_guide` | 使用指引：流程、網表格式、編輯操作、建模規則（功率／控制介面、開關、SPICE 模型、步長）、量測定義、常見錯誤 |
+| `daedalus_elements` | 查詢 221 種元件：接腳名稱與類型（功率／控制輸入／控制輸出…）、參數預設值、單位、說明與選項 |
+| `daedalus_new` | 由網表建立電路：每隻接腳寫節點名稱（同名相連、接地 `"0"`），自動排版成功率區與控制區，以節點標籤連線，並以程式的連線規則驗證與網表一致 |
+| `daedalus_inspect` | 讀取電路（包括使用者畫的）：元件、每隻接腳的節點、每個節點的接腳、問題清單（未接、功率與控制直接相連、名稱重複…） |
+| `daedalus_edit` | 修改電路：新增、刪除、改參數、移動旋轉、連接、拆線、拉線、模擬設定、波形畫面；每個操作都驗證不會誤接或斷開其他接腳，整批成功才存檔 |
+| `daedalus_simulate` | 暫態（含參數掃描、蒙地卡羅、高精度）或 AC 掃頻：每支探棒的平均、RMS、最小、最大、峰對峰、終值與示波器量測；AC 的頻寬、穿越頻率、相位與增益裕度 |
+| `daedalus_waveform` | 波形圖（PNG，快速切換部分以包絡顯示）與降取樣數值表 |
+| `daedalus_render` | 電路圖（PNG／SVG，與程式相同的符號、座標尺規、未接接腳紅圈，可標出節點或元件） |
+| `daedalus_examples` | 34 個已驗證的範例電路 |
+| `daedalus_open` | 在 DaedalusEngine 視窗開啟電路檔 |
+
+程式開著某個電路檔時，AI 透過 MCP 修改並存檔，畫面會**自動重新載入**（Ctrl+Z 可復原；有尚未儲存的變更時會先詢問）。
+`tools/mcp/test.js` 在每次建置時以 MCP 用戶端的方式逐一呼叫全部工具（建立 Buck 並模擬、修改手繪範例、AC 掃頻、圖片），結果與圖片保存在 CI 的成品中。
+
+### 電路繪製 Skill
+
+[`skills/daedalus-circuit-builder`](skills/daedalus-circuit-builder) 是一個 Agent Skill（`SKILL.md`＋Python 腳本），教 AI 代理畫出版面清楚的 `.psimx`
+（分區、軌、介面標籤）並在交付前用 DaedalusEngine 驗證；有 MCP 時以 MCP 為主，沒有 MCP 的環境用它的腳本。
+安裝到 Claude Code：`daedalus-cli skill install`（或「說明 › AI 與 MCP › 安裝到 Claude Code」）；每個 Release 也附上 `daedalus-circuit-builder-skill.zip`。
+
+- `scripts/psimx_builder.py`：Python 產生器與靜態檢查；接腳與參數表 `elements.json` 由元件庫自動產生（全部 221 種元件）。
+- `scripts/verify_psimx.py`：靜態檢查＋以 `daedalus-cli` 模擬，列出每支探棒的統計值，可用 `--expect` 判定。
+- `scripts/shot_psimx.py`：用 DaedalusEngine 開檔截圖（`--run` 連同波形）。
+- 範例 `examples/buck_converter.py` 在每次建置時由 CI 實際產生、檢查並模擬。
 
 ---
 
@@ -333,6 +364,12 @@ Simulation Control 的「高精度模式」設為 1、填入目標誤差（預�
   - 安裝資料夾加入 `NOTICE.txt` 與 `THIRD-PARTY-NOTICES.txt`：程式實際包含的 148 個開源套件的著作權聲明與授權全文
     （`tools/notices.js` 由套件原始碼產生，每次建置自動更新）。
   - 「說明 › 關於」加入免責聲明與「版權、授權與免責聲明全文」按鈕；使用說明書新增「版權與免責聲明」章節。
+- **V1.5.0**（新功能）：AI 代理
+  - MCP 伺服器 `daedalus-cli mcp`（見「AI 代理：MCP 伺服器與 Skill」）：10 個工具，AI 可查元件、由網表建立電路（自動排版）、
+    修改既有電路（每個操作以程式的連線規則驗證）、檢查節點、模擬與量測（示波器量測、AC 頻寬與相位裕度）、看電路圖與波形圖。
+  - 程式開著的電路檔在外部被修改（例如 AI 存檔）時自動重新載入，Ctrl+Z 可復原；有未儲存的變更時先詢問。
+  - 「說明 › AI 與 MCP」：Claude Code／Claude Desktop 的設定指令（可複製）、安裝 Claude Code Skill（`daedalus-cli skill install`）。
+  - 示波器量測移到模擬核心，波形檢視器與 MCP 共用同一套定義；使用說明書新增「AI 與 MCP」章節。
 
 ---
 
@@ -357,7 +394,7 @@ node tools/examples/gen.js                        # 由 defs*.js 產生 26 個�
 node tools/examples/verify.js                     # 執行並比對全部範例（269 項，AC 範例自動加 --ac）
 node tools/examples/coverage.js -m                # 範例的元件涵蓋率
 # 圖形介面自動測試（CI 執行；本機需 --shot 前綴）：DAEDALUS_SCRIPT=tools/gui_test/gui.script DaedalusEngine tools/gui_test/gui.psimx --shot out/gui
-powershell -ExecutionPolicy Bypass -File tools\package.ps1   # 產生 dist\DaedalusEngine-Setup-V1.4.1.exe
+powershell -ExecutionPolicy Bypass -File tools\package.ps1   # 產生 dist\DaedalusEngine-Setup-V1.5.0.exe
 ```
 
 專案結構：`crates/daedalus-core`（模擬引擎）、`daedalus-app`（GUI）、`daedalus-cli`（命令列）、
@@ -375,7 +412,7 @@ DaedalusEngine 建立在許多開源專案與公開資料之上，謹向這些�
 
 ### 程式使用的開源函式庫
 
-程式以 [Rust](https://www.rust-lang.org) 撰寫，Windows 版程式實際包含 148 個來自 [crates.io](https://crates.io) 的開源 crate
+程式以 [Rust](https://www.rust-lang.org) 撰寫，Windows 版程式實際包含 174 個來自 [crates.io](https://crates.io) 的開源 crate
 （`Cargo.lock` 共 314 個，含其他平台與建置工具），全部採用與 GPL-3.0 相容的寬鬆授權（MIT、Apache-2.0、BSD、Zlib、ISC、
 Unicode-3.0 等）。每個套件的著作權聲明與授權全文見 [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt)（隨程式安裝）。
 主要的直接相依：
@@ -393,7 +430,7 @@ Unicode-3.0 等）。每個套件的著作權聲明與授權全文見 [THIRD-PAR
 | [miniz_oxide](https://github.com/Frommi/miniz_oxide) | 波形檔 `.dwave` 與安裝檔內容的壓縮 | MIT OR Zlib OR Apache-2.0 |
 | [windows-rs](https://github.com/microsoft/windows-rs)、[winreg](https://github.com/gentoo90/winreg-rs) | 安裝程式的捷徑、登錄與 Windows API | MIT OR Apache-2.0；MIT |
 | [winresource](https://github.com/BenjaminRi/winresource) | 執行檔的圖示與版本資訊 | MIT |
-| [resvg](https://github.com/linebender/resvg)、[ico](https://github.com/mdsteele/rust-ico) | 由 SVG 產生程式圖示 | Apache-2.0 OR MIT；MIT |
+| [resvg](https://github.com/linebender/resvg)、[ico](https://github.com/mdsteele/rust-ico) | 由 SVG 產生程式圖示；MCP 工具的電路圖與波形圖 | Apache-2.0 OR MIT；MIT |
 
 介面的英文與符號字型使用 egui 內建字型（Hack、Ubuntu Light、Noto Emoji；OFL-1.1／Ubuntu Font License），
 中文則直接使用 Windows 內建的微軟正黑體，不隨程式散布。

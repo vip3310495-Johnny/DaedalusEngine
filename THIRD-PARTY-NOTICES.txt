@@ -1,4 +1,4 @@
-DaedalusEngine V1.4.1 — 第三方元件授權聲明 / Third-party notices
+DaedalusEngine V1.5.0 — 第三方元件授權聲明 / Third-party notices
 ==============================================================================
 
 DaedalusEngine 的程式（DaedalusEngine.exe、daedalus-cli.exe 與安裝程式）包含下列 174 個開源 Rust 套件。

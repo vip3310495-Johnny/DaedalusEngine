@@ -242,7 +242,7 @@ fn eval_time(doc: &Doc, t: &str) -> Result<f64, String> {
 }
 
 fn parse_meas(names: &[String]) -> Result<Vec<Meas>, String> {
-    let all: Vec<Meas> = Meas::LEVEdefs.iter().chain(Meas::TIME.iter()).copied().collect();
+    let all: Vec<Meas> = Meas::LEVEL.iter().chain(Meas::TIME.iter()).copied().collect();
     names
         .iter()
         .map(|n| {
@@ -478,7 +478,7 @@ fn elements(a: &Value) -> Reply {
     }
     if let Some(q) = s(a, "query") {
         let terms: Vec<String> = q.to_lowercase().split_whitespace().map(String::from).collect();
-        let mut hits: Vec<(i32, &daedalus_core::library::ElDef)> = L
+        let mut hits: Vec<(i32, &daedalus_core::library::ElDef)> = defs
             .iter()
             .filter_map(|d| {
                 let (t, zh, en, cat, desc) = (d.typ.to_lowercase(), d.zh.to_lowercase(), d.name.to_lowercase(), d.cat.to_lowercase(), d.desc.to_lowercase());

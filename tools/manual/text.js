@@ -215,6 +215,31 @@ y1 = u;</pre>`,
 <p>程式設定（介面文字大小、元件庫釘選、波形顏色、波形檢視器設定、最近開啟的檔案）會自動保存在使用者資料夾中。</p>`,
     },
     {
+      id: 'ai', title: 'AI 與 MCP',
+      html: `<p>DaedalusEngine 內建 <b>MCP 伺服器</b>（Model Context Protocol，<code>daedalus-cli mcp</code>），讓 Claude Code、Claude Desktop 等 AI 代理直接操作本程式：查詢元件、由網表建立電路、修改您畫的電路、檢查節點、模擬與量測，並查看電路圖與波形圖。模擬結果與按 <span class="kbd">F5</span> 完全相同。</p>
+<h3>設定</h3>
+<p>「說明 › AI 與 MCP」會列出已填好路徑的指令與設定，按「複製」即可：</p>
+<ul><li><b>Claude Code</b>：在終端機執行 <code>claude mcp add daedalus -- "%LOCALAPPDATA%\\Programs\\DaedalusEngine\\daedalus-cli.exe" mcp</code>。</li>
+<li><b>Claude Desktop</b>：在 <code>%APPDATA%\\Claude\\claude_desktop_config.json</code> 的 <code>mcpServers</code> 加入 <code>daedalus</code>（command 為 daedalus-cli.exe，args 為 <code>["mcp"]</code>），重新啟動 Claude Desktop。</li>
+<li><b>Claude Code Skill</b>：「安裝到 Claude Code」把電路繪製指引與 Python 腳本寫入 <code>%USERPROFILE%\\.claude\\skills</code>（沒有 MCP 的環境使用）。</li></ul>
+<h3>工具</h3>
+${table(['工具', '用途'], [
+        ['daedalus_guide', '使用指引：流程、網表格式、編輯操作、建模規則、量測定義、常見錯誤'],
+        ['daedalus_elements', '查詢元件：接腳名稱與類型、參數預設值、單位、說明與選項'],
+        ['daedalus_new', '由網表建立電路：每隻接腳寫節點名稱（同名相連，接地為 "0"），自動排版並以節點標籤連線'],
+        ['daedalus_inspect', '讀取電路：元件、每隻接腳接到的節點、每個節點的接腳、問題清單'],
+        ['daedalus_edit', '修改電路：新增、刪除、改參數、移動旋轉、連接、拆線、拉線、模擬設定；每個操作都以程式的連線規則驗證'],
+        ['daedalus_simulate', '暫態（含參數掃描、蒙地卡羅、高精度）或 AC 掃頻；統計值、示波器量測（見「波形檢視器」）、頻寬與相位裕度'],
+        ['daedalus_waveform', '波形圖與降取樣數值表'],
+        ['daedalus_render', '電路圖（與程式相同的符號，可標出節點或元件、接腳名稱）'],
+        ['daedalus_examples', '內建的已驗證範例電路'],
+        ['daedalus_open', '在 DaedalusEngine 視窗開啟電路檔'],
+      ])}
+<h3>與程式一起使用</h3>
+<p>程式開著某個電路檔時，AI 透過 MCP 修改並存檔，畫面會<b>自動重新載入</b>，<span class="kbd">Ctrl+Z</span> 可回到修改前；若您有尚未儲存的變更，程式會先詢問要重新載入還是保留目前的版本。例如可以請 AI：「在這個電路的開關節點加一支電壓探棒，把負載改成 12 Ω，模擬後告訴我輸出漣波」。</p>
+<p class="note">AI 會讀寫您指定的電路檔。修改重要的檔案前，可請它用 <code>save_as</code> 另存，或先自行備份。</p>`,
+    },
+    {
       id: 'legal', title: '版權與免責聲明',
       html: `<p class="note">安裝程式會要求同意以下條款；全文另見安裝資料夾中的 <code>NOTICE.txt</code>、<code>LICENSE</code>（GPL-3.0）與 <code>THIRD-PARTY-NOTICES.txt</code>，程式中「說明 › 關於」也可開啟。</p>
 ${noticeHtml()}`,
