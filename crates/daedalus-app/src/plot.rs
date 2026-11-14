@@ -3,29 +3,9 @@
 use crate::theme::Pal;
 use egui::{pos2, Align2, FontId, Painter, Rect, Stroke};
 
-/// value with SI prefix, `dig` significant digits
+/// value with SI prefix, `dig` significant digits (shared with the command-line tools: daedalus_core::util::si)
 pub fn si(v: f64, unit: &str, dig: usize) -> String {
-    if v == 0.0 {
-        return if unit.is_empty() { "0".into() } else { format!("0 {}", unit) };
-    }
-    if !v.is_finite() {
-        return format!("{}", v);
-    }
-    let a = v.abs();
-    const P: [(f64, &str); 9] = [(1e9, "G"), (1e6, "M"), (1e3, "k"), (1.0, ""), (1e-3, "m"), (1e-6, "µ"), (1e-9, "n"), (1e-12, "p"), (1e-15, "f")];
-    for (m, s) in P {
-        if a >= m * 0.9999999 {
-            let x = v / m;
-            let t = daedalus_core::util::js_to_precision(x, dig);
-            let t: f64 = t.parse().unwrap_or(x);
-            let mut t = format!("{}", t);
-            if t.contains('e') {
-                t = format!("{:.3}", x);
-            }
-            return format!("{} {}{}", t, s, unit).trim_end().to_string();
-        }
-    }
-    format!("{:.3e} {}", v, unit).trim_end().to_string()
+    daedalus_core::util::si(v, unit, dig)
 }
 
 pub fn nice_ticks(mut a: f64, mut b: f64, n: usize) -> (Vec<f64>, f64) {

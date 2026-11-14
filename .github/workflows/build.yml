@@ -51,7 +51,7 @@ jobs:
           rustup default stable
 
       - name: Unit tests
-        run: cargo test --release -p daedalus-core -p daedalus-app
+        run: cargo test --release -p daedalus-core -p daedalus-app -p daedalus-cli
 
       - name: Build command-line simulator
         run: cargo build --release -p daedalus-cli
@@ -117,6 +117,22 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python skills/daedalus-circuit-builder/scripts/verify_psimx.py out/skill/buck.psimx --cli target/release/daedalus-cli.exe --expect Vo:avg10:11.5:12.5 --expect IL:avg10:1.9:2.1
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      # the MCP server for AI agents (daedalus-cli mcp): every tool over stdio, as an MCP client uses it;
+      # the pictures and responses are kept as an artifact
+      - name: MCP server
+        shell: pwsh
+        run: |
+          node tools/mcp/test.js target/release/daedalus-cli.exe out/mcp
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Upload MCP test output
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: mcp-test
+          path: out/mcp/
+          if-no-files-found: ignore
 
       # scripted GUI test: input events replayed by the app itself (tools/gui_test), checked from state dumps;
       # the runner has no GPU, so Mesa's software OpenGL is placed next to a test copy of the program

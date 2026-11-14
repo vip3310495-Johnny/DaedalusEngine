@@ -76,6 +76,14 @@ pub struct App {
     wave_uid: u64,
     /// the circuit in the editor: a new or opened circuit gets a new number, so its results get their own viewer
     doc_serial: u64,
+    /// modification time and size of the open circuit file when it was loaded or saved: a change on disk (an AI
+    /// agent editing it through the MCP server) reloads it
+    file_stamp: Option<(Option<std::time::SystemTime>, u64)>,
+    stamp_at: f64,
+    /// the open file changed on disk while the circuit has unsaved changes: ask before reloading
+    ext_change: bool,
+    show_ai: bool,
+    ai_msg: String,
     /// curve colours and viewer settings for new viewers (the user's last choice, saved with the app settings)
     wave_colors: std::collections::HashMap<String, Color32>,
     wave_style: crate::settings::WaveStyle,
@@ -143,6 +151,11 @@ impl App {
             wave_last: 0,
             wave_uid: 0,
             doc_serial: 1,
+            file_stamp: None,
+            stamp_at: 0.0,
+            ext_change: false,
+            show_ai: false,
+            ai_msg: String::new(),
             wave_colors: Default::default(),
             wave_style: Default::default(),
             bode: BodeView::new(),
@@ -242,6 +255,8 @@ impl App {
     fn load_text(&mut self, txt: &str, name: String, path: Option<PathBuf>) -> Result<(), String> {
         let (doc, screens) = Doc::from_json(txt)?;
         self.ed.set_doc(doc);
+        self.file_stamp = path.as_deref().and_then(file_stamp_of);
+        self.ext_change = false;
         self.file = path;
         self.file_name = name;
         self.doc_layout = screens;
@@ -252,6 +267,46 @@ impl App {
         self.canvas.err_els.clear();
         self.canvas.want_fit = true;
         Ok(())
+    }
+    /// reload the open circuit when its file changed on disk (an AI agent saved it through the MCP server)
+    fn watch_file(&mut self, ctx: &egui::Context) {
+        let Some(p) = self.file.clone() else { return };
+        ctx.request_repaint_after(std::time::Duration::from_millis(1000));
+        let now = ctx.input(|i| i.time);
+        if now - self.stamp_at < 0.8 || self.ext_change {
+            return;
+        }
+        self.stamp_at = now;
+        let st = file_stamp_of(&p);
+        if st.is_none() || st == self.file_stamp {
+            return;
+        }
+        if self.ed.dirty && !self.ed.doc.elements.is_empty() {
+            self.ext_change = true;
+        } else {
+            self.reload_external(&p);
+        }
+    }
+    fn reload_external(&mut self, p: &std::path::Path) {
+        let st = file_stamp_of(p);
+        let r = std::fs::read_to_string(p).map_err(|e| e.to_string()).and_then(|t| Doc::from_json(&t));
+        match r {
+            Ok((doc, screens)) => {
+                // the same circuit: the view and the waveform viewer stay; Ctrl+Z restores the version before
+                self.ed.set_doc(doc);
+                if screens.is_some() {
+                    self.doc_layout = screens;
+                }
+                self.file_stamp = st;
+                self.ext_change = false;
+                self.canvas.err_els.clear();
+                self.toast("電路檔已在外部修改（例如 AI 代理），已重新載入；Ctrl+Z 可復原");
+            }
+            // half written or not a circuit file (yet): try again on the next check
+            Err(_) => {
+                self.ext_change = false;
+            }
+        }
     }
     pub fn open_path(&mut self, p: PathBuf) {
         let ext = p.extension().map(|e| e.to_string_lossy().to_lowercase()).unwrap_or_default();
@@ -372,6 +427,8 @@ impl App {
             Ok(()) => {
                 self.file_name = path.file_stem().map(|s| s.to_string_lossy().to_string()).unwrap_or_default();
                 self.file = Some(path.clone());
+                self.file_stamp = file_stamp_of(&path);
+                self.ext_change = false;
                 self.ed.dirty = false;
                 self.add_recent(path);
                 self.toast("已儲存");
@@ -1148,6 +1205,10 @@ impl App {
                     self.show_help = true;
                     ui.close();
                 }
+                if ui.button("AI 與 MCP…").on_hover_text("讓 Claude Code、Claude Desktop 等 AI 代理建立、修改、檢查與模擬電路：MCP 伺服器的設定指令與 Claude Code Skill").clicked() {
+                    self.show_ai = true;
+                    ui.close();
+                }
                 if ui.button(format!("關於 {}", APP_NAME)).clicked() {
                     self.show_about = true;
                     ui.close();
@@ -1332,6 +1393,7 @@ impl App {
         let ctx = ui.ctx().clone();
         let pal = *self.pal();
         self.poll_run();
+        self.watch_file(&ctx);
         if self.script.is_none() {
             self.shot_main(&ctx);
         } else {
@@ -1695,6 +1757,36 @@ impl App {
                 _ => {}
             }
         }
+        if self.ext_change {
+            let mut choice: Option<bool> = None;
+            egui::Modal::new(egui::Id::new("ext_change")).show(ctx, |ui| {
+                ui.heading("電路檔已在外部修改");
+                ui.label(format!("「{}」在程式外被修改（例如 AI 代理透過 MCP 存檔），但這裡還有尚未儲存的變更。", self.file_name));
+                ui.horizontal(|ui| {
+                    if ui.button("重新載入檔案").on_hover_text("以檔案的內容取代畫面；Ctrl+Z 可回到目前的版本").clicked() {
+                        choice = Some(true);
+                    }
+                    if ui.button("保留目前的版本").on_hover_text("不載入；之後儲存會覆蓋外部的修改").clicked() {
+                        choice = Some(false);
+                    }
+                });
+            });
+            match choice {
+                Some(true) => {
+                    if let Some(p) = self.file.clone() {
+                        self.reload_external(&p);
+                    }
+                }
+                Some(false) => {
+                    self.file_stamp = self.file.as_deref().and_then(file_stamp_of);
+                    self.ext_change = false;
+                }
+                None => {}
+            }
+        }
+        if self.show_ai {
+            self.ai_window(ctx);
+        }
         if self.show_help {
             egui::Window::new("操作說明與快捷鍵").open(&mut self.show_help).default_width(620.0).show(ctx, help_ui);
         }
@@ -1736,6 +1828,78 @@ impl App {
                 self.open_notice();
             }
         }
+    }
+
+    /// Help › AI 與 MCP: setting up the MCP server (daedalus-cli mcp) in Claude Code / Claude Desktop, and the skill
+    fn ai_window(&mut self, ctx: &egui::Context) {
+        let cli = std::env::current_exe().ok().and_then(|p| p.parent().map(|d| d.join("daedalus-cli.exe"))).unwrap_or_default();
+        let found = cli.is_file();
+        let cmd = format!("claude mcp add daedalus -- \"{}\" mcp", cli.display());
+        let json = serde_json::to_string_pretty(&serde_json::json!({"mcpServers": {"daedalus": {"command": cli.display().to_string(), "args": ["mcp"]}}})).unwrap_or_default();
+        let mut open = self.show_ai;
+        let mut copied: Option<&str> = None;
+        let mut install = false;
+        egui::Window::new("AI 與 MCP").open(&mut open).default_width(640.0).collapsible(false).show(ctx, |ui| {
+            ui.label("DaedalusEngine 內建 MCP 伺服器（daedalus-cli mcp），讓 Claude Code、Claude Desktop 等 AI 代理查詢元件、由網表建立電路、修改既有電路（連線經程式驗證）、檢查節點、模擬並量測，以及查看電路圖與波形圖。");
+            ui.label("AI 修改目前開啟的電路檔並存檔時，這裡的畫面會自動重新載入（Ctrl+Z 可復原）。");
+            if !found {
+                ui.colored_label(egui::Color32::from_rgb(0xc0, 0x60, 0x00), format!("找不到 {}：請用安裝程式安裝，或把 daedalus-cli.exe 放在 DaedalusEngine.exe 旁邊。", cli.display()));
+            }
+            ui.separator();
+            ui.strong("Claude Code：在終端機執行");
+            ui.add(egui::TextEdit::multiline(&mut cmd.as_str()).code_editor().desired_rows(1).desired_width(f32::INFINITY));
+            if ui.button("複製指令").clicked() {
+                ctx.copy_text(cmd.clone());
+                copied = Some("已複製 Claude Code 指令");
+            }
+            ui.add_space(6.0);
+            ui.strong("Claude Desktop：加入 %APPDATA%\\Claude\\claude_desktop_config.json");
+            ui.add(egui::TextEdit::multiline(&mut json.as_str()).code_editor().desired_rows(6).desired_width(f32::INFINITY));
+            if ui.button("複製設定").clicked() {
+                ctx.copy_text(json.clone());
+                copied = Some("已複製 Claude Desktop 設定");
+            }
+            ui.add_space(6.0);
+            ui.strong("Claude Code Skill（電路繪製指引與 Python 腳本，沒有 MCP 時使用）");
+            ui.horizontal(|ui| {
+                if ui.add_enabled(found, egui::Button::new("安裝到 Claude Code")).on_hover_text("寫入 %USERPROFILE%\\.claude\\skills\\daedalus-circuit-builder").clicked() {
+                    install = true;
+                }
+                if !self.ai_msg.is_empty() {
+                    ui.label(&self.ai_msg);
+                }
+            });
+            ui.separator();
+            ui.strong("MCP 工具");
+            for (n, d) in [
+                ("daedalus_guide", "使用指引：流程、網表格式、編輯操作、建模規則、量測定義"),
+                ("daedalus_elements", "查詢元件：接腳名稱與類型、參數、說明"),
+                ("daedalus_new", "由網表建立電路（自動排版，以節點標籤連線）"),
+                ("daedalus_inspect", "檢查電路：元件、節點連接、問題清單"),
+                ("daedalus_edit", "修改電路：新增、刪除、改參數、連接、拆線、拉線、模擬設定"),
+                ("daedalus_simulate", "模擬：暫態、AC 掃頻、參數掃描、蒙地卡羅；統計與示波器量測"),
+                ("daedalus_waveform", "波形圖與降取樣數值表"),
+                ("daedalus_render", "電路圖 PNG（可標出節點或元件）"),
+                ("daedalus_examples", "內建範例電路"),
+                ("daedalus_open", "在 DaedalusEngine 開啟電路檔"),
+            ] {
+                ui.horizontal(|ui| {
+                    ui.monospace(n);
+                    ui.weak(d);
+                });
+            }
+        });
+        if install {
+            self.ai_msg = match std::process::Command::new(&cli).args(["skill", "install"]).output() {
+                Ok(o) if o.status.success() => String::from_utf8_lossy(&o.stdout).trim().to_string(),
+                Ok(o) => format!("安裝失敗：{}", String::from_utf8_lossy(&o.stderr).trim()),
+                Err(e) => format!("無法執行 daedalus-cli：{}", e),
+            };
+        }
+        if let Some(m) = copied {
+            self.toast(m);
+        }
+        self.show_ai = open;
     }
 
     /// File → Export view: asks for the file name, then writes the PDF
@@ -2180,4 +2344,9 @@ fn request_shot(ctx: &egui::Context, path: String) {
         SHOTS.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         c.request_repaint();
     })));
+}
+
+/// modification time and size of a file (None if it cannot be read)
+fn file_stamp_of(p: &std::path::Path) -> Option<(Option<std::time::SystemTime>, u64)> {
+    std::fs::metadata(p).ok().map(|m| (m.modified().ok(), m.len()))
 }

@@ -1,6 +1,15 @@
 //! Headless runner.
 //!   daedalus-cli <file.psimx> <out.csv> [--ac] [--threads N]
 //!   daedalus-cli <case.json> <out.csv>          (regression case: {net, sc, ac})
+//!   daedalus-cli mcp                            (Model Context Protocol server on stdio, for AI agents)
+//!   daedalus-cli skill install [folder]         (circuit-builder skill for Claude Code)
+mod circuit;
+mod mcp;
+mod render;
+mod run;
+mod skill;
+mod tools;
+
 use daedalus_core::doc::Doc;
 use daedalus_core::netlist::{build_netlist, JsNetlist, Netlist};
 use daedalus_core::runner::*;
@@ -102,8 +111,19 @@ fn write_tran(out: &mut impl Write, res: &TranResult, secs: f64) -> String {
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
+    match args.get(1).map(String::as_str) {
+        Some("mcp") => std::process::exit(mcp::serve()),
+        Some("skill") => std::process::exit(skill::cmd(&args[2..])),
+        Some("--version") | Some("-V") => {
+            println!("daedalus-cli {}", daedalus_core::VERSION);
+            return;
+        }
+        _ => {}
+    }
     if args.len() < 3 {
-        die("usage: daedalus-cli <file.psimx|case.json> <out.csv> [--ac] [--threads N]", 1);
+        die("usage: daedalus-cli <file.psimx|case.json> <out.csv> [--ac] [--threads N]
+       daedalus-cli mcp
+       daedalus-cli skill install [folder]", 1);
     }
     let txt = std::fs::read_to_string(&args[1]).unwrap_or_else(|e| die(&format!("read: {}", e), 1));
     let threads = args.iter().position(|a| a == "--threads").and_then(|i| args.get(i + 1)).and_then(|s| s.parse().ok()).unwrap_or_else(|| std::thread::available_parallelism().map(|n| n.get()).unwrap_or(4));

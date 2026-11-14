@@ -344,6 +344,7 @@ name = "daedalus-cli"
 version = "1.4.1"
 dependencies = [
  "daedalus-core",
+ "resvg",
  "serde_json",
 ]
 

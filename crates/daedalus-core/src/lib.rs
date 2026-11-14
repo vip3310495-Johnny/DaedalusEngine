@@ -9,6 +9,7 @@ pub mod accuracy;
 pub mod doc;
 pub mod expr;
 pub mod library;
+pub mod measure;
 pub mod models;
 pub mod montecarlo;
 pub mod netlist;
