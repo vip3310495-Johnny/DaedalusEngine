@@ -1,4 +1,4 @@
-# DaedalusEngine V1.5.1
+# DaedalusEngine V1.6.0
 
 電力電子電路模擬器（Windows 11，Rust 原生程式）。
 以網頁版「電力電子電路模擬器 V3.2.1」為參考重新實作，包含其全部元件模型，`.psimx` 電路檔兩邊通用。
@@ -7,11 +7,11 @@
 
 ## 下載
 
-**[⬇ 下載安裝檔 DaedalusEngine-Setup-V1.5.1.exe](https://github.com/vip3310495-Johnny/DaedalusEngine/releases/download/v1.5.1/DaedalusEngine-Setup-V1.5.1.exe)**（14.1 MB，Windows 10／11，不需要系統管理員權限）
+**[⬇ 下載安裝檔 DaedalusEngine-Setup-V1.6.0.exe](https://github.com/vip3310495-Johnny/DaedalusEngine/releases/download/v1.6.0/DaedalusEngine-Setup-V1.6.0.exe)**（14.1 MB，Windows 10／11，不需要系統管理員權限）
 
 - 下載後按兩下執行，依畫面按「安裝」即可；已安裝舊版時會自動提供「更新」。
 - 最新版與所有舊版：[Releases 頁面](https://github.com/vip3310495-Johnny/DaedalusEngine/releases/latest)。安裝檔只放在 Releases，不放在程式碼清單中。
-- SHA-256 見各 Release 的 `SHA256SUMS.txt`（驗證：`certutil -hashfile DaedalusEngine-Setup-V1.5.1.exe SHA256`）
+- SHA-256 見各 Release 的 `SHA256SUMS.txt`（驗證：`certutil -hashfile DaedalusEngine-Setup-V1.6.0.exe SHA256`）
 - 目前版本尚未經程式碼簽章（SignPath 申請中）：Windows 可能顯示「Windows 已保護您的電腦」，請按「其他資訊 › 仍要執行」；
   開啟「智慧型應用程式控制」（Smart App Control）的電腦會直接封鎖，需等簽章版。
 
@@ -19,7 +19,7 @@
 
 ## 安裝與解除安裝
 
-- 執行 `DaedalusEngine-Setup-V1.5.1.exe`。**不需要系統管理員權限**：程式安裝於
+- 執行 `DaedalusEngine-Setup-V1.6.0.exe`。**不需要系統管理員權限**：程式安裝於
   `%LOCALAPPDATA%\Programs\DaedalusEngine`，捷徑與檔案關聯只寫入目前使用者（HKCU）。
 - 安裝前須閱讀並勾選同意**授權條款與免責聲明**（GPL-3.0、附加條款與免責聲明，全文見 [NOTICE.txt](NOTICE.txt)）；
   更新、修復與降級也會先顯示條款，解除安裝則不需要。
@@ -41,8 +41,8 @@
 ### 命令列（自動化部署）
 
 ```
-DaedalusEngine-Setup-V1.5.1.exe --silent [--dir <資料夾>] [--no-desktop|--desktop] [--no-assoc|--assoc] [--launch]   安裝或更新
-DaedalusEngine-Setup-V1.5.1.exe --silent --repair    修復已安裝的程式（uninstall.exe 亦可）
+DaedalusEngine-Setup-V1.6.0.exe --silent [--dir <資料夾>] [--no-desktop|--desktop] [--no-assoc|--assoc] [--launch]   安裝或更新
+DaedalusEngine-Setup-V1.6.0.exe --silent --repair    修復已安裝的程式（uninstall.exe 亦可）
 uninstall.exe --maintain                             開啟維護畫面（更新／修復／解除安裝）
 uninstall.exe --uninstall --silent [--purge]
 ```
@@ -384,6 +384,15 @@ Simulation Control 的「高精度模式」設為 1、填入目標誤差（預�
     控制區依訊號流向分欄；只有跨功率／控制的訊號（閘極、感測器輸出）用節點標籤（Buck 範例由每隻接腳一個標籤降為 2 個）。
   - 修改電路時 connect 先嘗試拉導線（via 可指定），新元件放在要連的節點旁；網表的節點名稱存在檔案（`nets`）中，之後仍可用名稱指定。
   - `daedalus-cli new／inspect／render／tool`：沒有 MCP 的環境（Skill）也能用同一套自動排版、檢查與電路圖。
+- **V1.6.0**（新功能）：PSIM 式子電路
+  - 自訂子電路：以「子電路埠」定義介面（左右上下四邊），子電路內可放任何功率、控制元件與探棒，並以參數方塊定義可在方塊上覆寫的變數；
+    定義存在主電路檔中，一個 `.psimx` 即包含全部內容。
+  - 「子電路」選單：新增、放置、從其他電路檔匯入、匯出成電路檔、管理（改名、刪除、查看使用處）；Ctrl+E 進入、Ctrl+Shift+E 返回，上方顯示所在路徑；
+    子電路可巢狀，不能直接或間接包含自己。
+  - 方塊的屬性視窗可選擇子電路並覆寫變數；修改子電路的埠後，所有方塊的接腳與導線自動跟著更新。
+  - 模擬時展開成單一電路：內部元件與探棒以 `X1.R1`、`X1.Vc` 命名，錯誤訊息指向對應的方塊；新範例 subcircuit_rc（與理論值比對）。
+  - MCP：網表 `subckts`、編輯操作的 `subckt` 範圍與 subckt_new／remove／rename／import，`daedalus_inspect`、`daedalus_render` 可查看子電路內部；
+    Skill 的 `psimx_builder.py` 支援子電路並附範例 `subcircuit_rc.py`。
 
 ---
 

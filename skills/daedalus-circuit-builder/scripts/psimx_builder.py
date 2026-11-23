@@ -30,7 +30,7 @@ with open(os.path.join(_HERE, 'elements.json'), encoding='utf-8') as _f:
 PROBES = {'VP', 'VP2', 'IP', 'VDCM', 'VACM', 'ADCM', 'AACM', 'WATT', 'WH3', 'DEVP', 'ACP', 'ACP2'}
 # elements of a definition that the main circuit's simulation does not use
 MAIN_ONLY = {'SIMCTRL', 'ACSWEEP', 'PSWEEP', 'MONTECARLO'}
-VERSION = 'V1.5.1'
+VERSION = 'V1.6.0'
 # subcircuit port kinds (as stored in a block's "ports") <-> pin kinds of elements.json
 _KIND_IN = {'p': 'P', 'ci': 'Ci', 'co': 'Co', 'a': 'A'}
 

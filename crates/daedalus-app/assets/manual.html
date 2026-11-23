@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>DaedalusEngine 使用說明書 V1.5.1</title>
+<title>DaedalusEngine 使用說明書 V1.6.0</title>
 <style>
 :root{--bg:#f6f8fa;--panel:#fff;--text:#18202a;--muted:#5d6877;--line:#d6dce4;--accent:#e8590c;--link:#1c6fd1;--code:#eef2f6;--sym:#1f48b8;--ctl:#0b7a75;--plot:#fbfcfd;--grid:#e3e8ee;--zero:#b9c3cf;--c0:#1c6fd1;--c1:#e8590c;--c2:#2b8a3e;--c3:#c2255c;--c4:#6741d9;--c5:#0c8599;color-scheme:light}
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0f1319;--panel:#151a21;--text:#e4e9ef;--muted:#9aa6b4;--line:#2a323d;--accent:#ff922b;--link:#7aa7ff;--code:#1d242e;--sym:#7aa7ff;--ctl:#4fd1c5;--plot:#0b0f14;--grid:#1f2731;--zero:#3a4554;--c0:#5aa2ff;--c1:#ff922b;--c2:#69db7c;--c3:#f783ac;--c4:#b197fc;--c5:#3bc9db;color-scheme:dark}}
@@ -55,7 +55,7 @@ details>summary{cursor:pointer;color:var(--link);font-size:14px;margin:4px 0}
 </style>
 </head>
 <body>
-<header class="top"><button class="menu" id="menu" aria-label="目錄">☰</button><div class="brand">DaedalusEngine 使用說明書 <span class="ver">V1.5.1</span></div>
+<header class="top"><button class="menu" id="menu" aria-label="目錄">☰</button><div class="brand">DaedalusEngine 使用說明書 <span class="ver">V1.6.0</span></div>
 <input id="q" type="search" placeholder="搜尋元件、參數或功能（例如 MOSFET、PWM、THD）" autocomplete="off"><span id="hits" class="muted"></span><button class="theme" id="theme" title="切換淺色／深色">◐ 跟隨系統</button></header>
 <nav class="toc" id="toc"><div class="tt">目錄</div><ol><li><a href="#intro">簡介</a></li><li><a href="#quick">快速開始</a></li><li><a href="#editor">電路圖編輯</a></li><li><a href="#subckt">子電路</a></li><li><a href="#sim">模擬與分析</a></li><li><a href="#wave">波形檢視器</a></li><li><a href="#expr">運算式語法</a></li><li><a href="#cblock">簡化 C 程式方塊</a></li><li><a href="#files">檔案</a></li><li><a href="#ai">AI 與 MCP</a></li><li><a href="#legal">版權與免責聲明</a></li><li><a href="#elements">元件參考</a><ol class="sub"><li><a href="#cat-sources-voltage">電源 › 電壓源</a></li><li><a href="#cat-sources-current">電源 › 電流源</a></li><li><a href="#cat-power-rlc-branches">功率元件 › RLC 支路</a></li><li><a href="#cat-power-switches">功率元件 › 開關</a></li><li><a href="#cat-power-non-ideal-switches">功率元件 › 非理想開關</a></li><li><a href="#cat-power-transformers">功率元件 › 變壓器</a></li><li><a href="#cat-power-other">功率元件 › 其他</a></li><li><a href="#cat-control">控制元件</a></li><li><a href="#cat-control-filters">控制元件 › 濾波器</a></li><li><a href="#cat-control-computational-blocks">控制元件 › 運算方塊</a></li><li><a href="#cat-control-other-function-blocks">控制元件 › 其他功能方塊</a></li><li><a href="#cat-control-logic-elements">控制元件 › 邏輯元件</a></li><li><a href="#cat-control-digital-control-module">控制元件 › 數位控制模組</a></li><li><a href="#cat-other">其他 › 分析與模擬設定</a></li><li><a href="#cat-other-switch-controllers">其他 › 開關控制器</a></li><li><a href="#cat-other-sensors">其他 › 感測器</a></li><li><a href="#cat-other-probes">其他 › 探棒與量表</a></li><li><a href="#cat-other-function-blocks">其他 › 函數方塊</a></li><li><a href="#cat-symbols">符號</a></li></ol></li></ol></nav>
 <main id="main">
@@ -1073,7 +1073,7 @@ y1 = 2*x1 + 100*acc;</pre></td><td>每個計算點執行。輸入為 x1..xn、�
 <p class="desc">在電路圖上放置文字註解，不參與模擬。</p><div class="note">文字註解：在電路圖上加說明文字，不參與模擬。</div>
 <table class="pt"><thead><tr><th>參數</th><th>預設值</th><th>說明</th></tr></thead><tbody><tr><td><b>Text 文字</b><br><code class="k">text</code></td><td><code>註解文字</code></td><td></td></tr></tbody></table>
 </article></div></section></section>
-<footer class="foot">DaedalusEngine V1.5.1 · 本說明書由程式內建，元件的波形圖皆以 DaedalusEngine 本身模擬示範電路產生。</footer>
+<footer class="foot">DaedalusEngine V1.6.0 · 本說明書由程式內建，元件的波形圖皆以 DaedalusEngine 本身模擬示範電路產生。</footer>
 </main>
 <script>
 const q=document.getElementById('q'),hits=document.getElementById('hits');
