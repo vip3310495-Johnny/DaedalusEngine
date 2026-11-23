@@ -15,6 +15,8 @@ pub enum Sel {
 pub struct Group {
     pub elements: Vec<Element>,
     pub wires: Vec<Wire>,
+    /// the subcircuit definitions its blocks use (so they can be pasted into another circuit)
+    pub defs: BTreeMap<String, Doc>,
 }
 
 pub struct Editor {
@@ -26,6 +28,9 @@ pub struct Editor {
     pub rev: u64,
     conn: Option<(u64, Conn)>,
     pub clip: Option<Group>,
+    /// parameter-file text of the circuits around this one (editing a subcircuit: the main circuit's parameters),
+    /// so that values typed here are checked against everything they can use
+    pub scope_params: String,
 }
 
 pub struct BBox {
@@ -42,8 +47,11 @@ pub fn wbox(el: &Element) -> BBox {
         None => return BBox { x0: el.x, y0: el.y, x1: el.x, y1: el.y },
     };
     let [mut x0, mut y0, mut x1, mut y1] = d.bb;
-    if el.typ == "LABEL" {
-        x1 = (0.62 * el.params.get("text").map(|s| s.chars().count()).unwrap_or(0) as f64 + 0.9).max(1.6);
+    if el.typ == "LABEL" || el.typ == "SUBPORT" {
+        x1 = label_len(el);
+    }
+    if el.typ == "SUBCKT" {
+        [x0, y0, x1, y1] = daedalus_core::library::local_bb(el);
     }
     if el.typ == "TEXT" {
         let t = el.params.get("text").cloned().unwrap_or_default();
@@ -61,6 +69,17 @@ pub fn wbox(el: &Element) -> BBox {
     }
     let c = [tpt(el, x0, y0), tpt(el, x1, y0), tpt(el, x0, y1), tpt(el, x1, y1)];
     BBox { x0: c.iter().map(|p| p.0).fold(f64::INFINITY, f64::min), y0: c.iter().map(|p| p.1).fold(f64::INFINITY, f64::min), x1: c.iter().map(|p| p.0).fold(f64::NEG_INFINITY, f64::max), y1: c.iter().map(|p| p.1).fold(f64::NEG_INFINITY, f64::max) }
+}
+
+/// length of a label's (or a subcircuit port's) outline in grid units
+pub fn label_len(el: &Element) -> f64 {
+    let n = el.params.get("text").map(|s| s.chars().count()).unwrap_or(0) as f64;
+    if el.typ == "SUBPORT" {
+        // the name, "·" and the side (one wide character), pointed at both ends
+        (0.62 * (n + 3.0) + 1.1).max(2.4)
+    } else {
+        (0.62 * n + 0.9).max(1.6)
+    }
 }
 
 /// L-shaped route from a to b (horizontal first when the horizontal distance dominates)
@@ -85,7 +104,7 @@ fn dist_seg(px: f64, py: f64, w: &Wire) -> f64 {
 
 impl Editor {
     pub fn new() -> Self {
-        Editor { doc: Doc { elements: vec![], wires: vec![], nid: 1 }, sel: HashSet::new(), undo: vec![], redo: vec![], dirty: false, rev: 0, conn: None, clip: None }
+        Editor { doc: Doc { elements: vec![], wires: vec![], nid: 1, subckts: Default::default() }, sel: HashSet::new(), undo: vec![], redo: vec![], dirty: false, rev: 0, conn: None, clip: None, scope_params: String::new() }
     }
     pub fn set_doc(&mut self, doc: Doc) {
         self.push_undo();
@@ -138,6 +157,15 @@ impl Editor {
     pub fn conn(&self) -> &Conn {
         &self.conn.as_ref().expect("ensure_conn").1
     }
+    /// parameter names usable in this circuit's values (the surrounding circuits' and its own parameter files)
+    pub fn syms(&self) -> daedalus_core::expr::Syms {
+        let mut t = self.scope_params.clone();
+        for e in self.doc.elements.iter().filter(|e| e.typ == "PARAMS" && !e.dis) {
+            t.push('\n');
+            t += e.params.get("text").map(|s| s.as_str()).unwrap_or("");
+        }
+        daedalus_core::expr::parse_param_text(&t).0
+    }
     pub fn el(&self, id: i64) -> Option<&Element> {
         self.doc.elements.iter().find(|e| e.id == id)
     }
@@ -164,7 +192,19 @@ impl Editor {
             _ if d.noname() => String::new(),
             _ => self.unique_name(&d.pre),
         };
-        Element { id, typ: typ.into(), x, y, rot, mir, dis: false, name, params: lib().default_params(typ), disp: None }
+        let mut params = lib().default_params(typ);
+        if typ == "SUBPORT" {
+            params.insert("text".into(), self.free_port("in"));
+        }
+        Element { id, typ: typ.into(), x, y, rot, mir, dis: false, name, params, disp: None }
+    }
+    /// a subcircuit port name not used yet (`want`, else P1, P2, …): two ports with one name would be one pin
+    pub fn free_port(&self, want: &str) -> String {
+        let used: HashSet<String> = self.doc.elements.iter().filter(|e| e.typ == "SUBPORT").filter_map(|e| e.params.get("text").map(|t| t.trim().to_string())).collect();
+        if !want.is_empty() && !used.contains(want) {
+            return want.to_string();
+        }
+        (1..).map(|i| format!("P{}", i)).find(|n| !used.contains(n)).unwrap()
     }
     /// place a copy of a prototype element; returns the new id or an error message
     pub fn place_element(&mut self, proto: &Element, x: f64, y: f64) -> Result<i64, String> {
@@ -177,6 +217,10 @@ impl Editor {
         el.dis = proto.dis;
         for (k, v) in &proto.params {
             el.params.insert(k.clone(), v.clone());
+        }
+        if el.typ == "SUBPORT" {
+            let want = el.params.get("text").cloned().unwrap_or_default();
+            el.params.insert("text".into(), self.free_port(want.trim()));
         }
         el.disp = proto.disp.clone();
         let id = el.id;
@@ -398,6 +442,7 @@ impl Editor {
         let g = Group {
             elements: self.doc.elements.iter().filter(|e| els.contains(&e.id)).map(|e| Element { x: e.x - cx, y: e.y - cy, ..e.clone() }).collect(),
             wires: self.doc.wires.iter().filter(|w| ws.contains(&w.id)).map(|w| Wire { id: 0, x1: w.x1 - cx, y1: w.y1 - cy, x2: w.x2 - cx, y2: w.y2 - cy }).collect(),
+            defs: BTreeMap::new(),
         };
         self.clip = Some(g);
         Some((els.len(), ws.len()))
@@ -417,6 +462,10 @@ impl Editor {
             }
             if d.has("single") && self.doc.elements.iter().any(|o| o.typ == el.typ) {
                 continue;
+            }
+            if el.typ == "SUBPORT" {
+                let want = el.params.get("text").cloned().unwrap_or_default();
+                el.params.insert("text".into(), self.free_port(want.trim()));
             }
             let id = el.id;
             self.doc.elements.push(el);

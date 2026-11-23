@@ -354,4 +354,44 @@ run
 wait 150
 dump 49_two_viewers
 shot 49_two_viewers
+# subcircuits: the example, two levels down and back, a new definition with a block, a port added inside
+wave_reset
+load_example subcircuit_rc
+wait 10
+fit
+wait 6
+dump 50_sub_example
+shot 50_sub_example
+sub_enter_block X2
+wait 10
+fit
+wait 6
+dump 51_sub_in
+sub_enter_block XA
+wait 10
+fit
+wait 6
+dump 52_sub_in2
+shot 52_sub_in2
+key E ctrl shift
+wait 6
+key E ctrl shift
+wait 6
+dump 53_sub_back
+sub_new SUBX
+wait 4
+key Escape
+sub_place SUBX 40 20
+wait 6
+sub_enter_block X4
+wait 10
+place SUBPORT -2 6
+wait 4
+sub_leave
+wait 8
+dump 54_sub_new
+shot 54_sub_new
+run
+wait 150
+dump 55_sub_run
 quit

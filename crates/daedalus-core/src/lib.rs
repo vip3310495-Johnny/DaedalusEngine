@@ -16,6 +16,7 @@ pub mod netlist;
 pub mod runner;
 pub mod sim;
 pub mod sparse;
+pub mod subckt;
 pub mod sweep;
 pub mod util;
 

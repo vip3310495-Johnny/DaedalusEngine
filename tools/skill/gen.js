@@ -35,7 +35,7 @@ function tables() {
     const v = String(p.d).replace(/\n/g, '⏎');
     return `${p.k}=${v.length > 40 ? v.slice(0, 40) + '…' : v}${p.u && !/^[⏎]/.test(p.u) ? p.u : ''}${p.adv ? '（進階）' : ''}`;
   };
-  let md = '# 元件參考（由元件庫自動產生，請勿手動修改）\n\n每列：`型別代碼` 中文名 — 接腳 名稱(x,y)類型（rot=0、未鏡像）— 參數=預設值。類型：P 功率、Ci 控制輸入、Co 控制輸出、G 閘極（控制訊號）、A 功率或控制。CBLOCK 的接腳依 nin／nout 變化（見 SKILL.md）。\n';
+  let md = '# 元件參考（由元件庫自動產生，請勿手動修改）\n\n每列：`型別代碼` 中文名 — 接腳 名稱(x,y)類型（rot=0、未鏡像）— 參數=預設值。類型：P 功率、Ci 控制輸入、Co 控制輸出、G 閘極（控制訊號）、A 功率或控制。CBLOCK 的接腳依 nin／nout 變化；SUBCKT（子電路方塊）的接腳是它的子電路的埠（見 SKILL.md）。\n';
   const cats = [];
   for (const d of LIB) if (!cats.includes(d.cat)) cats.push(d.cat);
   for (const c of cats) {

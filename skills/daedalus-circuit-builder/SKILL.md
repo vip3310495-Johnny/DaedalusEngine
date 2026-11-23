@@ -14,6 +14,7 @@ description: "Build a .psimx circuit file for DaedalusEngine (Windows power-elec
 > 2. 寫網表 JSON（每隻接腳寫節點名稱，接地 `"0"`）→ `daedalus-cli new netlist.json circuit.psimx`（輸出節點表與問題清單）。
 > 3. `daedalus-cli render circuit.psimx circuit.png --pins` 產生電路圖（PNG 或 SVG，不需要開程式）並實際看圖；`daedalus-cli inspect circuit.psimx` 看節點。
 > 4. `scripts/verify_psimx.py` 或 `daedalus-cli tool daedalus_simulate "{\"path\":\"…\"}"` 模擬驗證。
+> 重複的電路（橋臂、濾波器、每一相、控制迴路）用**子電路**：網表加 `subckts`（`daedalus_guide topic=netlist`），既有電路用 `daedalus_edit` 的 `subckt_new`、或在操作加 `"subckt": "名稱"` 修改子電路內容（`topic=edit`）；`daedalus-cli inspect|render … --subckt 名稱` 看子電路。詳見第 3.2 節。
 > 需要手工控制每個座標時才用以下 Python 腳本；第 3、4 節的建模與版面規則都適用。
 
 本資料夾：
@@ -26,6 +27,7 @@ description: "Build a .psimx circuit file for DaedalusEngine (Windows power-elec
 | `scripts/shot_psimx.py` | 用 DaedalusEngine 開檔截圖（目視檢查版面），可加 `--run` 連波形一起截 |
 | `references/elements.md` | 元件參考：型別代碼、中文名、接腳（座標、類型）、參數預設值、說明 |
 | `examples/buck_converter.py` | 完整範例：分區、軌、介面標籤、探棒（CI 每次建置都會實際模擬驗證） |
+| `examples/subcircuit_rc.py` | 子電路範例：定義（埠、參數、內部探棒）＋兩個各自參數的方塊（CI 同樣模擬驗證） |
 
 ## 1. 檔案格式
 
@@ -45,6 +47,7 @@ description: "Build a .psimx circuit file for DaedalusEngine (Windows power-elec
 - wire：`{"id":2,"x1":4,"y1":2,"x2":8,"y2":2}`，必須水平或垂直。
 - `nid`：大於所有 id。座標都是整數格點，y 向下為正。
 - 選擇性 `screens`：波形檢視器的畫面配置（探棒名稱分組）。
+- 選擇性 `doc.subckts`：子電路定義 `{"名稱": {"elements": [...], "wires": [...], "nid": n}}`（見第 3.2 節；用 `psimx_builder` 產生，不要手寫方塊的 `ports`）。
 
 ## 2. 連線規則（與程式完全相同）
 
@@ -81,6 +84,17 @@ description: "Build a .psimx circuit file for DaedalusEngine (Windows power-elec
 - 理想開關的關斷電阻預設 1 MΩ（PSIM 相同）；100 kΩ 等級的高阻抗類比電路把 `roff` 改大（1G 以上），否則漏電流造成誤差。
 - t = 0：電感為電流源（`i0`）、電容為電壓源（`v0`）；給接近實際的初值可縮短啟動暫態。
 - 三相：`VSIN3` 的 `V` 是線電壓有效值；逆變器的 DC bus 用兩顆 `RC` 分裂、中點接地；電網中性點浮接（三線制）時用 `LABEL` 而不是直接接地。
+
+### 3.2 子電路（PSIM 的 subcircuit）
+
+同一段電路出現兩次以上（半橋臂、三相的每一相、LC 濾波器、閘極驅動、控制迴路）時，畫成子電路：定義一次，放多個方塊，每個方塊可給不同參數。
+
+- **定義**：一般的電路，加上「子電路埠」`SUBPORT`（`text`＝埠名稱＝方塊的接腳名稱，`side`＝方塊的 L／R／T／B 邊）。埠的接腳在元件原點 (0,0)。同一邊的接腳依埠在定義中的位置排列（左右邊由上而下、上下邊由左而右）。
+- **參數**：定義裡放 `PARAMS`（例如 `R = 1k`），元件數值寫名稱；方塊的 `vars`（例如 `R = 2k`）覆寫此方塊的值，留白用預設值。定義裡也可直接用主電路參數檔的名稱。
+- **方塊**：`SUBCKT`，`params.def`＝子電路名稱、`params.vars`＝此方塊的值；接腳由程式依埠算出（`ports` 由 `psimx_builder` 自動填入）。接腳類型依埠在定義裡接到什麼：功率 P、控制輸入 Ci、控制輸出 Co，否則 A。
+- **規則**：子電路裡的接地就是共同的地；標籤只在子電路內有效，與埠同名的標籤就是那個埠的節點；SIMCTRL、ACSWEEP、PSWEEP、MONTECARLO 放在主電路；子電路可以包含其他子電路的方塊，但不可直接或間接包含自己。
+- **名稱**：子電路裡的元件以「方塊.元件」表示：探棒 `Vc` 在方塊 `X1` 裡的波形是 `X1.Vc`（巢狀時 `X2.XA.Vc`），`--expect X1.Vc:final:…` 與 `screens` 都用這個名稱。
+- **MCP**：網表 `"subckts": {"RC": {"ports": [{"name": "in", "net": "A", "side": "L"}, {"name": "out", "net": "B", "side": "R"}], "params": "R = 1k", "elements": [...]}}`，方塊 `{"type": "SUBCKT", "name": "X1", "params": {"def": "RC", "vars": "R = 2k"}, "pins": {"in": "VIN", "out": "VO"}}`。修改：`daedalus_edit` 的操作加 `"subckt": "RC"`（埠以 `port:in` 指定），或 `subckt_new`／`subckt_remove`／`subckt_rename`／`subckt_import`。
 
 ## 4. 版面與可讀性規範（必做，不必等使用者要求）
 
@@ -127,7 +141,25 @@ d.save('circuit.psimx')
 - `E(type, x, y, rot, params, name)`：參數名寫錯或缺少必要的名稱會直接報錯；名稱不分大小寫不可重複。
 - `pin(el, name)`、`W(*points)`、`label(pt, text)`、`gnd(pt)`、`text(x, y, s)`、`stub(pt, 'l'|'r'|'u'|'d', net, length)`、`tie(el, pin, net, dir, length)`（net＝`'GND'` 時放接地）。
 - `check()`：`errors`（未知型別、重複名稱、斜線、沒有 SIMCTRL、功率與控制直接相連、兩個控制輸出接同一點）、`open_pins`、`single_labels`、`warnings`（重複導線、元件疊在同一點、沒有探棒）。
-- 既有檔案：`python scripts/psimx_builder.py circuit.psimx` 做同樣的檢查。
+- 既有檔案：`python scripts/psimx_builder.py circuit.psimx` 做同樣的檢查（含每個子電路，結果以「subcircuit 名稱:」標示）。
+
+子電路（完整範例 `examples/subcircuit_rc.py`）：
+
+```python
+s = d.subckt('RCF')                                  # 定義：在 s 上畫，用法同 d（先畫完再放方塊）
+s.E('PARAMS', 4, -5, 0, {'text': 'R = 1k\nC = 1u'})
+pi = s.port(0, 0, 'in', 'L')                         # 埠的接腳在 (0,0)；外框預設朝外（L 向左、R 向右、T 上、B 下）
+r1 = s.E('R', 3, 0, 0, {'R': 'R'}, 'R1')
+s.W(s.pin(pi, 'port'), s.pin(r1, '1'))
+...
+s.port(12, 0, 'out', 'R')
+x1 = d.E('SUBCKT', 10, 2, 0, {'def': 'RCF'}, 'X1')                   # 主電路的方塊
+x2 = d.E('SUBCKT', 10, 10, 0, {'def': 'RCF', 'vars': 'R = 2k'}, 'X2')
+d.W(d.pin(v1, '+'), d.pin(x1, 'in'))                 # 方塊接腳名稱＝埠名稱
+```
+
+- `d.subckt(name)` 只能在主電路呼叫；`s.port(x, y, name, side, rot=None)` 只能在子電路裡；`s.check()` 檢查子電路本身（不要求 SIMCTRL），`d.check()` 檢查主電路與全部子電路。
+- 方塊放好後又改了子電路的埠，`d.save()` 會報錯（接腳位置會變）：先畫完子電路再放方塊。
 
 ### 6.2 模擬驗證與截圖
 

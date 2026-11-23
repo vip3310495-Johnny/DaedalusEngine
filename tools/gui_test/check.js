@@ -118,7 +118,8 @@ ok(g48 && g48.lib.pinned && !rect(g48, 'lib_tab'), '重新釘選：元件庫固�
 let man = ''; try { man = fs.readFileSync(`${pre}_manual.html`, 'utf8'); } catch (e) {}
 const nEl = (man.match(/<article class="el"/g) || []).length, nFig = (man.match(/<figure>/g) || []).length;
 const nLib = JSON.parse(fs.readFileSync(require('path').join(__dirname, '../../crates/daedalus-core/assets/library.json'), 'utf8')).length;
-ok(/DaedalusEngine 使用說明書/.test(man) && nEl === nLib && nFig >= nLib - 4, '說明 › 使用說明書：程式內建 HTML 說明書（每個元件一張卡片與示範圖）', `${nEl} / ${nLib} 個元件、${nFig} 張圖、${(man.length / 1024).toFixed(0)} KB`);
+const nNoFig = Object.keys(require('../manual/text.js').noFigure).length;
+ok(/DaedalusEngine 使用說明書/.test(man) && nEl === nLib && nFig >= nLib - nNoFig, '說明 › 使用說明書：程式內建 HTML 說明書（每個元件一張卡片與示範圖）', `${nEl} / ${nLib} 個元件、${nFig} 張圖、${(man.length / 1024).toFixed(0)} KB`);
 const g49 = load('49_two_viewers');
 const ws = g49 ? g49.waves.filter(w => w.open) : [];
 ok(ws.length >= 2 && ws.some(w => w.names.includes('I_rc')) && ws.some(w => w.names.some(n => n.startsWith('Vout'))) && new Set(ws.map(w => w.doc)).size === ws.length, '模擬另一個電路時開新的波形檢視器，原本電路的結果保留在原視窗', g49 && JSON.stringify(ws.map(w => `${w.title}: ${w.names.slice(0, 3).join(',')}`)));
@@ -136,5 +137,16 @@ const near = (a, b) => Math.abs(a / b - 1) < 1e-12;
 const nomOk = mr && mr.samples.length === 4 && near(mr.samples[0][0], 1000) && near(mr.samples[0][1], 1e-6) && near(mr.samples[0][2], 1);
 const inTol = mr && mr.samples.slice(1).every(s => Math.abs(s[0] / 1000 - 1) <= 0.05 + 1e-12 && Math.abs(s[1] / 1e-6 - 1) <= 0.05 + 1e-12 && Math.abs(s[2] - 1) <= 0.05 + 1e-12 && s[0] !== 1000);
 ok(mr && JSON.stringify(mr.vars) === JSON.stringify(['R1.R', 'C1.C', 'Vs.Vm']) && nomOk && inTol && mr.open, '蒙地卡羅執行 4 次：#0 標稱，其餘在 ±5 % 內', mr ? JSON.stringify(mr.samples.map(s => s.map(x => +x.toPrecision(4)))) : m38 && JSON.stringify(m38.msgs));
+// subcircuits
+const u50 = load('50_sub_example'), u51 = load('51_sub_in'), u52 = load('52_sub_in2'), u53 = load('53_sub_back'), u54 = load('54_sub_new'), u55 = load('55_sub_run');
+const blocks = d => d ? d.elements.filter(e => e.typ === 'SUBCKT') : [];
+ok(u50 && blocks(u50).length === 3 && JSON.stringify(u50.sub.defs) === JSON.stringify(['RC', 'TWO']) && u50.sub.depth === 0, '子電路範例：3 個方塊、2 個子電路定義', u50 && JSON.stringify(u50.sub));
+ok(u51 && u51.sub.depth === 1 && u51.sub.path === ' › TWO' && blocks(u51).map(e => e.name).join() === 'XA,XB', '進入方塊 X2：編輯子電路 TWO（內含 XA、XB）', u51 && JSON.stringify(u51.sub));
+ok(u52 && u52.sub.depth === 2 && u52.sub.path === ' › TWO › RC' && u52.elements.some(e => e.name === 'Vc'), '巢狀：再進入 XA 編輯子電路 RC', u52 && JSON.stringify(u52.sub));
+ok(u53 && u53.sub.depth === 0 && blocks(u53).length === 3 && !u53.sub.any_dirty, 'Ctrl+Shift+E 兩次回到主電路，沒有修改時不標示未存檔', u53 && JSON.stringify(u53.sub));
+const x4 = blocks(u54).find(e => e.name === 'X4');
+const x4ports = x4 ? JSON.parse(x4.params.ports).map(p => p[0]) : [];
+ok(u54 && u54.sub.defs.includes('SUBX') && JSON.stringify(x4ports) === JSON.stringify(['in', 'P1', 'out']) && u54.sub.any_dirty, '新增子電路 SUBX、放置方塊 X4；在裡面加一個埠後方塊多一隻接腳（自動命名 P1）', x4 ? x4.params.ports : u54 && JSON.stringify(u54.sub));
+ok(u55 && u55.msgs.length === 0 && u55.wave && ['X1.Vc', 'X2.XA.Vc', 'X2.XB.Vc', 'X3.Vc', 'Vo2'].every(n => u55.wave.names.includes(n)), '模擬含子電路的電路：方塊內的探棒以「方塊.探棒」出現在波形', u55 && JSON.stringify(u55.wave ? u55.wave.names : u55.msgs));
 console.log(`\n${n - bad}/${n} GUI checks passed`);
 process.exit(bad ? 1 : 0);

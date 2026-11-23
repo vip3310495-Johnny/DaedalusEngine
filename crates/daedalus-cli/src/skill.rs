@@ -10,6 +10,7 @@ const FILES: &[(&str, &str)] = &[
     ("scripts/elements.json", include_str!("../../../skills/daedalus-circuit-builder/scripts/elements.json")),
     ("references/elements.md", include_str!("../../../skills/daedalus-circuit-builder/references/elements.md")),
     ("examples/buck_converter.py", include_str!("../../../skills/daedalus-circuit-builder/examples/buck_converter.py")),
+    ("examples/subcircuit_rc.py", include_str!("../../../skills/daedalus-circuit-builder/examples/subcircuit_rc.py")),
 ];
 
 pub fn default_dir() -> PathBuf {

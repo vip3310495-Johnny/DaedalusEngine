@@ -22,6 +22,8 @@ pub struct Circuit {
     /// net names given by the AI that have no label in the drawing (name -> pins of the net); kept in the file
     /// as "nets" so later edits can still say "SW"; the program itself does not keep it when it saves
     pub nets: BTreeMap<String, Vec<String>>,
+    /// a subcircuit definition being edited (its doc carries the main circuit's definitions, for its blocks)
+    pub def: Option<String>,
 }
 
 fn fix_nid(doc: &mut Doc) {
@@ -33,7 +35,7 @@ fn fix_nid(doc: &mut Doc) {
 
 impl Circuit {
     pub fn empty() -> Circuit {
-        Circuit { doc: Doc { elements: vec![], wires: vec![], nid: 1 }, screens: None, nets: BTreeMap::new() }
+        Circuit { doc: Doc { elements: vec![], wires: vec![], nid: 1, subckts: Default::default() }, screens: None, nets: BTreeMap::new(), def: None }
     }
     pub fn load(path: &Path) -> Result<Circuit, String> {
         let txt = std::fs::read_to_string(path).map_err(|e| format!("無法讀取 {}：{}", path.display(), e))?;
@@ -54,7 +56,7 @@ impl Circuit {
                 }
             }
         }
-        Ok(Circuit { doc, screens, nets })
+        Ok(Circuit { doc, screens, nets, def: None })
     }
     /// written to a temporary file first, so a DaedalusEngine window that reloads the file never sees half of it
     pub fn save(&self, path: &Path) -> Result<(), String> {
@@ -89,7 +91,28 @@ impl Circuit {
     }
     /// the analysis with the AI's net names for nets that have no label
     pub fn analyze(&self) -> Analysis {
-        analyze_named(&self.doc, &self.nets)
+        let mut a = analyze_named(&self.doc, &self.nets);
+        if self.def.is_some() {
+            // the main circuit simulates a definition: it needs no simulation control or probe of its own
+            a.problems.retain(|p| !p.contains("SIMCTRL"));
+            a.warnings.retain(|w| !w.contains("沒有探棒"));
+        }
+        a
+    }
+    /// definition `name` as a circuit of its own; its doc also carries every definition, for the blocks in it
+    pub fn sub(&self, name: &str) -> Result<Circuit, String> {
+        let d = self.doc.subckts.get(name).ok_or_else(|| format!("找不到子電路「{}」。這個電路的子電路：{}", name, if self.doc.subckts.is_empty() { "（無）".to_string() } else { self.doc.subckts.keys().cloned().collect::<Vec<_>>().join("、") }))?;
+        let mut doc = d.clone();
+        fix_nid(&mut doc);
+        doc.subckts = self.doc.subckts.clone();
+        Ok(Circuit { doc, screens: None, nets: BTreeMap::new(), def: Some(name.to_string()) })
+    }
+    /// write an edited definition back; the pins of every block follow its ports (wires follow moved pins)
+    pub fn put_sub(&mut self, name: &str, sub: Circuit) {
+        let mut d = sub.doc;
+        d.subckts.clear();
+        self.doc.subckts.insert(name.to_string(), d);
+        self.doc.sync_subckt_ports();
     }
     fn new_id(&mut self) -> i64 {
         let id = self.doc.nid;
@@ -123,7 +146,9 @@ pub fn def(typ: &str) -> Option<&'static ElDef> {
 
 /// the name used in pin references and messages
 pub fn el_name(e: &Element) -> String {
-    if e.name.is_empty() {
+    if e.typ == "SUBPORT" {
+        format!("port:{}", e.params.get("text").map(|t| t.trim()).unwrap_or(""))
+    } else if e.name.is_empty() {
         format!("{}#{}", e.typ, e.id)
     } else {
         e.name.clone()
@@ -132,6 +157,14 @@ pub fn el_name(e: &Element) -> String {
 
 pub fn find_el(doc: &Doc, name: &str) -> Result<usize, String> {
     let n = name.trim();
+    // a subcircuit port by its name: "port:in"
+    if let Some(p) = n.strip_prefix("port:").or_else(|| n.strip_prefix("PORT:")).or_else(|| n.strip_prefix("埠:")) {
+        let p = p.trim();
+        return doc.elements.iter().position(|e| e.typ == "SUBPORT" && e.params.get("text").map(|t| t.trim()) == Some(p)).ok_or_else(|| {
+            let ports: Vec<String> = doc.elements.iter().filter(|e| e.typ == "SUBPORT").filter_map(|e| e.params.get("text").cloned()).collect();
+            format!("找不到子電路埠「{}」。現有的埠：{}", p, if ports.is_empty() { "（無）".to_string() } else { ports.join("、") })
+        });
+    }
     if let Some(i) = doc.elements.iter().position(|e| e.name == n).or_else(|| doc.elements.iter().position(|e| !e.name.is_empty() && e.name.eq_ignore_ascii_case(n))) {
         return Ok(i);
     }
@@ -164,9 +197,13 @@ pub fn local_bb(el: &Element) -> [f64; 4] {
         Some(d) => d,
         None => return [-1.0, -1.0, 1.0, 1.0],
     };
+    if el.typ == "SUBCKT" {
+        return daedalus_core::library::local_bb(el);
+    }
     let [x0, mut y0, mut x1, mut y1] = d.bb;
     match el.typ.as_str() {
         "LABEL" => x1 = label_width(el.params.get("text").map(|s| s.as_str()).unwrap_or("")),
+        "SUBPORT" => x1 = port_width(el),
         "TEXT" => {
             let t = el.params.get("text").cloned().unwrap_or_default();
             let lines: Vec<&str> = t.split('\n').collect();
@@ -193,6 +230,21 @@ pub fn text_w(s: &str) -> f64 {
 
 pub fn label_width(t: &str) -> f64 {
     (text_w(t) + 0.9).max(1.6)
+}
+
+/// side of the block a subcircuit port becomes a pin on (Chinese, as in the program)
+pub fn port_side(el: &Element) -> &'static str {
+    match el.params.get("side").map(|s| s.as_str()) {
+        Some("R") => "右",
+        Some("T") => "上",
+        Some("B") => "下",
+        _ => "左",
+    }
+}
+/// a subcircuit port's outline: its name, "·" and the side, pointed at both ends
+pub fn port_width(el: &Element) -> f64 {
+    let t = format!("{}·{}", el.params.get("text").map(|s| s.as_str()).unwrap_or(""), port_side(el));
+    (text_w(&t) + 1.4).max(2.4)
 }
 
 /// box of the element in world coordinates
@@ -282,6 +334,8 @@ pub struct Net {
     pub ground: bool,
     pub control: bool,
     pub labels: Vec<String>,
+    /// subcircuit ports on the net (inside a definition: the net continues outside the block)
+    pub ports: Vec<String>,
     /// "Q1.G"
     pub pins: Vec<String>,
     pub kinds: Vec<String>,
@@ -335,12 +389,15 @@ pub fn analyze(doc: &Doc) -> Analysis {
         i
     };
     for e in &els {
-        if e.typ != "LABEL" {
+        if e.typ != "LABEL" && e.typ != "SUBPORT" {
             continue;
         }
         let t = e.params.get("text").map(|s| s.trim().to_string()).unwrap_or_default();
         if let (false, Some(r)) = (t.is_empty(), c.root(e.x, e.y)) {
             let ni = get(r, &mut a.nets);
+            if e.typ == "SUBPORT" && !a.nets[ni].ports.contains(&t) {
+                a.nets[ni].ports.push(t.clone());
+            }
             if !a.nets[ni].labels.contains(&t) {
                 a.nets[ni].labels.push(t);
             }
@@ -395,7 +452,12 @@ pub fn analyze(doc: &Doc) -> Analysis {
         if n.ground {
             continue;
         }
-        if n.pins.len() == 1 {
+        if !n.ports.is_empty() {
+            // a port: the net goes on outside the block
+            if n.pins.iter().all(|p| p.starts_with("port:")) {
+                a.warnings.push(format!("子電路埠「{}」在子電路裡沒有接到任何元件", n.ports.join("、")));
+            }
+        } else if n.pins.len() == 1 {
             if n.kinds[0] == "co" {
                 a.warnings.push(format!("{} 是控制輸出，沒有接到任何輸入", n.pins[0]));
             } else {
@@ -764,6 +826,12 @@ fn str_map(v: Option<&Value>, what: &str) -> Result<BTreeMap<String, String>, St
 
 fn check_params(typ: &str, params: &BTreeMap<String, String>, who: &str) -> Result<(), String> {
     let d = def(typ).ok_or_else(|| format!("未知的元件類型「{}」", typ))?;
+    if typ == "SUBCKT" {
+        return match params.keys().find(|k| !matches!(k.as_str(), "def" | "vars")) {
+            Some(k) => Err(format!("{}（SUBCKT）沒有參數「{}」：子電路方塊只有 def（子電路名稱）與 vars（此方塊的子電路參數，例如 \"R = 20\"）", who, k)),
+            None => Ok(()),
+        };
+    }
     for k in params.keys() {
         if d.param(k).is_none() {
             return Err(format!(
@@ -828,8 +896,56 @@ pub struct Built {
 /// a circuit from a netlist: every element is placed on its own, each connected pin gets a short wire to a net
 /// label (or a ground symbol for net "0"); the result is checked against the requested connections
 pub fn from_netlist(v: &Value) -> Result<Built, String> {
+    // subcircuit definitions first (a definition may use the ones built before it)
+    let mut defs: BTreeMap<String, Doc> = BTreeMap::new();
     let mut notes = vec![];
-    let els = v.get("elements").and_then(|x| x.as_array()).ok_or("netlist.elements 必須是元件陣列")?;
+    if let Some(sv) = v.get("subckts") {
+        let so = sv.as_object().ok_or("netlist.subckts 必須是物件 {名稱: {ports, elements, params?}}")?;
+        let mut todo: Vec<(&String, &Value)> = so.iter().collect();
+        while !todo.is_empty() {
+            let before = todo.len();
+            let mut err = String::new();
+            todo.retain(|(name, dv)| {
+                let needs: Vec<String> = dv.get("elements").and_then(|x| x.as_array()).map(|a| a.iter().filter(|e| e.get("type").and_then(|t| t.as_str()) == Some("SUBCKT")).filter_map(|e| e.get("params").and_then(|p| p.get("def")).and_then(|d| d.as_str()).map(String::from)).collect()).unwrap_or_default();
+                if needs.iter().any(|n| !defs.contains_key(n)) {
+                    return true;
+                }
+                match build_doc(dv, &defs, false, name) {
+                    Ok(b) => {
+                        notes.extend(b.notes.into_iter().map(|n| format!("子電路 {}：{}", name, n)));
+                        let mut d = b.circuit.doc;
+                        d.subckts.clear();
+                        defs.insert(name.to_string(), d);
+                    }
+                    Err(e) => err = format!("子電路 {}：{}", name, e),
+                }
+                false
+            });
+            if !err.is_empty() {
+                return Err(err);
+            }
+            if todo.len() == before {
+                let names: Vec<&str> = todo.iter().map(|t| t.0.as_str()).collect();
+                return Err(format!("子電路 {} 用到不存在的子電路，或彼此包含（子電路不能包含自己）", names.join("、")));
+            }
+        }
+    }
+    let mut b = build_doc(v, &defs, true, "")?;
+    b.circuit.doc.subckts = defs;
+    notes.append(&mut b.notes);
+    b.notes = notes;
+    Ok(b)
+}
+
+/// One circuit of a netlist: the main circuit (`top`: simulation control, title) or a subcircuit definition
+/// (its ports become Subcircuit Port elements on their nets).
+fn build_doc(v: &Value, defs: &BTreeMap<String, Doc>, top: bool, def_name: &str) -> Result<Built, String> {
+    let mut notes = vec![];
+    let none = vec![];
+    let els = match v.get("elements") {
+        None if !top => &none,
+        e => e.and_then(|x| x.as_array()).ok_or("netlist.elements 必須是元件陣列")?,
+    };
     struct Item {
         typ: String,
         name: String,
@@ -855,7 +971,15 @@ pub fn from_netlist(v: &Value) -> Result<Built, String> {
         if typ == "LABEL" || typ == "GND" {
             return Err(format!("第 {} 個元件：不需要 {}，請在 pins 中直接寫節點名稱（接地寫 \"0\"）", i + 1, typ));
         }
-        let params = str_map(e.get("params"), &format!("第 {} 個元件（{}）的 params", i + 1, typ))?;
+        if typ == "SUBPORT" {
+            return Err(format!("第 {} 個元件：子電路的埠寫在 subckts.<名稱>.ports，例如 [{{\"name\":\"in\",\"net\":\"IN\",\"side\":\"L\"}}]", i + 1));
+        }
+        let mut params = str_map(e.get("params"), &format!("第 {} 個元件（{}）的 params", i + 1, typ))?;
+        if typ == "SUBCKT" {
+            let dn = params.get("def").cloned().unwrap_or_default();
+            let dd = defs.get(&dn).ok_or_else(|| if dn.is_empty() { format!("第 {} 個元件（SUBCKT）需要 params.def（子電路名稱）", i + 1) } else { format!("第 {} 個元件：找不到子電路「{}」（定義在 netlist.subckts）", i + 1, dn) })?;
+            params.insert("ports".into(), daedalus_core::library::ports_str(&daedalus_core::subckt::def_ports(dd)));
+        }
         let mut name = e.get("name").and_then(|x| x.as_str()).unwrap_or("").trim().to_string();
         if d.noname() {
             name.clear();
@@ -873,7 +997,13 @@ pub fn from_netlist(v: &Value) -> Result<Built, String> {
             notes.push(format!("第 {} 個元件（{}）自動命名為 {}", i + 1, typ, name));
         }
         let who = if name.is_empty() { typ.clone() } else { name.clone() };
-        check_params(&typ, &params, &who)?;
+        if typ == "SUBCKT" {
+            if let Some(k) = params.keys().find(|k| !matches!(k.as_str(), "def" | "vars" | "ports")) {
+                return Err(format!("{}（SUBCKT）沒有參數「{}」：子電路方塊只有 def（子電路名稱）與 vars（此方塊的子電路參數，例如 \"R = 20\"）", who, k));
+            }
+        } else {
+            check_params(&typ, &params, &who)?;
+        }
         let probe = Element { id: 0, typ: typ.clone(), x: 0.0, y: 0.0, rot: 0, mir: false, dis: false, name: name.clone(), params: params.clone(), disp: None };
         let pins = lib().pins_for(&probe);
         let mut nets: BTreeMap<String, Option<String>> = BTreeMap::new();
@@ -912,11 +1042,32 @@ pub fn from_netlist(v: &Value) -> Result<Built, String> {
         }
         items.push(Item { typ, name, params, rot: rot_of(e.get("rot")), mir: e.get("mir").and_then(|x| x.as_bool()).unwrap_or(false), nets });
     }
+    // a definition's ports: added next to their nets once the elements are drawn
+    let mut port_specs: Vec<(String, String, String)> = vec![];
+    if !top {
+        let ports = v.get("ports").and_then(|x| x.as_array()).ok_or("需要 ports：[{\"name\":\"in\",\"net\":\"IN\",\"side\":\"L\"}, …]（side 為 L、R、T、B，預設前一半在左、其餘在右）")?;
+        let n = ports.len();
+        for (k, p) in ports.iter().enumerate() {
+            let pn = p.get("name").and_then(|x| x.as_str()).map(|s| s.trim().to_string()).filter(|s| !s.is_empty()).ok_or_else(|| format!("第 {} 個埠缺少 name", k + 1))?;
+            let net = p.get("net").and_then(|x| x.as_str()).map(|s| s.trim().to_string()).filter(|s| !s.is_empty()).ok_or_else(|| format!("埠 {} 缺少 net（子電路內的節點名稱）", pn))?;
+            let side = p.get("side").and_then(|x| x.as_str()).map(|s| s.trim().to_uppercase()).unwrap_or_else(|| if k < n.div_ceil(2) { "L".into() } else { "R".into() });
+            if !matches!(side.as_str(), "L" | "R" | "T" | "B") {
+                return Err(format!("埠 {} 的 side 必須是 L、R、T 或 B", pn));
+            }
+            if port_specs.iter().any(|p| p.0 == pn) {
+                return Err(format!("埠名稱重複：{}", pn));
+            }
+            port_specs.push((pn, net, side));
+        }
+        if n == 0 {
+            notes.push(format!("子電路 {} 沒有埠：方塊不會有接腳", def_name));
+        }
+    }
     // simulation control and parameter file
     let mut header: Vec<crate::layout::Item> = vec![];
     let sim = str_map(v.get("sim"), "netlist.sim")?;
     check_params("SIMCTRL", &sim, "sim")?;
-    if !items.iter().any(|i| i.typ == "SIMCTRL") {
+    if top && !items.iter().any(|i| i.typ == "SIMCTRL") {
         if sim.is_empty() {
             notes.push("沒有給 sim：模擬控制使用預設值 dt = 10 µs、tt = 0.1 s".into());
         }
@@ -937,8 +1088,9 @@ pub fn from_netlist(v: &Value) -> Result<Built, String> {
             }
         }
     }
-    let title = v.get("title").and_then(|x| x.as_str());
-    let laid = crate::layout::build(title, header, items.into_iter().map(|i| crate::layout::Item { typ: i.typ, name: i.name, params: i.params, rot: i.rot, mir: i.mir, nets: i.nets }).collect());
+    let title = v.get("title").and_then(|x| x.as_str()).filter(|_| top);
+    let first_in = port_specs.iter().find(|p| p.2 == "L").or(port_specs.first()).map(|p| p.1.clone());
+    let laid = crate::layout::build_from(title, header, items.into_iter().map(|i| crate::layout::Item { typ: i.typ, name: i.name, params: i.params, rot: i.rot, mir: i.mir, nets: i.nets }).collect(), first_in);
     let mut c = laid.circuit;
     notes.extend(laid.notes);
     if let Some(s) = v.get("screens") {
@@ -948,7 +1100,17 @@ pub fn from_netlist(v: &Value) -> Result<Built, String> {
     let a = analyze(&c.doc);
     let mut seen_nets: HashMap<usize, String> = HashMap::new();
     for (net, pins) in &want {
-        let ids: HashSet<usize> = pins.iter().filter_map(|p| a.pin_net.get(p).copied()).collect();
+        // ports ("~in.port") are named nets, not pins
+        let mut ids: HashSet<usize> = pins.iter().filter(|p| !p.starts_with('~')).filter_map(|p| a.pin_net.get(p).copied()).collect();
+        for p in pins.iter().filter(|p| p.starts_with('~')) {
+            let pn = p.trim_start_matches('~').trim_end_matches(".port");
+            match a.nets.iter().position(|n| n.ports.iter().any(|q| q == pn)) {
+                Some(i) => {
+                    ids.insert(i);
+                }
+                None => return Err(format!("內部錯誤：埠 {} 沒有畫出來", pn)),
+            }
+        }
         if ids.len() != 1 {
             return Err(format!("內部錯誤：節點 {} 的接腳沒有接在一起（{}）", net, pins.join("、")));
         }
@@ -957,9 +1119,29 @@ pub fn from_netlist(v: &Value) -> Result<Built, String> {
             return Err(format!("內部錯誤：節點 {} 與 {} 被接在一起", o, net));
         }
     }
-    c.nets = want.iter().filter(|(n, _)| *n != "0").map(|(n, p)| (n.clone(), p.clone())).collect();
+    // ports have no names of their own
+    for e in c.doc.elements.iter_mut().filter(|e| e.typ == "SUBPORT") {
+        e.name.clear();
+    }
+    c.nets = want.iter().filter(|(n, _)| *n != "0").map(|(n, p)| (n.clone(), p.iter().filter(|q| !q.starts_with('~')).cloned().collect())).collect();
+    // the ports, as the edit operation adds them: beside their net, pointing out of the block's side
+    if !top {
+        c.def = Some(def_name.to_string());
+        let mut spot = Spot::of(&c.doc);
+        for (pn, net, side) in &port_specs {
+            let rot = match side.as_str() {
+                "L" => 2,
+                "R" => 0,
+                "T" => 3,
+                _ => 1,
+            };
+            let op = serde_json::json!({"op": "add", "type": "SUBPORT", "params": {"text": pn, "side": side}, "pins": {"port": net}, "rot": rot});
+            add(&mut c, &op, &mut spot).map_err(|e| format!("埠 {}：{}", pn, e))?;
+        }
+        c.def = None;
+    }
     for (net, pins) in &want {
-        if pins.len() == 1 && net != "0" {
+        if pins.len() == 1 && net != "0" && !port_specs.iter().any(|p| &p.1 == net) {
             notes.push(format!("節點 {} 只接了 {}：這隻接腳等於沒有連接", net, pins[0]));
         }
     }
@@ -1291,6 +1473,13 @@ fn set(c: &mut Circuit, op: &Value) -> Result<String, String> {
         msgs.push(format!("{}={}", k, v));
         c.doc.elements[i].params.insert(k.clone(), v.clone());
     }
+    // another definition: its pins (wires on a pin of the same name follow it)
+    if old.typ == "SUBCKT" && params.contains_key("def") {
+        let dn = params["def"].clone();
+        let dd = c.doc.subckts.get(&dn).ok_or_else(|| format!("找不到子電路「{}」", dn))?;
+        let p = daedalus_core::library::ports_str(&daedalus_core::subckt::def_ports(dd));
+        c.doc.set_block_ports(i, &p);
+    }
     if let Some(n) = op.get("rename").and_then(|x| x.as_str()) {
         let n = n.trim();
         if c.doc.elements.iter().any(|e| e.id != old.id && e.name.eq_ignore_ascii_case(n)) {
@@ -1454,6 +1643,31 @@ fn add(c: &mut Circuit, op: &Value, spot: &mut Spot) -> Result<String, String> {
     let typ = op.get("type").and_then(|x| x.as_str()).ok_or("add 需要 type")?.trim().to_string();
     let d = def(&typ).ok_or_else(|| format!("未知的元件類型「{}」", typ))?;
     let params = str_map(op.get("params"), "params")?;
+    match (&c.def, typ.as_str()) {
+        (None, "SUBPORT") => return Err("子電路埠只能放在子電路裡：這個操作加上 \"subckt\": \"子電路名稱\"".into()),
+        (Some(s), "SIMCTRL" | "ACSWEEP" | "PSWEEP" | "MONTECARLO") => return Err(format!("{} 屬於主電路，子電路 {} 裡的不會使用", typ, s)),
+        (Some(_), "SUBPORT") => {
+            let t = params.get("text").map(|t| t.trim().to_string()).unwrap_or_default();
+            if t.is_empty() {
+                return Err("子電路埠需要 params.text（埠名稱，也是方塊的接腳名稱）與 params.side（L、R、T、B）".into());
+            }
+            if c.doc.elements.iter().any(|e| e.typ == "SUBPORT" && e.params.get("text").map(|x| x.trim()) == Some(t.as_str())) {
+                return Err(format!("已有名為「{}」的埠", t));
+            }
+        }
+        (Some(s), "SUBCKT") => {
+            // a definition must not contain itself, directly or through other blocks
+            let dn = params.get("def").cloned().unwrap_or_default();
+            if let Some(dd) = c.doc.subckts.get(&dn) {
+                let mut uses = daedalus_core::subckt::used_defs(&c.doc, &dd.elements);
+                uses.push(dn.clone());
+                if uses.contains(s) {
+                    return Err(format!("子電路 {} 不能包含 {}：{} 會包含它自己", s, dn, s));
+                }
+            }
+        }
+        _ => {}
+    }
     let mut name = op.get("name").and_then(|x| x.as_str()).unwrap_or("").trim().to_string();
     if d.noname() {
         name.clear();
@@ -1475,6 +1689,12 @@ fn add(c: &mut Circuit, op: &Value, spot: &mut Spot) -> Result<String, String> {
     }
     let who = if name.is_empty() { typ.clone() } else { name.clone() };
     check_params(&typ, &params, &who)?;
+    let mut params = params;
+    if typ == "SUBCKT" {
+        let dn = params.get("def").cloned().unwrap_or_default();
+        let dd = c.doc.subckts.get(&dn).ok_or_else(|| format!("找不到子電路「{}」；這個電路的子電路：{}", dn, c.doc.subckts.keys().cloned().collect::<Vec<_>>().join("、")))?;
+        params.insert("ports".into(), daedalus_core::library::ports_str(&daedalus_core::subckt::def_ports(dd)));
+    }
     let rot = rot_of(op.get("rot"));
     let mir = op.get("mir").and_then(|x| x.as_bool()).unwrap_or(false);
     let probe = Element { id: 0, typ: typ.clone(), x: 0.0, y: 0.0, rot, mir, dis: false, name: name.clone(), params: params.clone(), disp: None };
@@ -1537,6 +1757,9 @@ fn add(c: &mut Circuit, op: &Value, spot: &mut Spot) -> Result<String, String> {
         }
     };
     let i = c.add_element(&typ, &name, x, y, rot, mir, &params);
+    // a port has no name: its pins are "port:<name>.port"
+    let name = if typ == "SUBPORT" { el_name(&c.doc.elements[i]) } else { name };
+    let who = if typ == "SUBPORT" { name.clone() } else { who };
     let mut msg = format!("新增 {}（{}）於 ({}, {})", who, typ, x, y);
     if !name.is_empty() {
         for (pn, net) in nets {
@@ -1555,11 +1778,149 @@ pub fn apply_ops(c: &mut Circuit, ops: &[Value]) -> Result<EditLog, String> {
     let mut log = EditLog { done: vec![] };
     let mut spot = Spot::of(&c.doc);
     // the whole batch or nothing
-    let saved = (c.doc.elements.clone(), c.doc.wires.clone(), c.doc.nid, c.screens.clone());
+    let saved = (c.doc.elements.clone(), c.doc.wires.clone(), c.doc.nid, c.screens.clone(), c.doc.subckts.clone());
     for (k, op) in ops.iter().enumerate() {
         let kind = op.get("op").and_then(|x| x.as_str()).unwrap_or("");
+        // "subckt": the operation edits that definition (every block that uses it follows)
+        let scope = op.get("subckt").and_then(|x| x.as_str()).filter(|_| !kind.starts_with("subckt_"));
+        let r = match scope {
+            Some(sn) => (|| -> Result<String, String> {
+                if matches!(kind, "sim" | "screens") {
+                    return Err(format!("{} 屬於主電路，不能用在子電路裡", kind));
+                }
+                let mut sub = c.sub(sn)?;
+                let mut sp = Spot::of(&sub.doc);
+                let m = run_op(&mut sub, op, kind, &mut sp)?;
+                c.put_sub(sn, sub);
+                Ok(format!("［子電路 {}］{}", sn, m))
+            })(),
+            None => run_op(c, op, kind, &mut spot),
+        };
+        match r {
+            Ok(m) => log.done.push(m),
+            Err(e) => {
+                c.doc.elements = saved.0.clone();
+                c.doc.wires = saved.1.clone();
+                c.doc.nid = saved.2;
+                c.screens = saved.3.clone();
+                c.doc.subckts = saved.4.clone();
+                return Err(format!("第 {} 個操作（{}）失敗：{}{}", k + 1, kind, e, if log.done.is_empty() { String::new() } else { format!("\n（先前完成的 {} 個操作也一併取消，檔案沒有改變）", log.done.len()) }));
+            }
+        }
+    }
+    Ok(log)
+}
+
+const OPS: &str = "add、set、remove、connect、disconnect、wire、sim、params、screens、text、subckt_new、subckt_remove、subckt_rename、subckt_import";
+
+/// one edit operation on a circuit (the main circuit or a definition)
+fn run_op(c: &mut Circuit, op: &Value, kind: &str, spot: &mut Spot) -> Result<String, String> {
+    if kind.starts_with("subckt_") && c.def.is_some() {
+        return Err(format!("{} 作用在主電路的子電路清單，不要加 subckt", kind));
+    }
+    match kind {
+            "subckt_new" => subckt_new(c, op),
+            "subckt_remove" => {
+                let n = op.get("name").and_then(|x| x.as_str()).ok_or("subckt_remove 需要 name")?;
+                if !c.doc.subckts.contains_key(n) {
+                    return Err(format!("找不到子電路「{}」", n));
+                }
+                let u = daedalus_core::subckt::users(&c.doc, n);
+                if u > 0 {
+                    return Err(format!("子電路 {} 還有 {} 個方塊在使用，先刪除那些方塊", n, u));
+                }
+                c.doc.subckts.remove(n);
+                Ok(format!("刪除子電路 {}", n))
+            }
+            "subckt_rename" => {
+                let n = op.get("name").and_then(|x| x.as_str()).ok_or("subckt_rename 需要 name")?;
+                let to = daedalus_core::subckt::valid_def_name(op.get("to").and_then(|x| x.as_str()).ok_or("subckt_rename 需要 to")?)?;
+                if !c.doc.subckts.contains_key(n) {
+                    return Err(format!("找不到子電路「{}」", n));
+                }
+                if !daedalus_core::subckt::rename_def(&mut c.doc, n, &to) {
+                    return Err(format!("已有名為「{}」的子電路", to));
+                }
+                Ok(format!("子電路 {} 改名為 {}（方塊一併更新）", n, to))
+            }
+            "subckt_import" => subckt_import(c, op),
+            _ => run_basic(c, op, kind, spot),
+    }
+}
+
+fn subckt_new(c: &mut Circuit, op: &Value) -> Result<String, String> {
+    let name = daedalus_core::subckt::valid_def_name(op.get("name").and_then(|x| x.as_str()).ok_or("subckt_new 需要 name")?)?;
+    let replace = op.get("replace").and_then(|x| x.as_bool()).unwrap_or(false);
+    if c.doc.subckts.contains_key(&name) && !replace {
+        return Err(format!("已有名為「{}」的子電路（要整個重建請加 replace: true；修改內容用一般操作加上 \"subckt\": \"{}\"）", name, name));
+    }
+    let b = build_doc(op, &c.doc.subckts, false, &name)?;
+    let mut d = b.circuit.doc;
+    d.subckts.clear();
+    if daedalus_core::subckt::used_defs(&c.doc, &d.elements).contains(&name) {
+        return Err(format!("子電路 {} 不能包含自己", name));
+    }
+    let ports: Vec<String> = daedalus_core::subckt::def_ports(&d).iter().map(|p| format!("{}［{}］", p.name, p.side)).collect();
+    c.doc.subckts.insert(name.clone(), d);
+    c.doc.sync_subckt_ports();
+    let mut m = format!("{}子電路 {}：埠 {}", if replace { "重建" } else { "新增" }, name, if ports.is_empty() { "（無）".to_string() } else { ports.join(" ") });
+    if !b.notes.is_empty() {
+        m += &format!("（{}）", b.notes.join("；"));
+    }
+    Ok(m)
+}
+
+/// a definition from another circuit file: one of its definitions (with the ones it uses), or the whole circuit
+fn subckt_import(c: &mut Circuit, op: &Value) -> Result<String, String> {
+    let path = op.get("path").and_then(|x| x.as_str()).ok_or("subckt_import 需要 path（電路檔的絕對路徑）")?;
+    let src = Circuit::load(Path::new(path))?;
+    let want = op.get("subckt").and_then(|x| x.as_str());
+    let mut take: Vec<(String, Doc)> = vec![];
+    let main_name;
+    match want {
+        Some(w) => {
+            let d = src.doc.subckts.get(w).ok_or_else(|| format!("{} 沒有子電路「{}」（有：{}）", path, w, src.doc.subckts.keys().cloned().collect::<Vec<_>>().join("、")))?;
+            main_name = daedalus_core::subckt::valid_def_name(op.get("as").and_then(|x| x.as_str()).unwrap_or(w))?;
+            take.push((main_name.clone(), d.clone()));
+            for u in daedalus_core::subckt::used_defs(&src.doc, &d.elements) {
+                if let Some(x) = src.doc.subckts.get(&u) {
+                    take.push((u, x.clone()));
+                }
+            }
+        }
+        None => {
+            let stem = Path::new(path).file_stem().map(|s| s.to_string_lossy().to_string()).unwrap_or_else(|| "SUB".into());
+            main_name = daedalus_core::subckt::valid_def_name(op.get("as").and_then(|x| x.as_str()).unwrap_or(&stem))?;
+            let mut d = src.doc.clone();
+            let nested = std::mem::take(&mut d.subckts);
+            // the main circuit's simulation settings mean nothing inside a block
+            d.elements.retain(|e| !matches!(e.typ.as_str(), "SIMCTRL" | "ACSWEEP" | "PSWEEP" | "MONTECARLO"));
+            take.push((main_name.clone(), d));
+            take.extend(nested);
+        }
+    }
+    let mut added = vec![];
+    for (i, (k, d)) in take.into_iter().enumerate() {
+        match c.doc.subckts.get(&k) {
+            None => {
+                c.doc.subckts.insert(k.clone(), d);
+                added.push(k);
+            }
+            Some(o) if *o == d => {}
+            Some(_) if i == 0 => return Err(format!("已有名為「{}」的子電路，內容不同；用 as 指定另一個名稱", k)),
+            Some(_) => return Err(format!("{} 用到的子電路「{}」與這個電路的同名子電路內容不同", main_name, k)),
+        }
+    }
+    c.doc.sync_subckt_ports();
+    let ports: Vec<String> = c.doc.subckts.get(&main_name).map(|d| daedalus_core::subckt::def_ports(d).iter().map(|p| p.name.clone()).collect()).unwrap_or_default();
+    Ok(format!("匯入子電路 {}（埠 {}）{}", main_name, if ports.is_empty() { "（無：子電路裡沒有子電路埠）".to_string() } else { ports.join("、") }, if added.len() > 1 { format!("；一併加入 {}", added[1..].join("、")) } else { String::new() }))
+}
+
+/// the operations that work on any circuit
+fn run_basic(c: &mut Circuit, op: &Value, kind: &str, spot: &mut Spot) -> Result<String, String> {
+    {
         let r = (|| -> Result<String, String> { match kind {
-            "add" => add(c, op, &mut spot),
+            "add" => add(c, op, spot),
             "set" => set(c, op),
             "remove" => op.get("name").and_then(|x| x.as_str()).ok_or("remove 需要 name".to_string()).and_then(|n| remove(c, n, op.get("keep_wires").and_then(|x| x.as_bool()) != Some(true))),
             "connect" => {
@@ -1592,21 +1953,11 @@ pub fn apply_ops(c: &mut Circuit, ops: &[Value]) -> Result<EditLog, String> {
                 c.add_element("TEXT", "", x, y, 0, false, &p);
                 Ok(format!("加入註解於 ({}, {})", x, y))
             }
-            "" => Err("每個操作需要 op（add、set、remove、connect、disconnect、wire、sim、params、screens、text）".into()),
-            o => Err(format!("不認得的操作「{}」（可用：add、set、remove、connect、disconnect、wire、sim、params、screens、text）", o)),
+            "" => Err(format!("每個操作需要 op（{}）", OPS)),
+            o => Err(format!("不認得的操作「{}」（可用：{}）", o, OPS)),
         } })();
-        match r {
-            Ok(m) => log.done.push(m),
-            Err(e) => {
-                c.doc.elements = saved.0.clone();
-                c.doc.wires = saved.1.clone();
-                c.doc.nid = saved.2;
-                c.screens = saved.3.clone();
-                return Err(format!("第 {} 個操作（{}）失敗：{}{}", k + 1, kind, e, if log.done.is_empty() { String::new() } else { format!("\n（先前完成的 {} 個操作也一併取消，檔案沒有改變）", log.done.len()) }));
-            }
-        }
+        r
     }
-    Ok(log)
 }
 
 fn single(c: &mut Circuit, typ: &str) -> usize {
@@ -1741,7 +2092,7 @@ pub mod tests {
     fn example_buck() -> Circuit {
         let txt = include_str!("../../daedalus-app/assets/examples/buck.psimx");
         let (doc, screens) = Doc::from_json(txt).unwrap();
-        let mut c = Circuit { doc, screens, nets: BTreeMap::new() };
+        let mut c = Circuit { doc, screens, nets: BTreeMap::new(), def: None };
         fix_nid(&mut c.doc);
         c
     }

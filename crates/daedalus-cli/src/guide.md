@@ -16,6 +16,8 @@
 - 每個電路要有一個 SIMCTRL（`daedalus_new` 的 `sim` 會自動建立），暫態模擬至少要有一支探棒或量表（探棒名稱就是波形名稱）。
 - 功率節點與控制節點不可直接相連（詳見 topic=modeling）。
 - 檔案路徑一律用絕對路徑。修改使用者的檔案前先確認；`daedalus_edit` 可用 `save_as` 另存、`dry_run` 試做。
+- 重複出現的電路（半橋臂、濾波器、三相的每一相、控制迴路）用**子電路**：網表的 `subckts` 定義一次，放多個 SUBCKT 方塊，各方塊以 `vars` 給不同參數；
+  既有電路用 `daedalus_edit` 的 subckt_new 或在操作加上 `"subckt"` 修改子電路（topic=netlist、edit）。子電路裡的探棒在波形中是「方塊.探棒」（X1.Vo）。
 
 ## netlist
 # daedalus_new 的網表格式
@@ -48,6 +50,12 @@
 - `rot`：0–3（順時針 90° 為單位，也接受 90/180/270）；`mir`：左右鏡像。
 - `sim`：模擬控制參數（dt 步長、tt 總時間、tp 開始記錄時間、ps 記錄間隔步數、acc 高精度…）；省略時 dt = 10 µs、tt = 0.1 s。
 - `screens`：波形檢視器的畫面（探棒名稱分組）。
+- `subckts`（子電路，PSIM 的 subcircuit）：`{"名稱": {"ports": [{"name": "in", "net": "A", "side": "L"}, …], "params": "R = 1k", "elements": [...]}}`。
+  `ports` 的每個埠成為子電路方塊的一隻接腳（`net` 是子電路內的節點，`side` 為方塊的 L／R／T／B 邊，省略時前一半在左、其餘在右）；
+  `params` 是子電路的參數檔（變數與預設值）；`elements` 格式同上，可再放其他子電路的方塊（不可包含自己）。
+  主電路（或另一個子電路）以 `{"type": "SUBCKT", "name": "X1", "params": {"def": "名稱", "vars": "R = 2k"}, "pins": {"in": "VIN", "out": "VO"}}` 放方塊：
+  接腳名稱就是埠名稱，`vars` 指定此方塊自己的參數值（省略的用預設值，運算式以方塊所在電路的參數計算）。
+  子電路裡的元件在波形與錯誤訊息中以「方塊名稱.元件名稱」表示（例如探棒 `X1.Vo`）；子電路裡的接地就是共同的地。
 - 不要放 LABEL、GND：連線全由 `pins` 的節點名稱決定，程式以導線畫出來（見下方排版）。
 - 沒有接腳的元件（SIMCTRL、PARAMS、ACSWEEP、PSWEEP、MONTECARLO、DEVP、TEXT）放在最上方一列。
 - 排版（以導線直連，PSIM 慣用畫法）：
@@ -75,6 +83,24 @@
 | params | text | 參數檔內容（每行 名稱 = 運算式） |
 | screens | screens | 波形畫面，例如 [["Vo"], ["IL", "Iout"]] |
 | text | text, x?, y? | 加註解文字 |
+
+### 子電路
+
+| op | 參數 | 說明 |
+| --- | --- | --- |
+| subckt_new | name, ports[{name, net, side?}], params?, elements?, replace? | 新增子電路定義（格式同 daedalus_new 的 subckts 一項）；replace: true 整個重建同名子電路，方塊的接腳隨之更新 |
+| subckt_remove | name | 刪除沒有方塊使用的子電路 |
+| subckt_rename | name, to | 改名，所有方塊一併更新 |
+| subckt_import | path, subckt?, as? | 從另一個電路檔匯入：subckt 指定其中一個子電路（連同它用到的子電路），省略則整個電路成為子電路（它的子電路埠成為接腳）；as 指定新名稱 |
+
+- **任何一般操作加上 `"subckt": "名稱"` 就改在該子電路裡做**（add、set、remove、connect、disconnect、wire、params、text），例如
+  `{"op": "set", "subckt": "RC", "name": "R1", "params": {"R": "2*R"}}`、`{"op": "params", "subckt": "RC", "text": "R = 1k\nC = 1u"}`。
+  修改會套用到所有使用這個子電路的方塊；埠改變時方塊的接腳跟著改，接在同名接腳上的導線會跟過去。
+- 子電路裡的埠：新增 `{"op": "add", "subckt": "RC", "type": "SUBPORT", "params": {"text": "fb", "side": "B"}, "pins": {"port": "out"}}`；
+  以 `port:名稱` 指定（`{"op": "set", "subckt": "RC", "name": "port:fb", "params": {"side": "T"}}`、`remove`、接腳 `port:fb.port`）。
+  子電路裡與埠同名的標籤就是那個埠的節點，節點表中埠以名稱出現。
+- 方塊（SUBCKT）：add 時 params.def 指定已有的子電路，set 可改 vars（此方塊的子電路參數）或 def。子電路不能直接或間接包含自己。
+- 看子電路的內容：`daedalus_inspect` 與 `daedalus_render` 加上 `subckt`（命令列 `--subckt 名稱`）。
 
 節點名稱：有標籤的節點用標籤文字，接地是 "0"，沒有標籤的節點顯示為「~元件.接腳」（例如 ~Q1.S），也可直接用來指定。
 `dry_run: true` 只回報結果不存檔；`save_as` 另存新檔（原檔不變）。

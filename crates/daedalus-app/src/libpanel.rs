@@ -79,13 +79,18 @@ pub fn draw_icon(ui: &Ui, rect: Rect, d: &ElDef, syms: &mut SymCache, col: Color
             }
         }
     }
-    if d.typ == "LABEL" {
-        // flag-shaped outline (as on the schematic) with a short name inside
+    if d.typ == "LABEL" || d.typ == "SUBPORT" {
+        // flag-shaped outline (as on the schematic) with a short name inside; a port is pointed at both ends
         let (w, h) = (rect.width().min(rect.height() * 1.6) * 0.86, rect.height() * 0.5);
         let x0 = c.x - w / 2.0;
-        let pts = vec![pos2(x0, c.y), pos2(x0 + h * 0.5, c.y - h / 2.0), pos2(x0 + w, c.y - h / 2.0), pos2(x0 + w, c.y + h / 2.0), pos2(x0 + h * 0.5, c.y + h / 2.0)];
+        let pts = if d.typ == "SUBPORT" {
+            vec![pos2(x0, c.y), pos2(x0 + h * 0.5, c.y - h / 2.0), pos2(x0 + w - h * 0.5, c.y - h / 2.0), pos2(x0 + w, c.y), pos2(x0 + w - h * 0.5, c.y + h / 2.0), pos2(x0 + h * 0.5, c.y + h / 2.0)]
+        } else {
+            vec![pos2(x0, c.y), pos2(x0 + h * 0.5, c.y - h / 2.0), pos2(x0 + w, c.y - h / 2.0), pos2(x0 + w, c.y + h / 2.0), pos2(x0 + h * 0.5, c.y + h / 2.0)]
+        };
         p.add(Shape::closed_line(pts, Stroke::new(1.0, col)));
-        p.text(pos2(c.x + h * 0.25, c.y), egui::Align2::CENTER_CENTER, "A", egui::FontId::proportional((h * 0.8).max(7.0)), col);
+        let t = if d.typ == "SUBPORT" { "P" } else { "A" };
+        p.text(pos2(c.x + if d.typ == "SUBPORT" { 0.0 } else { h * 0.25 }, c.y), egui::Align2::CENTER_CENTER, t, egui::FontId::proportional((h * 0.8).max(7.0)), col);
     }
 }
 

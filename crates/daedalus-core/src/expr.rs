@@ -753,6 +753,25 @@ pub fn parse_param_text(text: &str) -> (Syms, Vec<String>) {
     let mut errors = Vec::new();
     for (li, line) in text.split('\n').enumerate() {
         let line = line.strip_suffix('\r').unwrap_or(line);
+        match param_line(line) {
+            None => {}
+            Some(None) => errors.push(format!("第 {} 行格式錯誤：{}", li + 1, line)),
+            Some(Some((name, ex))) => match eval_const(&ex, &syms) {
+                Ok(v) => {
+                    syms.insert(name.to_lowercase(), v);
+                }
+                Err(e) => errors.push(format!("第 {} 行：{}", li + 1, e.0)),
+            },
+        }
+    }
+    (syms, errors)
+}
+
+/// One line of a parameter file: `None` for an empty, comment or `limit` line, `Some(None)` for a line that is
+/// not "name = expr" (or "name expr"), otherwise the name (as written) and the expression.
+pub fn param_line(line: &str) -> Option<Option<(String, String)>> {
+    {
+        let line = line.strip_suffix('\r').unwrap_or(line);
         let mut l = line.to_string();
         if let Some(p) = l.find(['%', '#']) {
             l.truncate(p);
@@ -762,11 +781,11 @@ pub fn parse_param_text(text: &str) -> (Syms, Vec<String>) {
         }
         let l = l.trim();
         if l.is_empty() {
-            continue;
+            return None;
         }
         let lc: Vec<char> = l.chars().collect();
         if lc.len() > 5 && l.to_lowercase().starts_with("limit") && js_space(lc[5]) {
-            continue;
+            return None;
         }
         // ^([A-Za-z_][A-Za-z0-9_]*)\s*(=|\s)\s*(.+)$
         let mut j = 0;
@@ -796,17 +815,54 @@ pub fn parse_param_text(text: &str) -> (Syms, Vec<String>) {
                 parsed = Some((name, rest[w..].iter().collect()));
             }
         }
-        match parsed {
-            None => errors.push(format!("第 {} 行格式錯誤：{}", li + 1, line)),
-            Some((name, ex)) => match eval_const(&ex, &syms) {
-                Ok(v) => {
-                    syms.insert(name.to_lowercase(), v);
-                }
-                Err(e) => errors.push(format!("第 {} 行：{}", li + 1, e.0)),
-            },
-        }
+        Some(parsed)
     }
-    (syms, errors)
+}
+
+/// `src` with every name found in `map` (lower-case keys) replaced; numbers with their suffix and unit letters
+/// ("10mH") and function names (a name followed by "(") stay as they are
+pub fn rename_idents(src: &str, map: &HashMap<String, String>) -> String {
+    let s: Vec<char> = src.chars().collect();
+    let n = s.len();
+    let mut out = String::with_capacity(src.len());
+    let mut i = 0;
+    while i < n {
+        let c = s[i];
+        if let Some((_, len)) = match_number(&s, i) {
+            let mut j = i + len;
+            if j + 3 <= n && s[j..j + 3].iter().collect::<String>().to_lowercase() == "meg" {
+                j += 3;
+            } else if j < n && suffix(s[j]).is_some() {
+                j += 1;
+            }
+            while j < n && (s[j].is_ascii_alphabetic() || s[j] == 'Ω') {
+                j += 1;
+            }
+            out.extend(&s[i..j]);
+            i = j;
+            continue;
+        }
+        if c.is_ascii_alphabetic() || c == '_' {
+            let st = i;
+            while i < n && (s[i].is_ascii_alphanumeric() || s[i] == '_') {
+                i += 1;
+            }
+            let id: String = s[st..i].iter().collect();
+            let mut k = i;
+            while k < n && js_space(s[k]) {
+                k += 1;
+            }
+            let call = k < n && s[k] == '(';
+            match map.get(&id.to_lowercase()).filter(|_| !call) {
+                Some(r) => out.push_str(r),
+                None => out.push_str(&id),
+            }
+            continue;
+        }
+        out.push(c);
+        i += 1;
+    }
+    out
 }
 
 #[cfg(test)]
@@ -847,6 +903,16 @@ mod tests {
         let (s, e) = parse_param_text("Vin = 100\nD 0.5 % duty\nVo=Vin*D");
         assert!(e.is_empty(), "{:?}", e);
         assert_eq!(s["vo"], 50.0);
+    }
+    #[test]
+    fn rename() {
+        let m: HashMap<String, String> = [("r".to_string(), "_x1_r".to_string()), ("mh".to_string(), "BAD".to_string()), ("sin".to_string(), "BAD".to_string())].into_iter().collect();
+        assert_eq!(rename_idents("R*2 + 10mH + sin(R) + Rx + r_", &m), "_x1_r*2 + 10mH + sin(_x1_r) + Rx + r_");
+        assert_eq!(rename_idents("1.5e-3*R", &m), "1.5e-3*_x1_r");
+        assert_eq!(param_line("  % only a comment"), None);
+        assert_eq!(param_line("R = 10 % ohm"), Some(Some(("R".into(), "10".into()))));
+        assert_eq!(param_line("D 0.5"), Some(Some(("D".into(), "0.5".into()))));
+        assert_eq!(param_line("= 3"), Some(None));
     }
     #[test]
     fn fns() {

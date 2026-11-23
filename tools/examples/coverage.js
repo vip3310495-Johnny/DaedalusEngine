@@ -8,7 +8,9 @@ const dir = path.join(ROOT, 'crates/daedalus-app/assets/examples');
 const used = new Map();
 for (const f of fs.readdirSync(dir).filter(f => f.endsWith('.psimx'))) {
   const j = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
-  const els = (j.doc && j.doc.elements) || j.elements || [];
+  const d = j.doc || j;
+  // elements of the main circuit and of its subcircuit definitions
+  const els = (d.elements || []).concat(...Object.values(d.subckts || {}).map(s => s.elements || []));
   for (const e of els) { if (!used.has(e.type)) used.set(e.type, []); used.get(e.type).push(f.replace('.psimx', '')); }
 }
 const cov = all.filter(t => used.has(t)), miss = all.filter(t => !used.has(t));

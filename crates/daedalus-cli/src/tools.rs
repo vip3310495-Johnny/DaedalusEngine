@@ -78,7 +78,7 @@ pub fn list() -> Vec<Value> {
         tool(
             "daedalus_elements",
             "查詢元件",
-            "查詢元件庫（221 種）：不帶參數列出全部型別代碼；query 以中英文關鍵字搜尋；category 列出一個類別；type 取得一個元件的完整資料（接腳名稱、位置與類型［功率／控制輸入／控制輸出…］、全部參數的預設值、單位、說明與選項）。寫網表或修改參數前先查，不要猜接腳或參數名稱。",
+            "查詢元件庫（223 種）：不帶參數列出全部型別代碼；query 以中英文關鍵字搜尋；category 列出一個類別；type 取得一個元件的完整資料（接腳名稱、位置與類型［功率／控制輸入／控制輸出…］、全部參數的預設值、單位、說明與選項）。寫網表或修改參數前先查，不要猜接腳或參數名稱。",
             json!({"type": "object", "properties": {
                 "query": {"type": "string", "description": "關鍵字，例如 \"mosfet\"、\"比較器\"、\"電流探棒\""},
                 "category": {"type": "string", "description": "類別名稱的一部分，例如 \"Switches\"、\"Sources/Voltage\""},
@@ -92,7 +92,7 @@ pub fn list() -> Vec<Value> {
             "由網表建立新的電路檔：每個元件給 type、name、params，pins 以節點名稱指定連線（同名相連，接地寫 \"0\"，不接寫 null）。程式以導線自動排版成易讀的電路圖：功率級主電流路徑沿上方的軌、並聯元件垂直掛到下方地線，兩個以上半橋臂時以直流母線與橋臂排列，控制區依訊號流向分欄；只有跨功率／控制的訊號（閘極、感測器輸出）用一對節點標籤。結果以程式本身的連線規則驗證與網表一致，節點名稱存在檔案中供之後的修改使用。格式見 daedalus_guide topic=netlist。回傳節點表與問題清單。",
             json!({"type": "object", "required": ["path", "netlist"], "properties": {
                 "path": path.clone(),
-                "netlist": {"type": "object", "description": "{title?, sim?{dt, tt,…}, params?（參數檔文字）, elements[{type, name?, params?, rot?, mir?, pins{接腳: 節點}}], screens?}",
+                "netlist": {"type": "object", "description": "{title?, sim?{dt, tt,…}, params?（參數檔文字）, elements[{type, name?, params?, rot?, mir?, pins{接腳: 節點}}], screens?, subckts?{名稱: {ports[{name, net, side?}], params?, elements[…]}}}（子電路見 daedalus_guide topic=netlist）",
                     "properties": {
                         "title": {"type": "string"},
                         "sim": {"type": "object", "description": "模擬控制參數，例如 {\"dt\": \"0.2u\", \"tt\": \"10m\"}"},
@@ -100,7 +100,8 @@ pub fn list() -> Vec<Value> {
                         "elements": {"type": "array", "items": {"type": "object", "required": ["type"], "properties": {
                             "type": {"type": "string"}, "name": {"type": "string"}, "params": {"type": "object"},
                             "rot": {"type": "integer"}, "mir": {"type": "boolean"}, "pins": {"type": "object"}}}},
-                        "screens": {"type": "array", "items": {"type": "array", "items": {"type": "string"}}}
+                        "screens": {"type": "array", "items": {"type": "array", "items": {"type": "string"}}},
+                        "subckts": {"type": "object", "description": "子電路定義 {名稱: {ports, params?, elements}}；方塊用 type SUBCKT、params.def"}
                     }, "required": ["elements"]},
                 "overwrite": {"type": "boolean", "description": "檔案已存在時覆寫（預設 false）"},
                 "render": {"type": "boolean", "description": "一併回傳電路圖 PNG（預設 false）"}
@@ -110,17 +111,17 @@ pub fn list() -> Vec<Value> {
         tool(
             "daedalus_inspect",
             "檢查電路",
-            "讀取電路檔（包括使用者在程式裡畫的）：元件與非預設參數、每隻接腳接到哪個節點、每個節點連到哪些接腳、模擬設定、問題（未接的接腳、功率與控制直接相連、名稱重複…）與警告。element 指定時列出該元件的全部參數與接腳。修改或模擬前先看這個。",
-            json!({"type": "object", "required": ["path"], "properties": {"path": path.clone(), "element": {"type": "string", "description": "只看一個元件的詳細資料"}}}),
+            "讀取電路檔（包括使用者在程式裡畫的）：元件與非預設參數、每隻接腳接到哪個節點、每個節點連到哪些接腳、模擬設定、問題（未接的接腳、功率與控制直接相連、名稱重複…）與警告。element 指定時列出該元件的全部參數與接腳；subckt 指定時改看該子電路的內容（埠、元件、節點、問題）。修改或模擬前先看這個。",
+            json!({"type": "object", "required": ["path"], "properties": {"path": path.clone(), "element": {"type": "string", "description": "只看一個元件的詳細資料"}, "subckt": {"type": "string", "description": "子電路名稱：改看（畫）這個子電路的內容"}}}),
             true,
         ),
         tool(
             "daedalus_edit",
             "修改電路",
-            "修改電路檔：ops 依序執行 add（新增元件並以節點名稱連接）、set（參數、改名、移動、旋轉、停用）、remove、connect（接腳接到節點或另一隻接腳）、disconnect、wire（兩接腳間拉導線）、sim、params、screens、text。每個操作都以程式的連線規則驗證，不會誤接或斷開其他接腳；任一操作失敗整批不存檔。格式見 daedalus_guide topic=edit。回傳節點變化與問題清單。",
+            "修改電路檔：ops 依序執行 add（新增元件並以節點名稱連接）、set（參數、改名、移動、旋轉、停用）、remove、connect（接腳接到節點或另一隻接腳）、disconnect、wire（兩接腳間拉導線）、sim、params、screens、text；操作加上 subckt（子電路名稱）就改在該子電路裡做（所有方塊跟著更新），subckt_new／subckt_remove／subckt_rename／subckt_import 管理子電路。每個操作都以程式的連線規則驗證，不會誤接或斷開其他接腳；任一操作失敗整批不存檔。格式見 daedalus_guide topic=edit。回傳節點變化與問題清單。",
             json!({"type": "object", "required": ["path", "ops"], "properties": {
                 "path": path.clone(),
-                "ops": {"type": "array", "items": {"type": "object", "required": ["op"], "properties": {"op": {"type": "string", "enum": ["add", "set", "remove", "connect", "disconnect", "wire", "sim", "params", "screens", "text"]}}},
+                "ops": {"type": "array", "items": {"type": "object", "required": ["op"], "properties": {"op": {"type": "string", "enum": ["add", "set", "remove", "connect", "disconnect", "wire", "sim", "params", "screens", "text", "subckt_new", "subckt_remove", "subckt_rename", "subckt_import"]}, "subckt": {"type": "string", "description": "在這個子電路裡執行（add、set、remove、connect…）"}}},
                     "description": "例如 [{\"op\":\"set\",\"name\":\"R1\",\"params\":{\"R\":\"4.7k\"}}, {\"op\":\"add\",\"type\":\"VP\",\"name\":\"Vsw\",\"pins\":{\"n\":\"SW\"}}, {\"op\":\"connect\",\"pin\":\"Q1.G\",\"net\":\"GATE\"}]"},
                 "dry_run": {"type": "boolean", "description": "只回報結果，不存檔"},
                 "save_as": {"type": "string", "description": "另存的絕對路徑（原檔不變）"},
@@ -165,13 +166,14 @@ pub fn list() -> Vec<Value> {
         tool(
             "daedalus_render",
             "電路圖",
-            "把電路畫成 PNG（與程式相同的元件符號；功率線深色、控制線藍色、未接的接腳紅圈、邊緣標有座標）。highlight 可標出一個節點（名稱或接腳，例如 \"VO\"、\"Q1.G\"）或元件；pins=true 標出每隻接腳的名稱。save 可另存 .png 或 .svg。用來目視檢查版面與連線。",
+            "把電路畫成 PNG（與程式相同的元件符號；功率線深色、控制線藍色、未接的接腳紅圈、邊緣標有座標）。highlight 可標出一個節點（名稱或接腳，例如 \"VO\"、\"Q1.G\"）或元件；pins=true 標出每隻接腳的名稱。save 可另存 .png 或 .svg；subckt 畫一個子電路的內容。用來目視檢查版面與連線。",
             json!({"type": "object", "required": ["path"], "properties": {
                 "path": path.clone(),
                 "highlight": {"type": "string"},
                 "pins": {"type": "boolean"},
                 "save": {"type": "string", "description": "另存圖片的絕對路徑（.png 或 .svg）"},
-                "max_px": {"type": "integer", "description": "圖片長邊像素（預設 1400）"}
+                "max_px": {"type": "integer", "description": "圖片長邊像素（預設 1400）"},
+                "subckt": {"type": "string", "description": "子電路名稱：改看（畫）這個子電路的內容"}
             }}),
             true,
         ),
@@ -275,6 +277,10 @@ fn guide_section(topic: &str) -> String {
 
 fn short_params(e: &daedalus_core::doc::Element) -> String {
     let Some(d) = lib().get(&e.typ) else { return String::new() };
+    if e.typ == "SUBCKT" {
+        let vars = e.params.get("vars").map(|s| s.trim().replace('\n', "; ")).unwrap_or_default();
+        return format!("def={}{}", e.params.get("def").cloned().unwrap_or_default(), if vars.is_empty() { String::new() } else { format!(" vars=\"{}\"", vars) });
+    }
     let mut v = vec![];
     for p in &d.params {
         let cur = e.params.get(&p.k).cloned().unwrap_or_default();
@@ -309,7 +315,7 @@ fn sim_line(doc: &Doc) -> String {
 
 fn nets_text(a: &Analysis) -> String {
     let mut out = String::new();
-    let mut nets: Vec<&circuit::Net> = a.nets.iter().filter(|n| !n.pins.is_empty()).collect();
+    let mut nets: Vec<&circuit::Net> = a.nets.iter().filter(|n| !n.pins.is_empty() || !n.ports.is_empty()).collect();
     nets.sort_by(|x, y| (!x.ground, x.name.starts_with('~'), x.name.to_lowercase()).cmp(&(!y.ground, y.name.starts_with('~'), y.name.to_lowercase())));
     for n in nets {
         let tag = if n.ground {
@@ -319,7 +325,8 @@ fn nets_text(a: &Analysis) -> String {
         } else {
             ""
         };
-        let _ = writeln!(out, "  {}{}：{}", n.name, tag, n.pins.join("、"));
+        let port = if n.ports.is_empty() { String::new() } else { format!("（子電路埠 {}）", n.ports.join("、")) };
+        let _ = writeln!(out, "  {}{}{}：{}", n.name, tag, port, if n.pins.is_empty() { "（沒有元件接腳）".to_string() } else { n.pins.join("、") });
     }
     out
 }
@@ -346,10 +353,18 @@ fn problems_text(a: &Analysis) -> String {
 fn summary(c: &Circuit, path: &Path) -> String {
     let doc = &c.doc;
     let a = c.analyze();
-    let real: Vec<&daedalus_core::doc::Element> = doc.elements.iter().filter(|e| !matches!(e.typ.as_str(), "LABEL" | "GND" | "TEXT")).collect();
+    let real: Vec<&daedalus_core::doc::Element> = doc.elements.iter().filter(|e| !matches!(e.typ.as_str(), "LABEL" | "GND" | "TEXT" | "SUBPORT")).collect();
     let mut out = String::new();
     let _ = writeln!(out, "{}", path.display());
-    let _ = writeln!(out, "元件 {}、導線 {}、節點 {}；模擬控制 {}", real.len(), doc.wires.len(), a.nets.iter().filter(|n| !n.pins.is_empty()).count(), sim_line(doc));
+    if let Some(dn) = &c.def {
+        let ports: Vec<String> = daedalus_core::subckt::def_ports(doc).iter().map(|p| format!("{}［{}，{}］", p.name, p.side, circuit::kind_zh(&p.kind))).collect();
+        let vars: Vec<String> = daedalus_core::subckt::def_vars(doc).iter().map(|(n, e)| format!("{}={}", n, e)).collect();
+        let users: Vec<String> = c.doc.subckts.iter().filter(|(k, _)| k.as_str() != dn).flat_map(|(k, d)| d.elements.iter().filter(|e| e.typ == "SUBCKT" && e.params.get("def") == Some(dn)).map(move |e| format!("{}（在子電路 {}）", e.name, k))).collect();
+        let _ = writeln!(out, "子電路 {}：埠 {}；參數 {}{}", dn, if ports.is_empty() { "（無）".to_string() } else { ports.join(" ") }, if vars.is_empty() { "（無）".to_string() } else { vars.join(" ") }, if users.is_empty() { String::new() } else { format!("；子電路中的方塊：{}", users.join("、")) });
+        let _ = writeln!(out, "元件 {}、導線 {}、節點 {}（埠在節點表中以埠名稱出現；修改時操作加上 \"subckt\": \"{}\"，埠以 port:名稱 指定）", real.len(), doc.wires.len(), a.nets.iter().filter(|n| !n.pins.is_empty() || !n.ports.is_empty()).count(), dn);
+    } else {
+        let _ = writeln!(out, "元件 {}、導線 {}、節點 {}；模擬控制 {}", real.len(), doc.wires.len(), a.nets.iter().filter(|n| !n.pins.is_empty()).count(), sim_line(doc));
+    }
     out += "元件（名稱 型別 非預設參數 @位置 接腳→節點）：\n";
     for e in &real {
         let pins: Vec<String> = lib()
@@ -380,6 +395,16 @@ fn summary(c: &Circuit, path: &Path) -> String {
             line += &format!("  {}", pins.join(" "));
         }
         let _ = writeln!(out, "{}", line);
+    }
+    if !doc.subckts.is_empty() && c.def.is_none() {
+        out += "子電路定義（名稱：埠［方塊邊］；參數預設值；內部元件）：\n";
+        for (k, d) in &doc.subckts {
+            let ports: Vec<String> = daedalus_core::subckt::def_ports(d).iter().map(|p| format!("{}［{}］", p.name, p.side)).collect();
+            let vars: Vec<String> = daedalus_core::subckt::def_vars(d).iter().map(|(n, e)| format!("{}={}", n, e)).collect();
+            let els: Vec<String> = d.elements.iter().filter(|e| !matches!(e.typ.as_str(), "LABEL" | "GND" | "TEXT" | "SUBPORT" | "PARAMS")).map(|e| format!("{}({})", el_name(e), e.typ)).collect();
+            let _ = writeln!(out, "  {}：{}；{}；{}", k, if ports.is_empty() { "（無埠）".to_string() } else { ports.join(" ") }, if vars.is_empty() { "無參數".to_string() } else { vars.join(" ") }, els.join(" "));
+        }
+        out += "  子電路裡的元件在波形中以「方塊名稱.元件名稱」出現（例如 X1.Vo）。\n";
     }
     out += "節點：\n";
     out += &nets_text(&a);
@@ -414,7 +439,7 @@ fn element_detail(c: &Circuit, name: &str) -> Result<String, String> {
 /* ------------------------------------------------------------------ elements */
 
 fn el_line(d: &daedalus_core::library::ElDef) -> String {
-    format!("{}｜{}｜{}｜接腳 {}", d.typ, d.zh, d.name, if d.pins.is_empty() { if d.typ == "CBLOCK" { "x1…、y1…（依 nin／nout）".to_string() } else { "無".to_string() } } else { d.pins.iter().map(|p| p.n.as_str()).collect::<Vec<_>>().join("、") })
+    format!("{}｜{}｜{}｜接腳 {}", d.typ, d.zh, d.name, if d.pins.is_empty() { if d.typ == "CBLOCK" { "x1…、y1…（依 nin／nout）".to_string() } else if d.typ == "SUBCKT" { "依子電路定義的埠".to_string() } else { "無".to_string() } } else { d.pins.iter().map(|p| p.n.as_str()).collect::<Vec<_>>().join("、") })
 }
 
 fn elements(a: &Value) -> Reply {
@@ -449,7 +474,7 @@ fn elements(a: &Value) -> Reply {
             let _ = writeln!(out, "性質：{}", flags.join("；"));
         }
         if d.pins.is_empty() {
-            out += if d.typ == "CBLOCK" { "接腳：輸入 x1…xn 在左（x=−2）、輸出 y1…ym 在右（x=2），數量由 nin／nout 決定，自 y = −⌊(n−1)/2⌋ 起每格一隻\n" } else { "接腳：無（不接線）\n" };
+            out += if d.typ == "SUBCKT" { "接腳：子電路定義的每個埠一隻（名稱即埠名稱）；netlist 的 subckts 定義子電路，方塊以 params.def 指定子電路、params.vars 指定此方塊的子電路參數（例如 \"R = 20\"）\n" } else if d.typ == "CBLOCK" { "接腳：輸入 x1…xn 在左（x=−2）、輸出 y1…ym 在右（x=2），數量由 nin／nout 決定，自 y = −⌊(n−1)/2⌋ 起每格一隻\n" } else { "接腳：無（不接線）\n" };
         } else {
             out += "接腳（rot=0 時相對元件中心的位置，y 向下）：\n";
             for p in &d.pins {
@@ -898,7 +923,10 @@ impl Server {
 
     fn inspect(&mut self, a: &Value) -> Result<Reply, String> {
         let p = path_arg(a)?;
-        let c = Circuit::load(&p)?;
+        let mut c = Circuit::load(&p)?;
+        if let Some(d) = s(a, "subckt") {
+            c = c.sub(d)?;
+        }
         if let Some(e) = s(a, "element") {
             return element_detail(&c, e).map(Reply::text);
         }
@@ -941,9 +969,35 @@ impl Server {
             }
         }
         txt += &problems_text(&after);
+        // the definitions this batch touched: their ports, nets and problems
+        let mut touched: Vec<String> = vec![];
+        for op in ops {
+            let kind = op.get("op").and_then(|x| x.as_str()).unwrap_or("");
+            let n = if kind.starts_with("subckt_") { op.get(if kind == "subckt_rename" { "to" } else if kind == "subckt_import" { "as" } else { "name" }).and_then(|x| x.as_str()) } else { op.get("subckt").and_then(|x| x.as_str()) };
+            if let Some(n) = n.map(String::from).filter(|n| c.doc.subckts.contains_key(n)) {
+                if !touched.contains(&n) {
+                    touched.push(n);
+                }
+            }
+        }
+        for n in &touched {
+            if let Ok(sc) = c.sub(n) {
+                let sa = sc.analyze();
+                let ports: Vec<String> = daedalus_core::subckt::def_ports(&sc.doc).iter().map(|p| format!("{}［{}，{}］", p.name, p.side, circuit::kind_zh(&p.kind))).collect();
+                let _ = writeln!(txt, "子電路 {}：埠 {}；方塊 {} 個", n, if ports.is_empty() { "（無）".to_string() } else { ports.join(" ") }, daedalus_core::subckt::users(&c.doc, n));
+                txt += &nets_text(&sa);
+                txt += &problems_text(&sa).lines().map(|l| format!("  {}\n", l)).collect::<String>();
+            }
+        }
         let mut rep = Reply::text(txt);
         if b(a, "render", false) {
-            rep = rep.image(&render::png(&render::schematic_svg(&c.doc, &render::SchOpts { highlight: None, pin_names: false, max_px: 1400.0 }))?);
+            // the definition when every operation was inside one, otherwise the main circuit
+            let one: Option<&str> = ops.iter().map(|o| o.get("subckt").and_then(|x| x.as_str())).collect::<Option<Vec<_>>>().and_then(|v| if !v.is_empty() && v.iter().all(|x| *x == v[0]) { Some(v[0]) } else { None });
+            let doc = match one.and_then(|n| c.sub(n).ok()) {
+                Some(sc) => sc.doc,
+                None => c.doc.clone(),
+            };
+            rep = rep.image(&render::png(&render::schematic_svg(&doc, &render::SchOpts { highlight: None, pin_names: false, max_px: 1400.0 }))?);
         }
         Ok(rep)
     }
@@ -1015,7 +1069,10 @@ impl Server {
 
     fn render(&mut self, a: &Value) -> Result<Reply, String> {
         let p = path_arg(a)?;
-        let c = Circuit::load(&p)?;
+        let mut c = Circuit::load(&p)?;
+        if let Some(d) = s(a, "subckt") {
+            c = c.sub(d)?;
+        }
         // a net known by the AI's name only: highlight it by one of its pins
         let hl = s(a, "highlight").map(|h| {
             let an = c.analyze();
@@ -1027,7 +1084,7 @@ impl Server {
         let o = render::SchOpts { highlight: hl, pin_names: b(a, "pins", false), max_px: a.get("max_px").and_then(|v| v.as_f64()).unwrap_or(1400.0).clamp(400.0, 4000.0) };
         let svg = render::schematic_svg(&c.doc, &o);
         let png = render::png(&svg)?;
-        let mut txt = format!("{} 的電路圖（深色：功率線；藍色：控制線；紅圈：未接的接腳；邊緣數字：座標）", p.display());
+        let mut txt = format!("{}{} 的電路圖（深色：功率線；藍色：控制線；紅圈：未接的接腳；邊緣數字：座標）", p.display(), c.def.as_ref().map(|d| format!(" 子電路 {}", d)).unwrap_or_default());
         if let Some(h) = &o.highlight {
             let _ = write!(txt, "；橘色標出 {}", h);
         }
@@ -1140,7 +1197,7 @@ pub fn cli(args: &[String]) -> i32 {
                 skip = false;
                 continue;
             }
-            if a == "--image" || a == "--highlight" {
+            if a == "--image" || a == "--highlight" || a == "--subckt" {
                 skip = true;
                 continue;
             }
@@ -1173,12 +1230,12 @@ pub fn cli(args: &[String]) -> i32 {
             _ => ("".into(), Err("usage: daedalus-cli new <netlist.json> <out.psimx>".into())),
         },
         Some("inspect") => match pos.first() {
-            Some(f) => ("daedalus_inspect".into(), Ok(json!({"path": f, "element": pos.get(1)}))),
-            None => ("".into(), Err("usage: daedalus-cli inspect <circuit.psimx> [element]".into())),
+            Some(f) => ("daedalus_inspect".into(), Ok(json!({"path": f, "element": pos.get(1), "subckt": opt("--subckt")}))),
+            None => ("".into(), Err("usage: daedalus-cli inspect <circuit.psimx> [element] [--subckt NAME]".into())),
         },
         Some("render") => match (pos.first(), pos.get(1)) {
-            (Some(f), Some(out)) => ("daedalus_render".into(), Ok(json!({"path": f, "save": out, "pins": flag("--pins"), "highlight": opt("--highlight")}))),
-            _ => ("".into(), Err("usage: daedalus-cli render <circuit.psimx> <out.png|out.svg> [--pins] [--highlight NET]".into())),
+            (Some(f), Some(out)) => ("daedalus_render".into(), Ok(json!({"path": f, "save": out, "pins": flag("--pins"), "highlight": opt("--highlight"), "subckt": opt("--subckt")}))),
+            _ => ("".into(), Err("usage: daedalus-cli render <circuit.psimx> <out.png|out.svg> [--pins] [--highlight NET] [--subckt NAME]".into())),
         },
         _ => ("".into(), Err("unknown command".into())),
     };

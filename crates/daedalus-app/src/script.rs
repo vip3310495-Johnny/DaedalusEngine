@@ -12,6 +12,9 @@
 //!   menu TEXT              click the context-menu item whose label starts with TEXT
 //!   run                    start the simulation (F5)
 //!   wave_add NAME / wave_math NAME EXPR / wave_fft NAME / wave_cursors T1 T2
+//!   sub_new DEF / sub_place DEF X Y / sub_enter_block NAME / sub_enter DEF / sub_leave     subcircuits
+//!   open_props_name NAME / props_sub_var VAR VALUE / props_apply                         block properties
+//!   save_as FILE           write the whole circuit to <prefix>_FILE
 //!   shot NAME              save <prefix>_NAME.png
 //!   dump NAME              save <prefix>_NAME.json (elements, selection, view, mode, waveform screens)
 //!   quit
