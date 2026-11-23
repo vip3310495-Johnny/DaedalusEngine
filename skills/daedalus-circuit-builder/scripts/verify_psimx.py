@@ -64,7 +64,7 @@ def main():
     with open(a.file, encoding='utf-8') as f:
         j = json.load(f)
     doc = j.get('doc', j)
-    rep = {'file': a.file, 'check': check_doc(doc.get('elements', []), doc.get('wires', []))}
+    rep = {'file': a.file, 'check': check_doc(doc.get('elements', []), doc.get('wires', []), doc.get('subckts'))}
     ok = not (rep['check']['errors'] or rep['check']['open_pins'] or rep['check']['single_labels'])
 
     cli = find_cli(a.cli)

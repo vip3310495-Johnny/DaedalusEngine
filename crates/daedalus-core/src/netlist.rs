@@ -107,6 +107,10 @@ impl Conn {
     pub fn is_gnd_root(&self, r: Option<usize>) -> bool {
         r.and_then(|r| self.kinds.get(&r)).map(|s| s.contains("gnd")).unwrap_or(false)
     }
+    /// pin kinds of the enabled element pins on the net through (x, y)
+    pub fn kinds_at(&self, x: f64, y: f64) -> Option<&HashSet<String>> {
+        self.root(x, y).and_then(|r| self.kinds.get(&r))
+    }
     pub fn members(&self, r: usize) -> usize {
         self.members.get(&r).copied().unwrap_or(0)
     }
@@ -184,7 +188,8 @@ pub fn connectivity(doc: &Doc, els: &[&Element]) -> Conn {
     // labels
     let mut lbl: HashMap<String, usize> = HashMap::new();
     for (el, wp) in &el_pins {
-        if el.typ == "LABEL" && !el.dis {
+        // a subcircuit port joins the labels of its name inside its definition (as the flattened circuit does)
+        if (el.typ == "LABEL" || el.typ == "SUBPORT") && !el.dis {
             let t = el.params.get("text").map(|s| s.trim().to_string()).unwrap_or_default();
             if t.is_empty() || wp.is_empty() {
                 continue;
@@ -248,11 +253,55 @@ pub fn connectivity(doc: &Doc, els: &[&Element]) -> Conn {
 
 pub struct BuildResult {
     pub net: Netlist,
+    /// problems; their elements are elements of the main circuit (a subcircuit block for anything inside it)
     pub errors: Vec<NlError>,
     pub syms: Syms,
+    /// netlist element id -> where it is, for elements inside subcircuit blocks
+    pub origin: HashMap<i64, crate::subckt::Origin>,
+    /// per error: the elements inside subcircuits it is about (definition, element id there)
+    pub err_inner: Vec<Vec<(String, i64)>>,
 }
 
+/// Netlist of a circuit; subcircuit blocks are replaced by their contents first (see `subckt`).
 pub fn build_netlist(doc: &Doc) -> BuildResult {
+    if !crate::subckt::has_blocks(doc) {
+        return build_flat(doc, "");
+    }
+    let mut global = String::new();
+    for e in doc.elements.iter().filter(|e| e.typ == "PARAMS" && !e.dis) {
+        global += e.params.get("text").map(|s| s.as_str()).unwrap_or("");
+        global.push('\n');
+    }
+    let flat = crate::subckt::flatten(doc, &global);
+    let mut br = build_flat(&flat.doc, &flat.params);
+    let mut errors = flat.errors;
+    errors.append(&mut br.errors);
+    let mut err_inner = Vec::new();
+    for e in errors.iter_mut() {
+        let mut top: Vec<i64> = Vec::new();
+        let mut inner = Vec::new();
+        for id in &e.els {
+            let t = match flat.origin.get(id) {
+                Some(o) => {
+                    inner.push((o.def.clone(), o.local));
+                    o.top
+                }
+                None => *id,
+            };
+            if !top.contains(&t) {
+                top.push(t);
+            }
+        }
+        e.els = top;
+        err_inner.push(inner);
+    }
+    br.errors = errors;
+    br.err_inner = err_inner;
+    br.origin = flat.origin;
+    br
+}
+
+fn build_flat(doc: &Doc, extra_params: &str) -> BuildResult {
     let lb = lib();
     let mut errors = Vec::new();
     let els: Vec<&Element> = doc.elements.iter().filter(|e| !e.dis).collect();
@@ -386,12 +435,14 @@ pub fn build_netlist(doc: &Doc) -> BuildResult {
             param_text.push('\n');
         }
     }
+    param_text += extra_params;
     let (syms, perr) = expr::parse_param_text(&param_text);
     let pids: Vec<i64> = els.iter().filter(|e| e.typ == "PARAMS").map(|e| e.id).collect();
     for m in perr {
         errors.push(NlError { msg: format!("參數檔：{}", m), els: pids.clone() });
     }
-    BuildResult { net: Netlist { nets: net_list, elements: out_els, param_text }, errors, syms }
+    let n_err = errors.len();
+    BuildResult { net: Netlist { nets: net_list, elements: out_els, param_text }, errors, syms, origin: HashMap::new(), err_inner: vec![vec![]; n_err] }
 }
 
 /// Parameter-file symbols of a document (enabled PARAMS elements).

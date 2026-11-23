@@ -117,6 +117,11 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python skills/daedalus-circuit-builder/scripts/verify_psimx.py out/skill/buck.psimx --cli target/release/daedalus-cli.exe --expect Vo:avg10:11.5:12.5 --expect IL:avg10:1.9:2.1
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          # subcircuits: a definition with ports, parameters and a probe inside, two blocks with their own values
+          python skills/daedalus-circuit-builder/examples/subcircuit_rc.py out/skill/rc.psimx
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python skills/daedalus-circuit-builder/scripts/verify_psimx.py out/skill/rc.psimx --cli target/release/daedalus-cli.exe --expect Vo1:final:9.99:10.01 --expect X1.Vc:final:9.99:10.01 --expect Vo2:final:9.92:9.94 --expect X2.Vc:final:9.92:9.94
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       # the MCP server for AI agents (daedalus-cli mcp): every tool over stdio, as an MCP client uses it;
       # the pictures and responses are kept as an artifact

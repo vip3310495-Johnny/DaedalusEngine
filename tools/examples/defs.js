@@ -241,7 +241,7 @@ EX.push({
 
 // further examples live in defs_b.js, defs_c.js, ... (each exports (EX, H) => void)
 const H = { PI, C, add, sub, mul, div, par, cabs, carg, jw, zc, csolve, row, wave, phasor };
-for (const f of ['defs_b.js', 'defs_c.js', 'defs_d.js', 'defs_e.js']) {
+for (const f of ['defs_b.js', 'defs_c.js', 'defs_d.js', 'defs_e.js', 'defs_f.js']) {
   const p = require('path').join(__dirname, f);
   if (require('fs').existsSync(p)) require(p)(EX, H);
 }

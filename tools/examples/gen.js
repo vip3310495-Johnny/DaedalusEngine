@@ -17,7 +17,39 @@ function defaults(type) {
   for (const q of d.params || []) p[q.k] = q.d;
   return p;
 }
+// subcircuit block geometry: the same rules as daedalus_core::library::sub_geom
+function subGeom(params) {
+  const ports = JSON.parse(params.ports || '[]').map(q => ({ name: q[0], side: q[1] || 'L' }));
+  const def = params.def || '';
+  const [l, r, t, b] = ['L', 'R', 'T', 'B'].map(c => ports.filter(p => p.side === c));
+  const start = n => -Math.floor((n - 1) / 2);
+  const reach = n => Math.max(0, Math.ceil((n - 1) / 2));
+  const tu = (s, sz) => [...s].reduce((a, c) => a + (c.charCodeAt(0) < 128 ? 0.56 : 1.0), 0) * sz;
+  const nv = Math.max(l.length, r.length, 1), nh = Math.max(t.length, b.length, 1);
+  const wmax = v => v.reduce((a, p) => Math.max(a, tu(p.name, 0.42)), 0);
+  const innerW = Math.max(wmax(l) + wmax(r) + tu(def, 0.6) + 1.2, 2.8);
+  let ht = Math.max(reach(nv) + 1, 2);
+  if (t.length) ht += 1;
+  if (b.length) ht += 1;
+  const tw = t.concat(b).reduce((a, p) => Math.max(a, tu(p.name, 0.42)), 0);
+  const step = nh > 1 && tw > 0.9 ? Math.ceil(tw + 0.3) : 1;
+  const hw = Math.max(Math.ceil(innerW / 2 + 0.6), reach(nh) * step + 1, 2);
+  const pins = [];
+  l.forEach((p, i) => pins.push({ x: -hw, y: start(l.length) + i, k: 'a', n: p.name }));
+  r.forEach((p, i) => pins.push({ x: hw, y: start(r.length) + i, k: 'a', n: p.name }));
+  t.forEach((p, i) => pins.push({ x: (start(t.length) + i) * step, y: -ht, k: 'a', n: p.name }));
+  b.forEach((p, i) => pins.push({ x: (start(b.length) + i) * step, y: ht, k: 'a', n: p.name }));
+  return { pins, bb: [-hw, -ht, hw, ht] };
+}
+// the pin list of a definition, ordered as daedalus_core::subckt::def_ports does
+function defPorts(doc) {
+  const ps = doc.elements.filter(e => e.type === 'SUBPORT').map(e => ({ name: e.params.text, side: e.params.side, x: e.x, y: e.y }));
+  const rank = c => 'LRTB'.indexOf(c);
+  ps.sort((a, b) => rank(a.side) - rank(b.side) || ('LR'.includes(a.side) ? a.y - b.y || a.x - b.x : a.x - b.x || a.y - b.y));
+  return JSON.stringify(ps.map(p => [p.name, p.side]));
+}
 function pinsOf(type, params) {
+  if (type === 'SUBCKT') return subGeom(params).pins;
   if (type === 'CBLOCK') {
     const n = Math.ceil(+params.nin || 0), m = Math.ceil(+params.nout || 0);
     const tn = -Math.floor((n - 1) / 2), tm = -Math.floor((m - 1) / 2);
@@ -29,6 +61,7 @@ function pinsOf(type, params) {
   return DEF[type].pins;
 }
 function bbOf(type, params) {
+  if (type === 'SUBCKT') return subGeom(params).bb;
   if (type === 'CBLOCK') {
     const n = Math.max(+params.nin || 0, +params.nout || 0);
     return [-2, -Math.max(1.6, n / 2 + 0.6), 2, Math.max(1.6, n / 2 + 0.6)];
@@ -48,7 +81,18 @@ function stubDir(p, bb) {
   return Math.abs(p.x) >= Math.abs(p.y) ? [Math.sign(p.x) || 1, 0] : [0, Math.sign(p.y) || 1];
 }
 
-function build(ex) {
+// ex.subckts: { NAME: { ports: [[name, side, net], …], params?: '…', parts: [...] } } — each definition is laid out
+// like an example (its ports as Subcircuit Port elements on their nets); SUBCKT parts get the pins of theirs
+function build(ex, sub) {
+  const defs = {};
+  for (const [name, s] of Object.entries((!sub && ex.subckts) || {})) {
+    const parts = s.ports.map(([text, side, net]) => ['SUBPORT', null, { text, side }, { port: net }]).concat(s.parts.map(p => {
+      if (p[0] !== 'SUBCKT') return p;
+      return [p[0], p[1], Object.assign({}, p[2], { ports: defPorts(defs[p[2].def]) }), p[3]];
+    }));
+    defs[name] = build({ key: ex.key + '/' + name, params: s.params, parts }, true).doc;
+  }
+  if (!sub) ex = Object.assign({}, ex, { parts: ex.parts.map(p => p[0] === 'SUBCKT' ? [p[0], p[1], Object.assign({}, p[2], { ports: defPorts(defs[p[2].def]) }), p[3]] : p) });
   const els = [], wires = [];
   let id = 1;
   const usedNames = new Set();
@@ -70,9 +114,11 @@ function build(ex) {
   };
   // header: description, simulation control, analysis elements
   let hx = -20;
-  add('TEXT', hx, -8, { text: ex.text || ex.name });
-  add('SIMCTRL', hx, -4, ex.sc);
-  hx += 8;
+  if (!sub) {
+    add('TEXT', hx, -8, { text: ex.text || ex.name });
+    add('SIMCTRL', hx, -4, ex.sc);
+    hx += 8;
+  }
   for (const [type, params] of ex.extra || []) { add(type, hx, -4, params); hx += 8; }
   if (ex.params) add('PARAMS', hx, -4, { text: ex.params });
   // parts on a grid
@@ -103,6 +149,7 @@ function build(ex) {
     rowH = Math.max(rowH, h);
   }
   const doc = { elements: els, wires, nid: id };
+  if (Object.keys(defs).length) doc.subckts = defs;
   const out = { app: 'psimweb', version: VERSION, doc };
   if (ex.screens) out.screens = ex.screens;
   return out;
@@ -113,15 +160,18 @@ function main() {
   const outA = path.join(ROOT, 'crates/daedalus-app/assets/examples');
   const outR = path.join(ROOT, 'reference/examples');
   const index = JSON.parse(fs.readFileSync(path.join(outA, 'index.json'), 'utf8')).filter(e => !e.generated);
+  // the reference (JS) engine has no subcircuits: those examples are not copied to reference/examples
+  const noRef = new Set();
   for (const ex of defs) {
     const j = build(ex);
     const txt = JSON.stringify(j, null, 1);
     fs.writeFileSync(path.join(outA, ex.key + '.psimx'), txt);
-    fs.writeFileSync(path.join(outR, ex.key + '.psimx'), txt);
+    if (ex.subckts) noRef.add(ex.key);
+    else fs.writeFileSync(path.join(outR, ex.key + '.psimx'), txt);
     index.push({ key: ex.key, name: ex.name, cat: ex.cat, generated: true });
   }
   fs.writeFileSync(path.join(outA, 'index.json'), JSON.stringify(index, null, 1));
-  fs.writeFileSync(path.join(outR, 'index.json'), JSON.stringify(index, null, 1));
+  fs.writeFileSync(path.join(outR, 'index.json'), JSON.stringify(index.filter(e => !noRef.has(e.key)), null, 1));
   // Rust list for the app
   const cats = { buck: '電力轉換', buckac: '電力轉換', doublepulse: '功率元件', bridge: '電力轉換', rlc: '被動電路與濾波', tl431: '類比與控制 IC', supervisor: '類比與控制 IC' };
   const rs = ['// generated by tools/examples/gen.js — do not edit', 'pub const EXAMPLES: &[Example] = &['];

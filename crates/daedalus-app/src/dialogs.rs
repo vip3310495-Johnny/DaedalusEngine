@@ -4,7 +4,6 @@ use crate::editor::Editor;
 use daedalus_core::expr::{self, Syms};
 use daedalus_core::library::{lib, ElDef, ParamDef};
 use daedalus_core::models::devices::{parse_spice_model, preset};
-use daedalus_core::netlist::doc_syms;
 use egui::{Color32, RichText, Ui};
 use std::collections::BTreeMap;
 
@@ -79,6 +78,127 @@ pub struct PropsDlg {
     pub field_w: f32,
     /// the tolerance table of a Monte Carlo element
     pub mc: Option<crate::mc_edit::McEdit>,
+    /// definition and variable values of a subcircuit block
+    pub sub: Option<SubEdit>,
+    /// GUI test: apply as the 確定 button on the next frame
+    pub script_apply: bool,
+}
+
+/// The subcircuit part of a block's property dialog: which definition it uses and its own values for the
+/// variables of the definition's parameter files (empty = the definition's default).
+pub struct SubEdit {
+    pub def: String,
+    /// every definition: name, pin list, variables with their defaults
+    defs: Vec<(String, String, Vec<(String, String)>)>,
+    /// (variable, value) for the variables of the chosen definition
+    pub vals: Vec<(String, String)>,
+    /// values for names the chosen definition does not have
+    pub extra: Vec<(String, String)>,
+    /// "edit the subcircuit" was pressed
+    pub enter: bool,
+}
+impl SubEdit {
+    pub fn new(el: &daedalus_core::doc::Element, defs: &BTreeMap<String, daedalus_core::doc::Doc>) -> Self {
+        use daedalus_core::subckt;
+        let defs: Vec<(String, String, Vec<(String, String)>)> = defs.iter().map(|(k, d)| (k.clone(), daedalus_core::library::ports_str(&subckt::def_ports(d)), subckt::def_vars(d))).collect();
+        let mut s = SubEdit { def: el.params.get("def").cloned().unwrap_or_default(), defs, vals: vec![], extra: vec![], enter: false };
+        s.load(subckt::parse_vars(el.params.get("vars").map(|v| v.as_str()).unwrap_or("")));
+        s
+    }
+    fn vars_of(&self, def: &str) -> Vec<(String, String)> {
+        self.defs.iter().find(|d| d.0 == def).map(|d| d.2.clone()).unwrap_or_default()
+    }
+    /// spread "name = value" pairs over the chosen definition's variables
+    fn load(&mut self, own: Vec<(String, String)>) {
+        let vars = self.vars_of(&self.def);
+        self.vals = vars.iter().map(|(n, _)| (n.clone(), own.iter().find(|(m, _)| m.eq_ignore_ascii_case(n)).map(|o| o.1.clone()).unwrap_or_default())).collect();
+        self.extra = own.into_iter().filter(|(m, _)| !vars.iter().any(|(n, _)| n.eq_ignore_ascii_case(m))).collect();
+    }
+    fn all(&self) -> Vec<(String, String)> {
+        self.vals.iter().filter(|(_, v)| !v.trim().is_empty()).cloned().chain(self.extra.iter().cloned()).collect()
+    }
+    /// write the definition and the values into the block's parameters (the pins follow with `ports`)
+    pub fn store(&self, vals: &mut BTreeMap<String, String>) {
+        vals.insert("def".into(), self.def.clone());
+        vals.insert("vars".into(), self.all().iter().map(|(n, v)| format!("{} = {}", n, v.trim())).collect::<Vec<_>>().join("\n"));
+    }
+    /// pin list of the chosen definition
+    pub fn ports(&self) -> Option<String> {
+        self.defs.iter().find(|d| d.0 == self.def).map(|d| d.1.clone())
+    }
+    pub fn errors(&self, syms: &Syms) -> Vec<String> {
+        let mut out = vec![];
+        if !self.defs.iter().any(|d| d.0 == self.def) {
+            out.push(format!("找不到子電路定義「{}」", self.def));
+        }
+        for (n, v) in self.vals.iter().filter(|(_, v)| !v.trim().is_empty()) {
+            if let Err(e) = expr::eval_const(v, syms) {
+                out.push(format!("{}：{}", n, e.0));
+            }
+        }
+        out
+    }
+    pub fn ui(&mut self, ui: &mut Ui, syms: &Syms) {
+        let red = Color32::from_rgb(0xd9, 0x36, 0x3e);
+        ui.horizontal(|ui| {
+            ui.label("子電路定義");
+            let before = self.def.clone();
+            egui::ComboBox::from_id_salt("sub_def").selected_text(if self.def.is_empty() { "（未指定）".to_string() } else { self.def.clone() }).width(220.0).show_ui(ui, |ui| {
+                for (k, _, _) in self.defs.clone() {
+                    ui.selectable_value(&mut self.def, k.clone(), k);
+                }
+            });
+            if self.def != before {
+                let own = self.all();
+                self.load(own);
+            }
+            if ui.button("進入子電路編輯…").on_hover_text("套用這些設定並開啟子電路的內容（Ctrl+E）；「返回上層」回到這裡").clicked() {
+                self.enter = true;
+            }
+        });
+        ui.add_space(4.0);
+        if self.vals.is_empty() && self.extra.is_empty() {
+            ui.weak("這個子電路沒有參數。在子電路裡放一個參數檔（例如 R = 10），就能在每個方塊個別指定數值。");
+            return;
+        }
+        ui.weak("子電路參數：留白使用子電路參數檔的預設值；填入的數值或運算式以這一層電路的參數計算。");
+        egui::Grid::new("sub_vars").num_columns(3).spacing([10.0, 4.0]).striped(true).show(ui, |ui| {
+            ui.strong("參數");
+            ui.strong("預設值");
+            ui.strong("此方塊的值");
+            ui.end_row();
+            let defaults = self.vars_of(&self.def);
+            for (n, v) in self.vals.iter_mut() {
+                ui.label(n.as_str());
+                ui.weak(defaults.iter().find(|d| &d.0 == n).map(|d| d.1.clone()).unwrap_or_default());
+                let err = (!v.trim().is_empty()).then(|| expr::eval_const(v, syms).err()).flatten();
+                let mut te = egui::TextEdit::singleline(v).hint_text("（預設）");
+                if err.is_some() {
+                    te = te.text_color(red);
+                }
+                let r = wide(ui, FIELD_W * 1.6, te);
+                if let Some(e) = err {
+                    r.on_hover_text(e.0);
+                }
+                ui.end_row();
+            }
+            let mut drop = None;
+            for (i, (n, v)) in self.extra.iter().enumerate() {
+                ui.label(n.as_str());
+                ui.colored_label(red, "（定義中沒有）");
+                ui.horizontal(|ui| {
+                    ui.label(v.as_str());
+                    if ui.small_button("移除").clicked() {
+                        drop = Some(i);
+                    }
+                });
+                ui.end_row();
+            }
+            if let Some(i) = drop {
+                self.extra.remove(i);
+            }
+        });
+    }
 }
 pub enum DlgResult {
     Keep,
@@ -87,7 +207,7 @@ pub enum DlgResult {
 }
 
 impl PropsDlg {
-    pub fn new(ed: &Editor, id: i64) -> Option<Self> {
+    pub fn new(ed: &Editor, id: i64, defs: &BTreeMap<String, daedalus_core::doc::Doc>) -> Option<Self> {
         let el = ed.el(id)?;
         let d = lib().get(&el.typ)?;
         let mut disp = BTreeMap::new();
@@ -97,7 +217,8 @@ impl PropsDlg {
             disp.insert(p.k.clone(), ed_disp.get(&p.k).copied().unwrap_or_else(|| d.show.contains(&p.k)));
         }
         let mc = (el.typ == "MONTECARLO").then(|| crate::mc_edit::McEdit::new(el.params.get("vars").map(|s| s.as_str()).unwrap_or("")));
-        Some(PropsDlg { id, name: el.name.clone(), vals: el.params.clone(), disp, err: String::new(), syms: doc_syms(&ed.doc), field_w: 0.0, mc })
+        let sub = (el.typ == "SUBCKT").then(|| SubEdit::new(el, defs));
+        Some(PropsDlg { id, name: el.name.clone(), vals: el.params.clone(), disp, err: String::new(), syms: ed.syms(), field_w: 0.0, mc, sub, script_apply: false })
     }
     /// GUI test: edit the Monte Carlo table ("add" target, "push" target unchecked, "rlc", "remove" row)
     pub fn script_mc(&mut self, ed: &Editor, cmd: &str, arg: &str) {
@@ -218,6 +339,13 @@ impl PropsDlg {
                     ui.add_space(8.0);
                     m.ui(ui, &ed.doc, &self.syms, self.vals.entry("vars".to_string()).or_default());
                 }
+                if let Some(s) = self.sub.as_mut() {
+                    ui.add_space(8.0);
+                    s.ui(ui, &self.syms);
+                    if s.enter {
+                        res = DlgResult::Apply;
+                    }
+                }
                 if d.params.iter().any(|p| p.adv) {
                     egui::CollapsingHeader::new("進階參數").default_open(model == "ds").show(ui, |ui| {
                         egui::Grid::new("pgrid_adv").num_columns(4).spacing([10.0, 6.0]).striped(true).show(ui, |ui| {
@@ -238,7 +366,7 @@ impl PropsDlg {
             }
             ui.separator();
             ui.horizontal(|ui| {
-                if ui.button("確定").clicked() || ui.input(|i| i.key_pressed(egui::Key::Enter) && i.modifiers.command) {
+                if std::mem::take(&mut self.script_apply) || ui.button("確定").clicked() || ui.input(|i| i.key_pressed(egui::Key::Enter) && i.modifiers.command) {
                     res = DlgResult::Apply;
                 }
                 if ui.button("取消").clicked() {
@@ -273,6 +401,18 @@ impl PropsDlg {
                     }
                 }
             }
+            if let Some(s) = &self.sub {
+                errs.extend(s.errors(&self.syms));
+                s.store(&mut self.vals);
+            }
+            if el.typ == "SUBPORT" {
+                let t = self.vals.get("text").map(|s| s.trim().to_string()).unwrap_or_default();
+                if t.is_empty() {
+                    errs.push("埠名稱不可空白".into());
+                } else if ed.doc.elements.iter().any(|o| o.id != self.id && o.typ == "SUBPORT" && o.params.get("text").map(|s| s.trim()) == Some(t.as_str())) {
+                    errs.push(format!("已有名為「{}」的埠（同名的埠會是同一隻接腳）", t));
+                }
+            }
             if model == "custom" && self.vals.get("spice").map(|s| s.trim().is_empty()).unwrap_or(true) && d.param("spice").is_some() {
                 errs.push("自訂模型需填寫 SPICE 參數".into());
             }
@@ -286,6 +426,9 @@ impl PropsDlg {
             }
             if !errs.is_empty() {
                 self.err = errs.join("；");
+                if let Some(s) = self.sub.as_mut() {
+                    s.enter = false;
+                }
                 return DlgResult::Keep;
             }
             let name = if d.noname() { None } else { Some(self.name.trim().to_string()) };
@@ -296,6 +439,15 @@ impl PropsDlg {
             let same_disp = self.disp.iter().all(|(k, v)| ed_disp.get(k).copied().unwrap_or(*v) == *v);
             if !(same_vals && same_name && same_disp) {
                 ed.set_params(self.id, name, self.vals.clone(), Some(self.disp.clone()));
+                // another definition: new pins, wires follow the pins they ended on (same names)
+                if let Some(p) = self.sub.as_ref().and_then(|s| s.ports()) {
+                    if let Some(i) = ed.doc.elements.iter().position(|e| e.id == self.id) {
+                        if ed.doc.elements[i].params.get("ports") != Some(&p) {
+                            ed.doc.set_block_ports(i, &p);
+                            ed.changed();
+                        }
+                    }
+                }
             }
             return DlgResult::Close;
         }
@@ -327,7 +479,7 @@ impl SimCtrlDlg {
         SimCtrlDlg { id, vals, err: String::new() }
     }
     pub fn ui(&mut self, ctx: &egui::Context, ed: &mut Editor) -> bool {
-        let syms = doc_syms(&ed.doc);
+        let syms = ed.syms();
         let mut keep = true;
         let mut open = true;
         let mut apply = false;
@@ -614,7 +766,7 @@ impl InlineEdit {
                                     keep = false;
                                 }
                             } else if let Some(p) = d.param(&self.key) {
-                                match validate(p, &self.text, &doc_syms(&ed.doc), &d.typ) {
+                                match validate(p, &self.text, &ed.syms(), &d.typ) {
                                     Some(e) => self.err = Some(e),
                                     None => {
                                         let mut pr = el.params.clone();
@@ -663,6 +815,7 @@ pub fn help_ui(ui: &mut Ui) {
         ("滾輪 / F / + / −", "縮放 / 全部顯示 / 放大 / 縮小"),
         ("右鍵或中鍵拖曳 / 空白鍵＋拖曳 / H", "平移（右鍵點一下不拖曳＝右鍵選單）"),
         ("Ctrl+F", "尋找元件"),
+        ("Ctrl+E / Ctrl+Shift+E", "進入選取的子電路方塊 / 返回上層電路"),
         ("F5 / F6 / F7", "執行模擬 / 開啟上次結果 / 模擬控制"),
         ("Ctrl+N / O / S", "新增 / 開啟 / 儲存"),
     ];
@@ -680,6 +833,7 @@ pub fn help_ui(ui: &mut Ui) {
     ui.label("最多 4 個畫面平分高度，再多時每個畫面維持同樣高度，可上下捲動。左側「量測」最多 4 欄，在「設定」選擇量測項目（頻率、工作週期、RMS 等示波器量測）；「量測」「游標」標題旁可切換全部畫面或目前畫面。");
     ui.label("「匯出」：CSV、所選波形報告或所有波形報告（PDF 或 Excel）。「儲存波形檔」存成 .dwave，日後以「開啟波形檔」讀回，不必重新模擬。");
     ui.label("「檔案 → 匯出畫面（PDF）」把整張電路圖存成向量 PDF；「檔案 → 設定」可調整介面與電路圖文字大小。元件庫標題列的圖釘可取消釘選，元件庫會收成左緣的標籤，滑鼠移過去才展開。");
+    ui.label("子電路（PSIM 的 subcircuit）：「子電路 → 新增子電路…」建立並放置方塊，右鍵方塊「進入子電路」（Ctrl+E）畫內容；子電路裡的「子電路埠」就是方塊的接腳，子電路參數檔的變數可在每個方塊的屬性中個別指定。所有方塊共用同一個定義，定義存在電路檔裡；「匯出子電路定義…」「從檔案匯入子電路…」可在電路之間共用。");
     ui.label("完整說明（每個元件的特性與波形圖、參數、運算式與 C 程式方塊支援的函數）：「說明 → 使用說明書」或按 F1。");
     ui.label("蒙地卡羅分析：在 Monte Carlo 元件的屬性視窗按「＋ 加入元件參數或變數…」選擇要隨機變化的數值（例如 R1.R），填入容差與分佈。");
     ui.label("「波形運算」以探棒訊號寫運算式（如 Vo*Io、sqrt(Va^2+Vb^2)）建立新訊號；「FFT」分析游標 C1–C2 之間（或目前顯示範圍）的頻譜、諧波與 THD。");

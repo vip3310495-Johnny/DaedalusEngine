@@ -16,7 +16,8 @@ pub mod netlist;
 pub mod runner;
 pub mod sim;
 pub mod sparse;
+pub mod subckt;
 pub mod sweep;
 pub mod util;
 
-pub const VERSION: &str = "V1.5.1";
+pub const VERSION: &str = "V1.6.0";

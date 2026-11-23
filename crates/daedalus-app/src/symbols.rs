@@ -399,6 +399,17 @@ impl SymCache {
                 }
                 Symbol { prims: blk(h, &ins, &outs), texts }
             }
+            "SUBCKT" => {
+                let g = daedalus_core::library::sub_geom(el);
+                let [x0, y0, x1, y1] = g.body;
+                let mut prims = vec![Prim::Poly { pts: vec![[x0 as f32, y0 as f32], [x1 as f32, y0 as f32], [x1 as f32, y1 as f32], [x0 as f32, y1 as f32]], closed: true, fill: false, thin: false, dash: false }];
+                for p in &g.pins {
+                    let (ex, ey) = if p.x <= g.bb[0] { (x0, p.y) } else if p.x >= g.bb[2] { (x1, p.y) } else if p.y <= g.bb[1] { (p.x, y0) } else { (p.x, y1) };
+                    prims.push(Prim::Poly { pts: vec![[p.x as f32, p.y as f32], [ex as f32, ey as f32]], closed: false, fill: false, thin: false, dash: false });
+                }
+                let texts = g.texts.into_iter().map(|(x, y, s, sz, a)| SymText { x, y, s, sz, a: a.into() }).collect();
+                Symbol { prims, texts }
+            }
             _ => self.get(d).clone(),
         }
     }

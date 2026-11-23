@@ -173,7 +173,10 @@ impl Canvas {
 
     fn pin_dir(el: &Element, p: &daedalus_core::library::PinDef) -> (f64, f64) {
         let d = lib().get(&el.typ).unwrap();
-        let [x0, mut y0, x1, mut y1] = d.bb;
+        let [mut x0, mut y0, mut x1, mut y1] = d.bb;
+        if el.typ == "SUBCKT" {
+            [x0, y0, x1, y1] = daedalus_core::library::local_bb(el);
+        }
         if el.typ == "CBLOCK" {
             let pins = lib().pins_for(el);
             let n = pins.iter().filter(|q| q.k == "ci").count().max(1) as f64;
@@ -255,8 +258,22 @@ impl Canvas {
 
     fn draw_label_el(&self, painter: &egui::Painter, el: &Element, pal: &Pal, ghost: bool) {
         let t = el.params.get("text").cloned().unwrap_or_default();
-        let wd = (0.62 * t.chars().count() as f64 + 0.9).max(1.6);
-        let pts: Vec<Pos2> = [(0.0, 0.0), (0.5, -0.55), (wd, -0.55), (wd, 0.55), (0.5, 0.55)].iter().map(|&(a, b)| {
+        let wd = crate::editor::label_len(el);
+        // a subcircuit port: pointed at both ends, with the side of the block it becomes a pin on
+        let port = el.typ == "SUBPORT";
+        let outline: Vec<(f64, f64)> = if port { vec![(0.0, 0.0), (0.5, -0.55), (wd - 0.5, -0.55), (wd, 0.0), (wd - 0.5, 0.55), (0.5, 0.55)] } else { vec![(0.0, 0.0), (0.5, -0.55), (wd, -0.55), (wd, 0.55), (0.5, 0.55)] };
+        let t = if port {
+            let side = match el.params.get("side").map(|s| s.as_str()) {
+                Some("R") => "右",
+                Some("T") => "上",
+                Some("B") => "下",
+                _ => "左",
+            };
+            format!("{}·{}", t, side)
+        } else {
+            t
+        };
+        let pts: Vec<Pos2> = outline.iter().map(|&(a, b)| {
             let (x, y) = tpt(el, a, b);
             self.w2s(x, y)
         }).collect();

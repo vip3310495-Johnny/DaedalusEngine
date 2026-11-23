@@ -211,6 +211,8 @@ struct Lay {
     /// net of each wire drawn so far (parallel to c.doc.wires)
     wnet: Vec<String>,
     its: Vec<It>,
+    /// where the main chain starts when there is no source (a subcircuit: the net of its first input port)
+    start: Option<String>,
 }
 
 impl Lay {
@@ -327,7 +329,10 @@ pub struct Out {
 }
 
 pub fn build(title: Option<&str>, head_items: Vec<Item>, items: Vec<Item>) -> Out {
-    let mut lay = Lay { c: Circuit::empty(), wnet: vec![], its: vec![] };
+    build_from(title, head_items, items, None)
+}
+pub fn build_from(title: Option<&str>, head_items: Vec<Item>, items: Vec<Item>, start: Option<String>) -> Out {
+    let mut lay = Lay { c: Circuit::empty(), wnet: vec![], its: vec![], start };
     let mut notes = vec![];
     // power nets: those with a power pin
     let mut power_net: HashSet<String> = HashSet::new();
@@ -571,9 +576,11 @@ fn power(lay: &mut Lay, hb: f64) -> f64 {
             adj.entry(na.clone()).or_default().push((i, a.n.clone(), b.n.clone(), nb.clone()));
             adj.entry(nb).or_default().push((i, b.n.clone(), a.n.clone(), na));
         }
+        // a real source first; without one, the given start (a subcircuit's input port) before any shunt
+        let given = lay.start.clone().filter(|n| adj.contains_key(n));
         let start = match src {
-            Some(s) => Some(shunt_at(lay, s).2),
-            None => series.first().map(|&i| net_of(lay, i, &lay.its[i].ends.as_ref().unwrap().0.n)),
+            Some(s) if given.is_none() || is_src(lay, s) => Some(shunt_at(lay, s).2),
+            _ => given.or_else(|| series.first().map(|&i| net_of(lay, i, &lay.its[i].ends.as_ref().unwrap().0.n))),
         };
         let mut best: (Vec<String>, Vec<(usize, String, String)>) = (start.iter().cloned().collect(), vec![]);
         if let Some(st) = start.clone() {

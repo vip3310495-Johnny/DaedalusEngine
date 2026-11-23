@@ -1,4 +1,4 @@
-# DaedalusEngine V1.5.1
+# DaedalusEngine V1.6.0
 
 電力電子電路模擬器（Windows 11，Rust 原生程式）。
 以網頁版「電力電子電路模擬器 V3.2.1」為參考重新實作，包含其全部元件模型，`.psimx` 電路檔兩邊通用。
@@ -7,11 +7,11 @@
 
 ## 下載
 
-**[⬇ 下載安裝檔 DaedalusEngine-Setup-V1.5.1.exe](https://github.com/vip3310495-Johnny/DaedalusEngine/releases/download/v1.5.1/DaedalusEngine-Setup-V1.5.1.exe)**（14.1 MB，Windows 10／11，不需要系統管理員權限）
+**[⬇ 下載安裝檔 DaedalusEngine-Setup-V1.6.0.exe](https://github.com/vip3310495-Johnny/DaedalusEngine/releases/download/v1.6.0/DaedalusEngine-Setup-V1.6.0.exe)**（14.1 MB，Windows 10／11，不需要系統管理員權限）
 
 - 下載後按兩下執行，依畫面按「安裝」即可；已安裝舊版時會自動提供「更新」。
 - 最新版與所有舊版：[Releases 頁面](https://github.com/vip3310495-Johnny/DaedalusEngine/releases/latest)。安裝檔只放在 Releases，不放在程式碼清單中。
-- SHA-256 見各 Release 的 `SHA256SUMS.txt`（驗證：`certutil -hashfile DaedalusEngine-Setup-V1.5.1.exe SHA256`）
+- SHA-256 見各 Release 的 `SHA256SUMS.txt`（驗證：`certutil -hashfile DaedalusEngine-Setup-V1.6.0.exe SHA256`）
 - 目前版本尚未經程式碼簽章（SignPath 申請中）：Windows 可能顯示「Windows 已保護您的電腦」，請按「其他資訊 › 仍要執行」；
   開啟「智慧型應用程式控制」（Smart App Control）的電腦會直接封鎖，需等簽章版。
 
@@ -19,7 +19,7 @@
 
 ## 安裝與解除安裝
 
-- 執行 `DaedalusEngine-Setup-V1.5.1.exe`。**不需要系統管理員權限**：程式安裝於
+- 執行 `DaedalusEngine-Setup-V1.6.0.exe`。**不需要系統管理員權限**：程式安裝於
   `%LOCALAPPDATA%\Programs\DaedalusEngine`，捷徑與檔案關聯只寫入目前使用者（HKCU）。
 - 安裝前須閱讀並勾選同意**授權條款與免責聲明**（GPL-3.0、附加條款與免責聲明，全文見 [NOTICE.txt](NOTICE.txt)）；
   更新、修復與降級也會先顯示條款，解除安裝則不需要。
@@ -41,8 +41,8 @@
 ### 命令列（自動化部署）
 
 ```
-DaedalusEngine-Setup-V1.5.1.exe --silent [--dir <資料夾>] [--no-desktop|--desktop] [--no-assoc|--assoc] [--launch]   安裝或更新
-DaedalusEngine-Setup-V1.5.1.exe --silent --repair    修復已安裝的程式（uninstall.exe 亦可）
+DaedalusEngine-Setup-V1.6.0.exe --silent [--dir <資料夾>] [--no-desktop|--desktop] [--no-assoc|--assoc] [--launch]   安裝或更新
+DaedalusEngine-Setup-V1.6.0.exe --silent --repair    修復已安裝的程式（uninstall.exe 亦可）
 uninstall.exe --maintain                             開啟維護畫面（更新／修復／解除安裝）
 uninstall.exe --uninstall --silent [--purge]
 ```
@@ -56,8 +56,8 @@ uninstall.exe --uninstall --silent [--purge]
 
 ## 快速上手
 
-1. 「檔案 › 範例」依分類開啟 34 個範例電路（電力轉換、三相系統、功率元件、變壓器與磁性元件、類比與控制 IC、
-   被動電路與濾波、電源與受控源、控制方塊、數位邏輯、數位控制、分析功能），每個都附理論驗證（見「範例電路與驗證」）。
+1. 「檔案 › 範例」依分類開啟 35 個範例電路（電力轉換、三相系統、功率元件、變壓器與磁性元件、類比與控制 IC、
+   被動電路與濾波、電源與受控源、控制方塊、數位邏輯、數位控制、分析功能、子電路），每個都附理論驗證（見「範例電路與驗證」）。
 2. 按 **F5** 執行模擬；暫態結果顯示在波形視窗，AC 掃頻結果顯示在波德圖視窗（含交越頻率、相位邊限、增益邊限）。
 3. 左側元件庫可依分類瀏覽或搜尋（中英文皆可），點選後在電路圖上左鍵放置；也可在空白處按 `/` 快速新增（在空白處雙擊快速新增需在「檔案 → 設定」開啟）。
    元件庫標題列的圖釘可取消釘選：元件庫收成左緣的「元件庫」標籤，滑鼠移過去才展開，電路圖可用整個視窗寬度。
@@ -75,6 +75,12 @@ uninstall.exe --uninstall --silent [--purge]
    第 #0 次為標稱值，其餘各次以所有核心平行運算；波形視窗疊出全部結果，「模擬 › 蒙地卡羅統計結果」列出每個探棒
    末值／平均／最大／最小的平均值、σ、最小、最大與每次的抽樣值，可匯出 CSV。相同種子可完全重現。
    此元件亦為 DaedalusEngine 新增（範例「蒙地卡羅容差分析」）。
+7. **子電路**（PSIM 的 subcircuit）：「子電路 › 新增子電路…」建立並放置方塊，右鍵方塊「進入子電路」（`Ctrl+E`）畫內容，
+   「⬑ 返回上層」（`Ctrl+Shift+E`）回到上一層。子電路裡的「子電路埠」就是方塊的接腳（名稱與左／右／上／下位置在埠的屬性設定）；
+   子電路參數檔的變數（例如 `R = 1k`）可在每個方塊的屬性中個別指定數值，留白用預設值。子電路可以巢狀，
+   裡面的元件以「方塊名稱.元件名稱」出現在波形中（例如 `X1.Vc`、`X2.XA.Vc`）。定義存在電路檔裡；
+   「匯出子電路定義…」「從檔案匯入子電路…」在電路之間共用，「管理子電路…」重新命名或刪除。
+   模擬時子電路展開成完整電路，結果與直接畫出所有元件相同（範例「子電路：RC 低通方塊」）。網頁版不認得子電路。
 
 ### 硬體加速
 
@@ -102,6 +108,7 @@ uninstall.exe --uninstall --silent [--purge]
 | 滾輪、`F`、`+`、`−` | 縮放、全部顯示 |
 | 右鍵或中鍵拖曳、按住空白鍵拖曳、`H` 手形工具 | 平移（右鍵點一下不拖曳＝右鍵選單） |
 | `Ctrl+F` | 尋找元件 |
+| `Ctrl+E` / `Ctrl+Shift+E` | 進入選取的子電路方塊 / 返回上層 |
 | `F5` / `F6` / `F7` | 執行模擬 / 上次結果 / 模擬控制 |
 | `Ctrl+N / O / S` | 新增 / 開啟 / 儲存 |
 
@@ -133,8 +140,8 @@ uninstall.exe --uninstall --silent [--purge]
 
 ## 範例電路與驗證
 
-內建 34 個範例（網頁版 7 個＋新增 27 個），**元件庫 221 種元件全部用到（涵蓋率 100 %）**。新增範例的理論值定義在 `tools/examples/defs*.js`，
-`node tools/examples/verify.js` 以命令列版執行全部範例並逐點比對：**269 項檢查全部通過**。
+內建 35 個範例（網頁版 7 個＋新增 28 個），**元件庫 223 種元件全部用到（涵蓋率 100 %，包括子電路裡的元件）**。新增範例的理論值定義在 `tools/examples/defs*.js`，
+`node tools/examples/verify.js` 以命令列版執行全部範例並逐點比對：**283 項理論檢查全部通過**（另有 5 項與 ngspice 比對，需先下載 ngspice）。
 
 | 類型 | 範例 | 比對方式 | 最大相對誤差 |
 |---|---|---|---|
@@ -177,14 +184,14 @@ Claude Desktop：在 `%APPDATA%\Claude\claude_desktop_config.json` 加入
 | 工具 | 用途 |
 |---|---|
 | `daedalus_guide` | 使用指引：流程、網表格式、編輯操作、建模規則（功率／控制介面、開關、SPICE 模型、步長）、量測定義、常見錯誤 |
-| `daedalus_elements` | 查詢 221 種元件：接腳名稱與類型（功率／控制輸入／控制輸出…）、參數預設值、單位、說明與選項 |
+| `daedalus_elements` | 查詢 223 種元件：接腳名稱與類型（功率／控制輸入／控制輸出…）、參數預設值、單位、說明與選項 |
 | `daedalus_new` | 由網表建立電路：每隻接腳寫節點名稱（同名相連、接地 `"0"`），以導線自動排版成 PSIM 慣用畫法（主電流路徑在上方軌、並聯元件掛到地線、橋式電路以母線與橋臂排列、控制區依訊號流向），只有跨功率／控制的訊號用節點標籤；以程式的連線規則驗證與網表一致 |
-| `daedalus_inspect` | 讀取電路（包括使用者畫的）：元件、每隻接腳的節點、每個節點的接腳、問題清單（未接、功率與控制直接相連、名稱重複…） |
-| `daedalus_edit` | 修改電路：新增、刪除、改參數、移動旋轉、連接、拆線、拉線、模擬設定、波形畫面；每個操作都驗證不會誤接或斷開其他接腳，整批成功才存檔 |
+| `daedalus_inspect` | 讀取電路（包括使用者畫的）：元件、每隻接腳的節點、每個節點的接腳、問題清單（未接、功率與控制直接相連、名稱重複…）；加 `subckt` 看一個子電路的內容 |
+| `daedalus_edit` | 修改電路：新增、刪除、改參數、移動旋轉、連接、拆線、拉線、模擬設定、波形畫面；每個操作都驗證不會誤接或斷開其他接腳，整批成功才存檔；操作加 `subckt` 就改在子電路裡做（所有方塊跟著更新），另有 subckt_new／remove／rename／import 管理子電路 |
 | `daedalus_simulate` | 暫態（含參數掃描、蒙地卡羅、高精度）或 AC 掃頻：每支探棒的平均、RMS、最小、最大、峰對峰、終值與示波器量測；AC 的頻寬、穿越頻率、相位與增益裕度 |
 | `daedalus_waveform` | 波形圖（PNG，快速切換部分以包絡顯示）與降取樣數值表 |
-| `daedalus_render` | 電路圖（PNG／SVG，與程式相同的符號、座標尺規、未接接腳紅圈，可標出節點或元件） |
-| `daedalus_examples` | 34 個已驗證的範例電路 |
+| `daedalus_render` | 電路圖（PNG／SVG，與程式相同的符號、座標尺規、未接接腳紅圈，可標出節點或元件；`subckt` 畫子電路） |
+| `daedalus_examples` | 35 個已驗證的範例電路 |
 | `daedalus_open` | 在 DaedalusEngine 視窗開啟電路檔 |
 
 程式開著某個電路檔時，AI 透過 MCP 修改並存檔，畫面會**自動重新載入**（Ctrl+Z 可復原；有尚未儲存的變更時會先詢問）。
@@ -197,10 +204,10 @@ Claude Desktop：在 `%APPDATA%\Claude\claude_desktop_config.json` 加入
 沒有 MCP 時，Skill 以 `daedalus-cli new <網表.json> <電路.psimx>`（同一套自動排版）、`daedalus-cli render <電路.psimx> <圖.png>`、`daedalus-cli inspect` 建立與檢查電路。
 安裝到 Claude Code：`daedalus-cli skill install`（或「說明 › AI 與 MCP › 安裝到 Claude Code」）；每個 Release 也附上 `daedalus-circuit-builder-skill.zip`。
 
-- `scripts/psimx_builder.py`：Python 產生器與靜態檢查；接腳與參數表 `elements.json` 由元件庫自動產生（全部 221 種元件）。
+- `scripts/psimx_builder.py`：Python 產生器與靜態檢查；接腳與參數表 `elements.json` 由元件庫自動產生（全部 223 種元件）；支援子電路（`d.subckt()`、`port()`、SUBCKT 方塊的接腳與檢查與程式一致）。
 - `scripts/verify_psimx.py`：靜態檢查＋以 `daedalus-cli` 模擬，列出每支探棒的統計值，可用 `--expect` 判定。
 - `scripts/shot_psimx.py`：用 DaedalusEngine 開檔截圖（`--run` 連同波形）。
-- 範例 `examples/buck_converter.py` 在每次建置時由 CI 實際產生、檢查並模擬。
+- 範例 `examples/buck_converter.py` 與子電路範例 `examples/subcircuit_rc.py` 在每次建置時由 CI 實際產生、檢查並模擬。
 
 ---
 
@@ -377,6 +384,15 @@ Simulation Control 的「高精度模式」設為 1、填入目標誤差（預�
     控制區依訊號流向分欄；只有跨功率／控制的訊號（閘極、感測器輸出）用節點標籤（Buck 範例由每隻接腳一個標籤降為 2 個）。
   - 修改電路時 connect 先嘗試拉導線（via 可指定），新元件放在要連的節點旁；網表的節點名稱存在檔案（`nets`）中，之後仍可用名稱指定。
   - `daedalus-cli new／inspect／render／tool`：沒有 MCP 的環境（Skill）也能用同一套自動排版、檢查與電路圖。
+- **V1.6.0**（新功能）：PSIM 式子電路
+  - 自訂子電路：以「子電路埠」定義介面（左右上下四邊），子電路內可放任何功率、控制元件與探棒，並以參數方塊定義可在方塊上覆寫的變數；
+    定義存在主電路檔中，一個 `.psimx` 即包含全部內容。
+  - 「子電路」選單：新增、放置、從其他電路檔匯入、匯出成電路檔、管理（改名、刪除、查看使用處）；Ctrl+E 進入、Ctrl+Shift+E 返回，上方顯示所在路徑；
+    子電路可巢狀，不能直接或間接包含自己。
+  - 方塊的屬性視窗可選擇子電路並覆寫變數；修改子電路的埠後，所有方塊的接腳與導線自動跟著更新。
+  - 模擬時展開成單一電路：內部元件與探棒以 `X1.R1`、`X1.Vc` 命名，錯誤訊息指向對應的方塊；新範例 subcircuit_rc（與理論值比對）。
+  - MCP：網表 `subckts`、編輯操作的 `subckt` 範圍與 subckt_new／remove／rename／import，`daedalus_inspect`、`daedalus_render` 可查看子電路內部；
+    Skill 的 `psimx_builder.py` 支援子電路並附範例 `subcircuit_rc.py`。
 
 ---
 

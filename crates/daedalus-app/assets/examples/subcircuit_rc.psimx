@@ -1,0 +1,787 @@
+{
+ "app": "psimweb",
+ "version": "V1.6.0",
+ "doc": {
+  "elements": [
+   {
+    "id": 1,
+    "type": "TEXT",
+    "x": -20,
+    "y": -8,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "子電路「RC」：R、C 與探棒 Vc，參數 R = 1k、C = 1u；埠 in（左）、out（右）。子電路「TWO」：兩個 RC 方塊串接，第二個指定 R = 10k。\nX1 用預設值（τ = 1 ms）；X3 指定 R = Rf（主電路參數檔 Rf = 2.2k，τ = 2.2 ms）；X2 為 TWO（兩節 RC 串接，理論解為 2×2 線性系統的指數解）。\n方塊裡的探棒在波形中以「方塊名稱.探棒名稱」出現：X1.Vc、X3.Vc、X2.XA.Vc（第一節）、X2.XB.Vc（第二節）。右鍵方塊「進入子電路」（Ctrl+E）看內容。"
+    }
+   },
+   {
+    "id": 2,
+    "type": "SIMCTRL",
+    "x": -20,
+    "y": -4,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "dt": "1u",
+     "tt": "10m",
+     "tp": "0",
+     "ps": "1",
+     "lte": "1",
+     "ltetol": "1e-3",
+     "interp": "1",
+     "damp": "1",
+     "acc": "0",
+     "etol": "1e-6",
+     "maxlv": "8"
+    }
+   },
+   {
+    "id": 3,
+    "type": "PARAMS",
+    "x": -12,
+    "y": -4,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "Rf = 2.2k"
+    }
+   },
+   {
+    "id": 4,
+    "type": "VDC",
+    "x": -13,
+    "y": 14,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "V1",
+    "params": {
+     "V": "10"
+    }
+   },
+   {
+    "id": 6,
+    "type": "LABEL",
+    "x": -13,
+    "y": 10,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "vin"
+    }
+   },
+   {
+    "id": 8,
+    "type": "GND",
+    "x": -13,
+    "y": 18,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 9,
+    "type": "SUBCKT",
+    "x": 3,
+    "y": 14,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "X1",
+    "params": {
+     "def": "RC",
+     "ports": "[[\"in\",\"L\"],[\"out\",\"R\"]]"
+    }
+   },
+   {
+    "id": 11,
+    "type": "LABEL",
+    "x": -2,
+    "y": 14,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "vin"
+    }
+   },
+   {
+    "id": 13,
+    "type": "LABEL",
+    "x": 8,
+    "y": 14,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o1"
+    }
+   },
+   {
+    "id": 14,
+    "type": "SUBCKT",
+    "x": 20,
+    "y": 14,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "X2",
+    "params": {
+     "def": "TWO",
+     "ports": "[[\"i\",\"L\"],[\"o\",\"R\"]]"
+    }
+   },
+   {
+    "id": 16,
+    "type": "LABEL",
+    "x": 16,
+    "y": 14,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "vin"
+    }
+   },
+   {
+    "id": 18,
+    "type": "LABEL",
+    "x": 24,
+    "y": 14,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o2"
+    }
+   },
+   {
+    "id": 19,
+    "type": "SUBCKT",
+    "x": -11,
+    "y": 28,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "X3",
+    "params": {
+     "def": "RC",
+     "vars": "R = Rf",
+     "ports": "[[\"in\",\"L\"],[\"out\",\"R\"]]"
+    }
+   },
+   {
+    "id": 21,
+    "type": "LABEL",
+    "x": -16,
+    "y": 28,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "vin"
+    }
+   },
+   {
+    "id": 23,
+    "type": "LABEL",
+    "x": -6,
+    "y": 28,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o3"
+    }
+   },
+   {
+    "id": 24,
+    "type": "VP",
+    "x": 5,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vo1",
+    "params": {}
+   },
+   {
+    "id": 26,
+    "type": "LABEL",
+    "x": 5,
+    "y": 31,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o1"
+    }
+   },
+   {
+    "id": 27,
+    "type": "VP",
+    "x": 19,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vo2",
+    "params": {}
+   },
+   {
+    "id": 29,
+    "type": "LABEL",
+    "x": 19,
+    "y": 31,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o2"
+    }
+   },
+   {
+    "id": 30,
+    "type": "VP",
+    "x": 33,
+    "y": 27,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vo3",
+    "params": {}
+   },
+   {
+    "id": 32,
+    "type": "LABEL",
+    "x": 33,
+    "y": 31,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "o3"
+    }
+   }
+  ],
+  "wires": [
+   {
+    "id": 5,
+    "x1": -13,
+    "y1": 12,
+    "x2": -13,
+    "y2": 10
+   },
+   {
+    "id": 7,
+    "x1": -13,
+    "y1": 16,
+    "x2": -13,
+    "y2": 18
+   },
+   {
+    "id": 10,
+    "x1": 0,
+    "y1": 14,
+    "x2": -2,
+    "y2": 14
+   },
+   {
+    "id": 12,
+    "x1": 6,
+    "y1": 14,
+    "x2": 8,
+    "y2": 14
+   },
+   {
+    "id": 15,
+    "x1": 18,
+    "y1": 14,
+    "x2": 16,
+    "y2": 14
+   },
+   {
+    "id": 17,
+    "x1": 22,
+    "y1": 14,
+    "x2": 24,
+    "y2": 14
+   },
+   {
+    "id": 20,
+    "x1": -14,
+    "y1": 28,
+    "x2": -16,
+    "y2": 28
+   },
+   {
+    "id": 22,
+    "x1": -8,
+    "y1": 28,
+    "x2": -6,
+    "y2": 28
+   },
+   {
+    "id": 25,
+    "x1": 5,
+    "y1": 29,
+    "x2": 5,
+    "y2": 31
+   },
+   {
+    "id": 28,
+    "x1": 19,
+    "y1": 29,
+    "x2": 19,
+    "y2": 31
+   },
+   {
+    "id": 31,
+    "x1": 33,
+    "y1": 29,
+    "x2": 33,
+    "y2": 31
+   }
+  ],
+  "nid": 33,
+  "subckts": {
+   "RC": {
+    "elements": [
+     {
+      "id": 1,
+      "type": "PARAMS",
+      "x": -20,
+      "y": -4,
+      "rot": 0,
+      "mir": false,
+      "dis": false,
+      "name": "",
+      "params": {
+       "text": "R = 1k\nC = 1u"
+      }
+     },
+     {
+      "id": 2,
+      "type": "SUBPORT",
+      "x": -14,
+      "y": 13,
+      "rot": 0,
+      "mir": false,
+      "dis": false,
+      "name": "",
+      "params": {
+       "text": "in",
+       "side": "L"
+      }
+     },
+     {
+      "id": 4,
+      "type": "LABEL",
+      "x": -14,
+      "y": 15,
+      "rot": 0,
+      "mir": false,
+      "dis": false,
+      "name": "",
+      "params": {
+       "text": "A"
+      }
+     },
+     {
+      "id": 5,
+      "type": "SUBPORT",
+      "x": 1,
+      "y": 13,
+      "rot": 0,
+      "mir": false,
+      "dis": false,
+      "name": "",
+      "params": {
+       "text": "out",
+       "side": "R"
+      }
+     },
+     {
+      "id": 7,
+      "type": "LABEL",
+      "x": 1,
+      "y": 15,
+      "rot": 0,
+      "mir": false,
+      "dis": false,
+      "name": "",
+      "params": {
+       "text": "B"
+      }
+     },
+     {
+      "id": 8,
+      "type": "R",
+      "x": 18,
+      "y": 13,
+      "rot": 0,
+      "mir": false,
+      "dis": false,
+      "name": "R1",
+      "params": {
+       "R": "R"
+      }
+     },
+     {
+      "id": 10,
+      "type": "LABEL",
+      "x": 14,
+      "y": 13,
+      "rot": 0,
+      "mir": false,
+      "dis": false,
+      "name": "",
+      "params": {
+       "text": "A"
+      }
+     },
+     {
+      "id": 12,
+      "type": "LABEL",
+      "x": 22,
+      "y": 13,
+      "rot": 0,
+      "mir": false,
+      "dis": false,
+      "name": "",
+      "params": {
+       "text": "B"
+      }
+     },
+     {
+      "id": 13,
+      "type": "C",
+      "x": 34,
+      "y": 13,
+      "rot": 0,
+      "mir": false,
+      "dis": false,
+      "name": "C1",
+      "params": {
+       "C": "C",
+       "v0": "0"
+      }
+     },
+     {
+      "id": 15,
+      "type": "LABEL",
+      "x": 30,
+      "y": 13,
+      "rot": 0,
+      "mir": false,
+      "dis": false,
+      "name": "",
+      "params": {
+       "text": "B"
+      }
+     },
+     {
+      "id": 17,
+      "type": "GND",
+      "x": 38,
+      "y": 13,
+      "rot": 0,
+      "mir": false,
+      "dis": false,
+      "name": "",
+      "params": {}
+     },
+     {
+      "id": 18,
+      "type": "VP",
+      "x": -13,
+      "y": 24,
+      "rot": 0,
+      "mir": false,
+      "dis": false,
+      "name": "Vc",
+      "params": {}
+     },
+     {
+      "id": 20,
+      "type": "LABEL",
+      "x": -13,
+      "y": 28,
+      "rot": 0,
+      "mir": false,
+      "dis": false,
+      "name": "",
+      "params": {
+       "text": "B"
+      }
+     }
+    ],
+    "wires": [
+     {
+      "id": 3,
+      "x1": -14,
+      "y1": 13,
+      "x2": -14,
+      "y2": 15
+     },
+     {
+      "id": 6,
+      "x1": 1,
+      "y1": 13,
+      "x2": 1,
+      "y2": 15
+     },
+     {
+      "id": 9,
+      "x1": 16,
+      "y1": 13,
+      "x2": 14,
+      "y2": 13
+     },
+     {
+      "id": 11,
+      "x1": 20,
+      "y1": 13,
+      "x2": 22,
+      "y2": 13
+     },
+     {
+      "id": 14,
+      "x1": 32,
+      "y1": 13,
+      "x2": 30,
+      "y2": 13
+     },
+     {
+      "id": 16,
+      "x1": 36,
+      "y1": 13,
+      "x2": 38,
+      "y2": 13
+     },
+     {
+      "id": 19,
+      "x1": -13,
+      "y1": 26,
+      "x2": -13,
+      "y2": 28
+     }
+    ],
+    "nid": 21
+   },
+   "TWO": {
+    "elements": [
+     {
+      "id": 1,
+      "type": "SUBPORT",
+      "x": -14,
+      "y": 13,
+      "rot": 0,
+      "mir": false,
+      "dis": false,
+      "name": "",
+      "params": {
+       "text": "i",
+       "side": "L"
+      }
+     },
+     {
+      "id": 3,
+      "type": "LABEL",
+      "x": -14,
+      "y": 15,
+      "rot": 0,
+      "mir": false,
+      "dis": false,
+      "name": "",
+      "params": {
+       "text": "I"
+      }
+     },
+     {
+      "id": 4,
+      "type": "SUBPORT",
+      "x": 1,
+      "y": 13,
+      "rot": 0,
+      "mir": false,
+      "dis": false,
+      "name": "",
+      "params": {
+       "text": "o",
+       "side": "R"
+      }
+     },
+     {
+      "id": 6,
+      "type": "LABEL",
+      "x": 1,
+      "y": 15,
+      "rot": 0,
+      "mir": false,
+      "dis": false,
+      "name": "",
+      "params": {
+       "text": "O"
+      }
+     },
+     {
+      "id": 7,
+      "type": "SUBCKT",
+      "x": 19,
+      "y": 14,
+      "rot": 0,
+      "mir": false,
+      "dis": false,
+      "name": "XA",
+      "params": {
+       "def": "RC",
+       "ports": "[[\"in\",\"L\"],[\"out\",\"R\"]]"
+      }
+     },
+     {
+      "id": 9,
+      "type": "LABEL",
+      "x": 14,
+      "y": 14,
+      "rot": 0,
+      "mir": false,
+      "dis": false,
+      "name": "",
+      "params": {
+       "text": "I"
+      }
+     },
+     {
+      "id": 11,
+      "type": "LABEL",
+      "x": 24,
+      "y": 14,
+      "rot": 0,
+      "mir": false,
+      "dis": false,
+      "name": "",
+      "params": {
+       "text": "M"
+      }
+     },
+     {
+      "id": 12,
+      "type": "SUBCKT",
+      "x": -11,
+      "y": 28,
+      "rot": 0,
+      "mir": false,
+      "dis": false,
+      "name": "XB",
+      "params": {
+       "def": "RC",
+       "vars": "R = 10k",
+       "ports": "[[\"in\",\"L\"],[\"out\",\"R\"]]"
+      }
+     },
+     {
+      "id": 14,
+      "type": "LABEL",
+      "x": -16,
+      "y": 28,
+      "rot": 0,
+      "mir": false,
+      "dis": false,
+      "name": "",
+      "params": {
+       "text": "M"
+      }
+     },
+     {
+      "id": 16,
+      "type": "LABEL",
+      "x": -6,
+      "y": 28,
+      "rot": 0,
+      "mir": false,
+      "dis": false,
+      "name": "",
+      "params": {
+       "text": "O"
+      }
+     }
+    ],
+    "wires": [
+     {
+      "id": 2,
+      "x1": -14,
+      "y1": 13,
+      "x2": -14,
+      "y2": 15
+     },
+     {
+      "id": 5,
+      "x1": 1,
+      "y1": 13,
+      "x2": 1,
+      "y2": 15
+     },
+     {
+      "id": 8,
+      "x1": 16,
+      "y1": 14,
+      "x2": 14,
+      "y2": 14
+     },
+     {
+      "id": 10,
+      "x1": 22,
+      "y1": 14,
+      "x2": 24,
+      "y2": 14
+     },
+     {
+      "id": 13,
+      "x1": -14,
+      "y1": 28,
+      "x2": -16,
+      "y2": 28
+     },
+     {
+      "id": 15,
+      "x1": -8,
+      "y1": 28,
+      "x2": -6,
+      "y2": 28
+     }
+    ],
+    "nid": 17
+   }
+  }
+ },
+ "screens": [
+  [
+   "Vo1",
+   "Vo3"
+  ],
+  [
+   "X2.XA.Vc",
+   "Vo2"
+  ]
+ ]
+}

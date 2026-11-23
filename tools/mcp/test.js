@@ -108,7 +108,7 @@ const buck = {
   r = await call('daedalus_elements', { type: 'mosfet' });
   check(!r.isError && /G ［閘極控制］/.test(r.text) && /ron/.test(r.text), 'elements detail', r.text);
   r = await call('daedalus_elements', {});
-  check(!r.isError && /全部 221 種/.test(r.text), 'elements index', r.text.slice(0, 200));
+  check(!r.isError && /全部 223 種/.test(r.text), 'elements index', r.text.slice(0, 200));
 
   const P = f => path.join(OUT, f);
   r = await call('daedalus_new', { path: P('buck.psimx'), netlist: buck, render: true }, 'new');
@@ -147,6 +147,58 @@ const buck = {
 
   r = await call('daedalus_render', { path: P('buck.psimx'), highlight: 'SW', pins: true, save: P('buck.svg') }, 'render');
   check(!r.isError && isPng(r.images[0]) && fs.readFileSync(P('buck.svg'), 'utf8').startsWith('<svg'), 'render: picture and svg', r.text);
+
+  // subcircuits: a divider definition (with a probe inside) used by two blocks, one with its own value
+  const sub = {
+    title: '子電路（MCP 測試）', sim: { dt: '1u', tt: '20u' },
+    subckts: {
+      DIV: {
+        params: 'Rt = 10\nRb = 10',
+        ports: [{ name: 'in', net: 'A' }, { name: 'out', net: 'B' }],
+        elements: [
+          { type: 'R', name: 'R1', params: { R: 'Rt' }, pins: { 1: 'A', 2: 'B' } },
+          { type: 'R', name: 'R2', params: { R: 'Rb' }, pins: { 1: 'B', 2: '0' } },
+          { type: 'VP', name: 'Vm', pins: { n: 'B' } },
+        ],
+      },
+    },
+    elements: [
+      { type: 'VDC', name: 'V1', params: { V: '12' }, pins: { '+': 'VIN', '-': '0' } },
+      { type: 'SUBCKT', name: 'X1', params: { def: 'DIV' }, pins: { in: 'VIN', out: 'O1' } },
+      { type: 'SUBCKT', name: 'X2', params: { def: 'DIV', vars: 'Rb = 30' }, pins: { in: 'VIN', out: 'O2' } },
+      { type: 'VP', name: 'Vo1', pins: { n: 'O1' } },
+      { type: 'VP', name: 'Vo2', pins: { n: 'O2' } },
+    ],
+  };
+  r = await call('daedalus_new', { path: P('sub.psimx'), netlist: sub, render: true }, 'sub_new');
+  check(!r.isError && /問題：無/.test(r.text) && /DIV：in［L］ out［R］/.test(r.text) && isPng(r.images[0]), 'subcircuit: built from a netlist, definition listed', r.text);
+  r = await call('daedalus_simulate', { path: P('sub.psimx') }, 'sub_simulate');
+  const s1 = mean(r.text, 'Vo1'), s2 = mean(r.text, 'Vo2'), s3 = mean(r.text, 'X2\\.Vm');
+  check(!r.isError && Math.abs(s1 - 6) < 1e-6 && Math.abs(s2 - 9) < 1e-6 && Math.abs(s3 - 9) < 1e-6, `subcircuit: Vo1 ${s1} V, Vo2 ${s2} V (own value), probe inside X2.Vm ${s3} V`, r.text);
+  r = await call('daedalus_edit', { path: P('sub.psimx'), ops: [{ op: 'set', name: 'X1', params: { vars: 'Rb = 20' } }] }, 'sub_edit');
+  r = await call('daedalus_simulate', { path: P('sub.psimx') }, 'sub_simulate2');
+  const s4 = mean(r.text, 'Vo1');
+  check(!r.isError && Math.abs(s4 - 8) < 1e-6, `subcircuit: block value changed by edit, Vo1 ${s4} V`, r.text);
+  r = await call('daedalus_inspect', { path: P('sub.psimx'), subckt: 'DIV' }, 'sub_inspect_def');
+  check(!r.isError && /子電路 DIV：埠 in［L，功率］ out［R，功率］/.test(r.text) && /out（子電路埠 out）/.test(r.text) && /問題：無/.test(r.text), 'subcircuit: inspect a definition (ports, nets)', r.text);
+  // inside the definition: change the top resistor of every block, add a port, then a new definition with a block
+  r = await call('daedalus_edit', { path: P('sub.psimx'), ops: [
+    { op: 'params', subckt: 'DIV', text: 'Rt = 20\nRb = 10' },
+    { op: 'add', subckt: 'DIV', type: 'SUBPORT', params: { text: 'mid', side: 'B' }, pins: { port: 'out' } },
+    { op: 'subckt_new', name: 'SER', ports: [{ name: 'a', net: 'A' }, { name: 'b', net: 'B' }], elements: [{ type: 'R', name: 'R1', params: { R: '5' }, pins: { 1: 'A', 2: 'B' } }] },
+    { op: 'add', type: 'SUBCKT', name: 'X3', params: { def: 'SER' }, pins: { a: 'O1', b: 'O3' } },
+    { op: 'add', type: 'R', name: 'R3', params: { R: '5' }, pins: { 1: 'O3', 2: '0' } },
+    { op: 'add', type: 'VP', name: 'Vo3', pins: { n: 'O3' } },
+  ], render: true }, 'sub_edit_def');
+  check(!r.isError && /［子電路 DIV］新增 port:mid/.test(r.text) && /子電路 DIV：埠 in［L，功率］ out［R，功率］ mid［B，功率］/.test(r.text) && /新增子電路 SER/.test(r.text) && isPng(r.images[0]), 'subcircuit: edit inside a definition, add a port, new definition', r.text);
+  r = await call('daedalus_simulate', { path: P('sub.psimx') }, 'sub_simulate3');
+  // DIV: Rt = 20; X1 Rb = 20 → 6 V loaded by X3+R3 (10 Ω): out = 12·(20∥10)/(20 + 20∥10) = 3.0 V; X2 Rb = 30 → 12·30/50 = 7.2 V
+  const t1 = mean(r.text, 'Vo1'), t2 = mean(r.text, 'Vo2'), t3 = mean(r.text, 'Vo3');
+  check(!r.isError && Math.abs(t1 - 3) < 1e-6 && Math.abs(t2 - 7.2) < 1e-6 && Math.abs(t3 - 1.5) < 1e-6, `subcircuit: definition change reaches every block: Vo1 ${t1}, Vo2 ${t2}, Vo3 ${t3} V`, r.text);
+  r = await call('daedalus_edit', { path: P('sub.psimx'), ops: [{ op: 'add', subckt: 'SER', type: 'SUBCKT', name: 'XL', params: { def: 'SER' }, pins: { a: 'A', b: null } }], dry_run: true }, 'sub_edit_loop');
+  check(r.isError && /包含它自己/.test(r.text), 'subcircuit: a definition cannot contain itself', r.text);
+  r = await call('daedalus_render', { path: P('sub.psimx'), subckt: 'DIV' }, 'sub_render_def');
+  check(!r.isError && isPng(r.images[0]) && /子電路 DIV/.test(r.text), 'subcircuit: render a definition', r.text);
 
   r = await call('daedalus_examples', {});
   check(!r.isError && /buckac/.test(r.text), 'examples: list', r.text.slice(0, 200));

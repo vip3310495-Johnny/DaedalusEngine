@@ -1,0 +1,416 @@
+{
+ "app": "psimweb",
+ "version": "V3.2.1",
+ "doc": {
+  "elements": [
+   {
+    "id": 1,
+    "type": "VDC",
+    "x": 0,
+    "y": 6,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vin",
+    "params": {
+     "V": "100"
+    }
+   },
+   {
+    "id": 2,
+    "type": "GND",
+    "x": 0,
+    "y": 8,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 3,
+    "type": "MOSFET",
+    "x": 6,
+    "y": 4,
+    "rot": 3,
+    "mir": false,
+    "dis": false,
+    "name": "Q1",
+    "params": {
+     "ron": "10u",
+     "vd": "0",
+     "init": "0",
+     "roff": "1M"
+    }
+   },
+   {
+    "id": 5,
+    "type": "DIODE",
+    "x": 10,
+    "y": 6,
+    "rot": 3,
+    "mir": false,
+    "dis": false,
+    "name": "D1",
+    "params": {
+     "vf": "0",
+     "init": "0",
+     "ron": "10u",
+     "roff": "1M",
+     "model": "ideal",
+     "vfd": "0.85",
+     "ifd": "5",
+     "rd": "20m",
+     "trr": "0",
+     "qrr": "0",
+     "irr": "0",
+     "cjd": "0",
+     "vcj": "0",
+     "bvd": "0",
+     "spice": ""
+    }
+   },
+   {
+    "id": 7,
+    "type": "L",
+    "x": 13,
+    "y": 4,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "L1",
+    "params": {
+     "L": "100u",
+     "i0": "0"
+    }
+   },
+   {
+    "id": 8,
+    "type": "C",
+    "x": 17,
+    "y": 6,
+    "rot": 1,
+    "mir": false,
+    "dis": false,
+    "name": "Co",
+    "params": {
+     "C": "100u",
+     "v0": "0"
+    }
+   },
+   {
+    "id": 9,
+    "type": "R",
+    "x": 23,
+    "y": 6,
+    "rot": 1,
+    "mir": false,
+    "dis": false,
+    "name": "RL",
+    "params": {
+     "R": "5"
+    }
+   },
+   {
+    "id": 11,
+    "type": "ACP",
+    "x": 20,
+    "y": 2,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vo_ac",
+    "params": {}
+   },
+   {
+    "id": 12,
+    "type": "VP",
+    "x": 27,
+    "y": 2,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vo",
+    "params": {}
+   },
+   {
+    "id": 14,
+    "type": "VDC",
+    "x": -4,
+    "y": 17,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vref",
+    "params": {
+     "V": "0.437"
+    }
+   },
+   {
+    "id": 15,
+    "type": "GND",
+    "x": -4,
+    "y": 19,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 16,
+    "type": "SUM2",
+    "x": 4,
+    "y": 15,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "SUM1",
+    "params": {
+     "k1": "1",
+     "k2": "1"
+    }
+   },
+   {
+    "id": 18,
+    "type": "VSIN",
+    "x": 4,
+    "y": 20,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vac",
+    "params": {
+     "Vm": "0",
+     "f": "1k",
+     "ph": "0",
+     "off": "0",
+     "ts": "0"
+    }
+   },
+   {
+    "id": 19,
+    "type": "GND",
+    "x": 4,
+    "y": 22,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 21,
+    "type": "COMP",
+    "x": 13,
+    "y": 17,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "CMP",
+    "params": {}
+   },
+   {
+    "id": 25,
+    "type": "VTRI",
+    "x": 10,
+    "y": 23,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "Vtri",
+    "params": {
+     "Vpp": "1",
+     "f": "50k",
+     "D": "0.5",
+     "off": "0",
+     "ph": "0"
+    }
+   },
+   {
+    "id": 26,
+    "type": "GND",
+    "x": 10,
+    "y": 25,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {}
+   },
+   {
+    "id": 28,
+    "type": "ONCTRL",
+    "x": 20,
+    "y": 17,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "ON1",
+    "params": {}
+   },
+   {
+    "id": 33,
+    "type": "SIMCTRL",
+    "x": 34,
+    "y": 1,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "dt": "0.2u",
+     "tt": "6m",
+     "tp": "0",
+     "ps": "10",
+     "lte": "1",
+     "ltetol": "1e-3",
+     "interp": "1",
+     "damp": "1"
+    }
+   },
+   {
+    "id": 34,
+    "type": "ACSWEEP",
+    "x": 34,
+    "y": 8,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "f0": "200",
+     "f1": "20k",
+     "n": "25",
+     "flag": "0",
+     "src": "Vac",
+     "a0": "0.005",
+     "a1": "0.02",
+     "extra": "",
+     "method": "0",
+     "settle": "5",
+     "mcyc": "4",
+     "maxc": "80",
+     "tol": "0.2",
+     "tpre": "-1",
+     "tset": "0",
+     "base": "1"
+    }
+   },
+   {
+    "id": 35,
+    "type": "TEXT",
+    "x": -4,
+    "y": -3,
+    "rot": 0,
+    "mir": false,
+    "dis": false,
+    "name": "",
+    "params": {
+     "text": "激勵源 Vac 經加法器注入調變訊號，AC Sweep Probe 量測 Vo/調變 的開迴路響應（含開關動作）。F5 執行掃頻。"
+    }
+   }
+  ],
+  "wires": [
+   {
+    "id": 4,
+    "x1": 0,
+    "y1": 4,
+    "x2": 4,
+    "y2": 4
+   },
+   {
+    "id": 6,
+    "x1": 8,
+    "y1": 4,
+    "x2": 11,
+    "y2": 4
+   },
+   {
+    "id": 10,
+    "x1": 15,
+    "y1": 4,
+    "x2": 27,
+    "y2": 4
+   },
+   {
+    "id": 13,
+    "x1": 0,
+    "y1": 8,
+    "x2": 23,
+    "y2": 8
+   },
+   {
+    "id": 17,
+    "x1": -4,
+    "y1": 15,
+    "x2": 2,
+    "y2": 15
+   },
+   {
+    "id": 20,
+    "x1": 4,
+    "y1": 17,
+    "x2": 4,
+    "y2": 18
+   },
+   {
+    "id": 22,
+    "x1": 6,
+    "y1": 15,
+    "x2": 9,
+    "y2": 15
+   },
+   {
+    "id": 23,
+    "x1": 9,
+    "y1": 15,
+    "x2": 9,
+    "y2": 16
+   },
+   {
+    "id": 24,
+    "x1": 9,
+    "y1": 16,
+    "x2": 10,
+    "y2": 16
+   },
+   {
+    "id": 27,
+    "x1": 10,
+    "y1": 21,
+    "x2": 10,
+    "y2": 18
+   },
+   {
+    "id": 29,
+    "x1": 16,
+    "y1": 17,
+    "x2": 18,
+    "y2": 17
+   },
+   {
+    "id": 30,
+    "x1": 22,
+    "y1": 17,
+    "x2": 22,
+    "y2": 12
+   },
+   {
+    "id": 31,
+    "x1": 22,
+    "y1": 12,
+    "x2": 6,
+    "y2": 12
+   },
+   {
+    "id": 32,
+    "x1": 6,
+    "y1": 12,
+    "x2": 6,
+    "y2": 6
+   }
+  ],
+  "nid": 36
+ }
+}

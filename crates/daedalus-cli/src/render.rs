@@ -162,6 +162,41 @@ pub fn schematic_svg(doc: &Doc, o: &SchOpts) -> String {
                 let _ = write!(out, r##"<g{op}><polygon points="{}" fill="#e6f6f3" stroke="{LBL}" stroke-width="0.08"/><text x="{}" y="{}" font-size="0.8" fill="{LBL}" text-anchor="middle" dominant-baseline="central" transform="rotate({} {} {})">{}</text></g>"##, pts.join(" "), f(cx), f(cy), ang, f(cx), f(cy), esc(&t));
                 continue;
             }
+            "SUBPORT" => {
+                let t = format!("{}·{}", e.params.get("text").cloned().unwrap_or_default(), crate::circuit::port_side(e));
+                let wd = crate::circuit::port_width(e);
+                let pts: Vec<String> = [(0.0, 0.0), (0.5, -0.55), (wd - 0.5, -0.55), (wd, 0.0), (wd - 0.5, 0.55), (0.5, 0.55)]
+                    .iter()
+                    .map(|&(a, b)| {
+                        let (x, y) = tpt(e, a, b);
+                        format!("{},{}", f(x), f(y))
+                    })
+                    .collect();
+                let (cx, cy) = tpt(e, wd / 2.0, 0.0);
+                let q = tpt(e, 1.0, 0.0);
+                let ang = if q.1 - e.y > 0.5 { 90 } else if q.1 - e.y < -0.5 { -90 } else { 0 };
+                let _ = write!(out, r##"<g{op}><polygon points="{}" fill="#fff4e6" stroke="#c2410c" stroke-width="0.08"/><text x="{}" y="{}" font-size="0.8" fill="#c2410c" text-anchor="middle" dominant-baseline="central" transform="rotate({} {} {})">{}</text></g>"##, pts.join(" "), f(cx), f(cy), ang, f(cx), f(cy), esc(&t));
+                continue;
+            }
+            "SUBCKT" => {
+                let g = daedalus_core::library::sub_geom(e);
+                let [x0, y0, x1, y1] = g.body;
+                let _ = write!(out, r##"<g transform="{tr}" fill="none" stroke="{SYM}" stroke-width="0.09"{op}><rect x="{}" y="{}" width="{}" height="{}"/>"##, f(x0), f(y0), f(x1 - x0), f(y1 - y0));
+                for p in &g.pins {
+                    let (ex, ey) = if p.x <= g.bb[0] { (x0, p.y) } else if p.x >= g.bb[2] { (x1, p.y) } else if p.y <= g.bb[1] { (p.x, y0) } else { (p.x, y1) };
+                    let _ = write!(out, r##"<line x1="{}" y1="{}" x2="{}" y2="{}"/>"##, f(p.x), f(p.y), f(ex), f(ey));
+                }
+                let _ = write!(out, "</g>");
+                for (x, y, s, sz, a) in &g.texts {
+                    let (tx, ty) = tpt(e, *x, *y);
+                    let a = match *a {
+                        "start" if tpt(e, 1.0, 0.0).0 < e.x => "end",
+                        "end" if tpt(e, 1.0, 0.0).0 < e.x => "start",
+                        a => a,
+                    };
+                    let _ = write!(out, r##"<text x="{}" y="{}" font-size="{}" fill="{SYM}" text-anchor="{}"{op}>{}</text>"##, f(tx), f(ty), f(*sz), a, esc(s));
+                }
+            }
             "TEXT" => {
                 let t = e.params.get("text").cloned().unwrap_or_default();
                 for (i, l) in t.split('\n').enumerate() {
@@ -208,7 +243,7 @@ pub fn schematic_svg(doc: &Doc, o: &SchOpts) -> String {
                 let _ = write!(out, r##"<text x="{}" y="{}" font-size="0.78" fill="{TXT}" text-anchor="{}"{fw}{op}>{}</text>"##, f(x), f(y), anchor, esc(t));
             }
         }
-        if o.pin_names && !matches!(e.typ.as_str(), "LABEL" | "GND" | "TEXT") {
+        if o.pin_names && !matches!(e.typ.as_str(), "LABEL" | "GND" | "TEXT" | "SUBPORT" | "SUBCKT") {
             for p in lib().pins_for(e) {
                 let (px, py) = tpt(e, p.x, p.y);
                 let dv = pin_dir(e, &p);

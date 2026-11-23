@@ -306,6 +306,8 @@
 "flags":["single","nosim","noname"]},
 "PARAMS":{"zh":"參數檔","name":"Parameter File","pins":[],"params":{"text":"Vin = 100\nfsw = 50k\nL1 = 100u"},
 "flags":["nosim","noname"]},
+"SUBCKT":{"zh":"子電路","name":"Subcircuit","pins":[],"params":{},
+"flags":["dynPins","nosim"]},
 "ONCTRL":{"zh":"開關控制器","name":"On-Off Controller","pins":[["in",-2,0,"Ci"],["gate",2,0,"Co"]],"params":{},
 "flags":[]},
 "ACTRL":{"zh":"觸發角控制器","name":"Alpha Controller","pins":[["alpha",-3,-1,"Ci"],["sync",-3,0,"Ci"],["enable",-3,1,"Ci"],["gate",3,0,"Co"]],"params":{"f":"60","pw":"90"},
@@ -438,5 +440,7 @@
 "flags":["noname"]},
 "LABEL":{"zh":"標籤","name":"Label","pins":[["lbl",0,0,"lbl"]],"params":{"text":"Vo"},
 "flags":["noname","label"]},
+"SUBPORT":{"zh":"子電路埠","name":"Subcircuit Port","pins":[["port",0,0,"lbl"]],"params":{"text":"in","side":"L"},
+"flags":["noname","nosim","label"]},
 "TEXT":{"zh":"文字註解","name":"Text","pins":[],"params":{"text":"註解文字"},
 "flags":["nosim","noname","text"]}}}

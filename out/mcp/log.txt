@@ -1,0 +1,538 @@
+
+===== daedalus_guide {"topic":"netlist"}
+# daedalus_new 的網表格式
+
+```json
+{
+  "title": "24 V → 12 V Buck、50 kHz",
+  "sim": {"dt": "0.2u", "tt": "10m"},
+  "params": "Vin = 24\nfsw = 50k",
+  "elements": [
+    {"type": "VDC",    "name": "Vin", "params": {"V": "Vin"},           "pins": {"+": "VIN", "-": "0"}},
+    {"type": "MOSFET", "name": "Q1",                                     "pins": {"D": "VIN", "S": "SW", "G": "GATE"}},
+    {"type": "DIODE",  "name": "Dfw",                                    "pins": {"A": "0", "K": "SW"}},
+    {"type": "L",      "name": "L1",  "params": {"L": "100u"},          "pins": {"1": "SW", "2": "LO"}},
+    {"type": "IP",     "name": "IL",                                     "pins": {"in": "LO", "out": "VO"}},
+    {"type": "RC",     "name": "Co",  "params": {"R": "10m", "C": "100u"}, "pins": {"1": "VO", "2": "0"}},
+    {"type": "R",      "name": "RL",  "params": {"R": "6"},             "pins": {"1": "VO", "2": "0"}},
+    {"type": "VP",     "name": "Vo",                                     "pins": {"n": "VO"}},
+    {"type": "CONST",  "name": "Duty", "params": {"v": "0.5"},          "pins": {"out": "D"}},
+    {"type": "VTRI",   "name": "Vcar", "params": {"Vpp": "1", "f": "fsw"}, "pins": {"+": "CAR", "-": "0"}},
+    {"type": "COMP",   "name": "PWM",                                    "pins": {"in+": "D", "in-": "CAR", "out": "GATE"}}
+  ],
+  "screens": [["Vo"], ["IL"]]
+}
+```
+
+- `type`：型別代碼（`daedalus_elements` 查詢）。`name`：唯一、不分大小寫；省略時自動命名。探棒與量表的名稱就是波形名稱。
+- `pins`：**每一隻接腳都要寫**；值是節點名稱（同名即相連），接地寫 `"0"`，刻意不接寫 `null`。只出現一次的節點等於沒接（會提示）。
+- `params`：文字或數字；未寫的用預設值。數值可用 SI 字尾（1k、4.7u、10m、1M＝百萬、1meg），可寫運算式與 `params`（參數檔）中的名稱。
+- `rot`：0–3（順時針 90° 為單位，也接受 90/180/270）；`mir`：左右鏡像。
+- `sim`：模擬控制參數（dt 步長、tt 總時間、tp 開始記錄時間、ps 記錄間隔步數、acc 高精度…）；省略時 dt = 10 µs、tt = 0.1 s。
+- `screens`：波形檢視器的畫面（探棒名稱分組）。
+- `subckts`（子電路，PSIM 的 subcircuit）：`{"名稱": {"ports": [{"name": "in", "net": "A", "side": "L"}, …], "params": "R = 1k", "elements": [...]}}`。
+  `ports` 的每個埠成為子電路方塊的一隻接腳（`net` 是子電路內的節點，`side` 為方塊的 L／R／T／B 邊，省略時前一半在左、其餘在右）；
+  `params` 是子電路的參數檔（變數與預設值）；`elements` 格式同上，可再放其他子電路的方塊（不可包含自己）。
+  主電路（或另一個子電路）以 `{"type": "SUBCKT", "name": "X1", "params": {"def": "名稱", "vars": "R = 2k"}, "pins": {"in": "VIN", "out": "VO"}}` 放方塊：
+  接腳名稱就是埠名稱，`vars` 指定此方塊自己的參數值（省略的用預設值，運算式以方塊所在電路的參數計算）。
+  子電路裡的元件在波形與錯誤訊息中以「方塊名稱.元件名稱」表示（例如探棒 `X1.Vo`）；子電路裡的接地就是共同的地。
+- 不要放 LABEL、GND：連線全由 `pins` 的節點名稱決定，程式以導線畫出來（見下方排版）。
+- 沒有接腳的元件（SIMCTRL、PARAMS、ACSWEEP、PSWEEP、MONTECARLO、DEVP、TEXT）放在最上方一列。
+- 排版（以導線直連，PSIM 慣用畫法）：
+  - 功率級：主電流路徑（電源 → 開關 → 電感 → 輸出）沿上方的軌由左到右，一端接地的元件（電源、電容、負載、低側開關、二極體、感測器）垂直掛在軌與下方地線之間，對地探棒接在軌上；與主路徑元件並聯的元件（反並聯二極體、緩衝電路）放在它上方。
+  - 有兩個以上半橋臂（全橋、三相）時：電源正端為上方直流母線、地線在下，各臂垂直排列（上管與反並聯二極體並排），負載水平接在兩臂中點之間。
+  - 控制：依訊號流向分欄（輸入在左、輸出在右），以導線相連。
+  - 只有同時接到功率區與控制區的訊號（閘極、感測器輸出）用一對節點標籤；導線接不到或太遠時才以標籤代替。
+  - 主路徑依網表連接推得；elements 以訊號流向排列，結果最好讀。
+- 網表中的節點名稱存於檔案的 `nets` 欄位：沒有標籤的節點在 daedalus_inspect／daedalus_edit 中仍以原名（例如 SW）出現與指定。程式本身存檔後名稱不保留，屆時以「~元件.接腳」表示。
+
+
+
+===== daedalus_elements {"query":"比較器"}
+「比較器」找到 14 個（型別｜中文｜英文｜接腳）：
+  COMP｜邏輯比較器（控制電路）｜Comparator (logic)｜接腳 in+、in-、out
+  COMPOC｜比較器（開集極，LM393 類）｜Comparator (open collector)｜接腳 IN+、IN-、OUT、V+、GND
+  AND｜及閘｜AND Gate｜接腳 in1、in2、out
+  AND3｜三輸入及閘｜AND Gate (3-input)｜接腳 in1、in2、in3、out
+  ITRI｜三角波電流源｜Triangular｜接腳 +、-
+  NAND｜反及閘｜NAND Gate｜接腳 in1、in2、out
+  NOR｜反或閘｜NOR Gate｜接腳 in1、in2、out
+  NOT｜反閘｜NOT Gate｜接腳 in1、out
+  ONCTRL｜開關控制器｜On-Off Controller｜接腳 in、gate
+  OPAMP｜運算放大器｜Op. Amp.｜接腳 V-、V+、Vo
+  OR｜或閘｜OR Gate｜接腳 in1、in2、out
+  OR3｜三輸入或閘｜OR Gate (3-input)｜接腳 in1、in2、in3、out
+  VTRI｜三角波電壓源｜Triangular｜接腳 +、-
+  XOR｜互斥或閘｜XOR Gate｜接腳 in1、in2、out
+用 type 取得接腳類型與參數。
+
+===== daedalus_elements {"type":"mosfet"}
+MOSFET｜N 通道 MOSFET｜MOSFET
+類別：Elements/Power/Switches
+說明：N 通道 MOSFET 開關模組：主動開關加反並聯本體二極體。閘極為高（> 0.5）且 VDS > 0 時通道導通；閘極轉低時關斷，反向電流經由本體二極體。
+接腳（rot=0 時相對元件中心的位置，y 向下）：
+  D ［功率］ (0,-2)
+  S ［功率］ (0,2)
+  G ［閘極控制］ (-2,0)
+參數（鍵 = 預設值 [單位] 名稱：說明）：
+  ron = 10u [Ω] On Resistance 導通電阻：通道導通電阻 Rds(on)。
+  vd = 0 [V] Diode Voltage Drop 二極體壓降：本體二極體壓降。
+  init = 0 Initial Position 初始狀態：模擬開始時開關的狀態。　選項：0＝0：關斷 (Off)；1＝1：導通 (On)
+  roff = 1M [Ω] Off Resistance 關斷電阻（進階）：關斷時的漏電阻。PSIM 固定為 1 MΩ；模擬 100 kΩ 等級的高阻抗類比電路時建議改為 1G 以上，否則漏電流會造成可觀的誤差。
+
+
+===== daedalus_elements {}
+全部 223 種元件（型別代碼（中文名）），依類別：
+Power/RLC Branches：R（電阻）、L（電感）、C（電容）、RL（R-L 串聯支路）、RC（R-C 串聯支路）、LC（L-C 串聯支路）、RLC（R-L-C 串聯支路）、R3（三相電阻）、RL3（三相 R-L 支路）、RC3（三相 R-C 支路）、RLC3（三相 R-L-C 支路）、RHEO（可變電阻）、LSAT（飽和電感）、NONI（非線性元件（電導型））、NONV（非線性元件（電阻型））
+Power/Switches：DIODE（二極體）、LED（發光二極體）、ZENER（稽納二極體）、DIAC（雙向觸發二極體）、THY（閘流體 SCR）、TRIAC（雙向閘流體）、GTO（閘關閘流體）、NPN（NPN 電晶體（開關））、PNP（PNP 電晶體（開關））、IGBT（IGBT）、MOSFET（N 通道 MOSFET）、PMOS（P 通道 MOSFET）、SSWI（雙向開關）、PBSW（按鈕開關）、SSWI3（三相雙向開關）、SPDT（單刀雙擲雙向開關）、DPST（雙刀單擲雙向開關）、DPDT（雙刀雙擲雙向開關）、NPN3（NPN 電晶體（SPICE 模型））、PNP3（PNP 電晶體（SPICE 模型））、MOS3（N 通道 MOSFET（SPICE 模型））、PMOS3（P 通道 MOSFET（SPICE 模型））、BDIODE1（單相二極體橋）、BDIODE3（三相二極體橋）、BTHY1（單相閘流體橋）、BTHY3（三相閘流體橋）、BTHY3H（三相半波閘流體橋）、BTHY6H（六相半波閘流體橋）
+Power/Non-ideal Switches：MOSNI（N 通道 MOSFET（非理想））、PMOSNI（P 通道 MOSFET（非理想））、IGBTNI（IGBT（非理想））
+Power/Transformers：TFI（理想變壓器）、TF1（單相變壓器）、TF3W（單相三繞組變壓器）、TF3YY（三相 Y/Y 變壓器）、TF3YD（三相 Y/Δ 變壓器）
+Power/Other：MUT2（耦合電感（2 繞組））、MUT3（耦合電感（3 繞組））、OPAMP（運算放大器）、OPAMP1（運算放大器（含地端））、COMPOC（比較器（開集極，LM393 類））、TL431（TL431 可調分流穩壓器）、OPTO1（光耦合器（一對一））、OPTO2（光耦合器（一對二））、DVDT（微分方塊（功率））
+Control：CONST（常數）、P（比例控制器）、I（積分器）、RESETI（可重置積分器）、DIFF（微分器）、PI（PI 控制器）、SUM2（加法器（雙輸入））、SUB2（減法器）、SUM3（加法器（三輸入））、COMP（邏輯比較器（控制電路））、LIM（限制器）
+Control/Filters：LP1（一階低通濾波器）、HP1（一階高通濾波器）、LP2（二階低通濾波器）、HP2（二階高通濾波器）、BP2（帶通濾波器）、BS2（帶拒濾波器）
+Control/Computational Blocks：MULT（乘法器）、DIVD（除法器）、SQRT（平方根）、SIN（正弦（度））、SINR（正弦（弧度））、ASIN（反正弦）、COS（餘弦（度））、COSR（餘弦（弧度））、ACOS（反餘弦）、TAN（正切）、ATAN（反正切）、ATAN2（四象限反正切）、EXP（指數函數）、POW（冪次函數）、LOG（自然對數）、LOG10（常用對數）、RMS（均方根）、ABS（絕對值）、SIGN（符號函數）、MAXMIN（最大/最小值）
+Control/Other Function Blocks：SAMP（取樣保持）、LKUP（查表）、LKUPTZ（梯形波查表）、LKUPSQ（方波查表）、FFT（快速傅立葉轉換）、TFS（s 域轉移函數）、TFS1（s 域轉移函數（含初值））、TDELAY（時間延遲）、UTD（單位時間延遲）、THD（總諧波失真）、ROUND（四捨五入）、LIMDVDT（變化率限制器）、MUX2（2 輸入多工器）、MUX4（4 輸入多工器）、MUX8（8 輸入多工器）、ABC2DQO（abc→dqo 轉換）、DQO2ABC（dqo→abc 轉換）
+Control/Logic Elements：AND（及閘）、AND3（三輸入及閘）、OR（或閘）、OR3（三輸入或閘）、XOR（互斥或閘）、NOT（反閘）、NAND（反及閘）、NOR（反或閘）、SRFF（SR 正反器）、JKFF（JK 正反器）、JKFFSR（JK 正反器（含設定/重置））、DFF（D 正反器）、DFFSR（D 正反器（含設定/重置））、MONO（單擊多諧振盪器）、MONOC（可控單擊電路）、PWCT（脈寬計數器）、UPDN（上/下數計數器）、ADC（A/D 轉換器）、DAC（D/A 轉換器）
+Control/Digital Control Module：ZOH（零階保持）、UDELAY（單位延遲 1/z）、ID（離散積分器）、IRSTD（外部重置積分器）、IRSTI（內部重置積分器）、DD（離散微分器）、FIR（FIR 濾波器）、FILTD（數位濾波器 (IIR)）、TFZ（z 域轉移函數）、DIGIT（量化方塊）、DIGIT2（量化方塊（含偏移））、CBUF（環形緩衝區）、ARRAY（資料陣列）、CONV（摺積）、MEMREAD（記憶體讀取）、STACK（堆疊）
+Other：SIMCTRL（模擬控制）、ACSWEEP（AC 掃頻（波德圖））、PSWEEP（參數掃描（多核心平行））、MONTECARLO（蒙地卡羅分析（多核心平行））、PARAMS（參數檔）、SUBCKT（子電路）
+Other/Switch Controllers：ONCTRL（開關控制器）、ACTRL（觸發角控制器）、GATING（閘極脈波產生器）
+Other/Sensors：VSEN（電壓感測器）、ISEN（電流感測器）
+Other/Probes：VP（電壓探棒（對地））、VP2（電壓探棒（兩點））、IP（電流探棒）、VDCM（直流電壓表）、VACM（交流電壓表）、ADCM（直流電流表）、AACM（交流電流表）、WATT（瓦特計）、WH3（三相瓦時計）、DEVP（元件內部探棒）、ACP（AC 掃頻探棒）、ACP2（AC 掃頻探棒（迴路））
+Other/Function Blocks：CTOP（控制-功率介面）、MATH1（1 輸入數學函數）、MATH2（2 輸入數學函數）、MATH3（3 輸入數學函數）、MATH5（5 輸入數學函數）、MATH10（10 輸入數學函數）、CBLOCK（簡化 C 程式方塊）
+Sources/Voltage：VDC（直流電壓源）、VSIN（正弦電壓源）、VTRI（三角波電壓源）、VSAW（鋸齒波電壓源）、VSQU（方波電壓源）、VSTEP（步階電壓源）、VSTEP2（雙準位步階電壓源）、VPWL（分段線性電壓源）、VPWL2（分段線性（成對）電壓源）、VBAT（直流電池）、VSIN3（三相正弦電壓源）、VCCVS（電流控制電壓源）、VCCVS1（電流控制電壓源（串接））、VVCVS（電壓控制電壓源）、VVCVSV（可變增益電壓控制電壓源）、VNONM（非線性電壓源（乘法））、VNOND（非線性電壓源（除法））、VNONSQ（非線性電壓源（平方根））、VPOWERS（冪次電壓源）、VGDC（接地直流源（圓形））、VGDCT（接地直流源（T 形））、VRAND（亂數電壓源）、VMATH（數學函數電壓源）
+Sources/Current：IDC（直流電流源）、ISIN（正弦電流源）、ITRI（三角波電流源）、ISQU（方波電流源）、ISTEP（步階電流源）、ISTEP2（雙準位步階電流源）、IPWL（分段線性電流源）、IPWL2（分段線性（成對）電流源）、ICCCS（電流控制電流源）、ICCCS1（電流控制電流源（串接））、IVCCS（電壓控制電流源）、IVCCSV（可變增益電壓控制電流源）、INONM（非線性電流源（乘法））、INOND（非線性電流源（除法））、INONSQ（非線性電流源（平方根））、IRAND（亂數電流源）、IMATH（數學函數電流源）
+Symbols：GND（接地）、LABEL（標籤）、SUBPORT（子電路埠）、TEXT（文字註解）
+用 type 取得一個元件的接腳與參數；query 以關鍵字搜尋。
+
+===== new {"path":"C:\\Johnny\\Claude Code\\DaedalusEngine\\.claude\\worktrees\\epic-murdock-da675c\\out\\mcp\\buck.psimx","netlist":{"title":"24 V → 12 V Buck（MCP 測試）","sim":{"dt":"0.2u","tt":"10m"},"params":"Vin = 24\nfsw = 50k","elements":[{"type":"VDC","name":"Vin","params":{"V":"Vin"},"pins":{"+":"VIN","
+已建立電路檔。
+C:\Johnny\Claude Code\DaedalusEngine\.claude\worktrees\epic-murdock-da675c\out\mcp\buck.psimx
+元件 13、導線 20、節點 8；模擬控制 dt=0.2u tt=10m
+元件（名稱 型別 非預設參數 @位置 接腳→節點）：
+  SIMCTRL#2 SIMCTRL dt=0.2u tt=10m @(6,8)
+  PARAMS#3 PARAMS text=Vin = 24⏎fsw = 50k @(19,6)
+  Vin VDC V=Vin @(8,21)  +→VIN -→0
+  Q1 MOSFET @(18,17) rot3  D→VIN S→SW G→GATE
+  Dfw DIODE @(24,21) rot3  A→0 K→SW
+  L1 L L=100u @(32,17)  1→SW 2→LO
+  IL IP @(39,17)  in→LO out→VO
+  Co RC R=10m @(45,22) rot1  1→VO 2→0
+  RL R R=6 @(53,21) rot1  1→VO 2→0
+  Vo VP @(61,15)  n→VO
+  Duty CONST v=0.5 @(6,37)  out→D
+  Vcar VTRI f=fsw @(5,46)  +→CAR -→0
+  PWM COMP @(19,38)  in+→D in-→CAR out→GATE
+節點：
+  0（接地）：Vin.-、Dfw.A、Co.2、RL.2、Vcar.-
+  CAR［控制］：Vcar.+、PWM.in-
+  D［控制］：Duty.out、PWM.in+
+  GATE［控制］：Q1.G、PWM.out
+  LO：L1.2、IL.in
+  SW：Q1.S、Dfw.K、L1.1
+  VIN：Vin.+、Q1.D
+  VO：IL.out、Co.1、RL.1、Vo.n
+波形畫面：Vo | IL
+問題：無
+下一步：daedalus_simulate 模擬；daedalus_render 看電路圖。
+
+===== new_again {"path":"C:\\Johnny\\Claude Code\\DaedalusEngine\\.claude\\worktrees\\epic-murdock-da675c\\out\\mcp\\buck.psimx","netlist":{"title":"24 V → 12 V Buck（MCP 測試）","sim":{"dt":"0.2u","tt":"10m"},"params":"Vin = 24\nfsw = 50k","elements":[{"type":"VDC","name":"Vin","params":{"V":"Vin"},"pins":{"+":"VIN","
+[isError] C:\Johnny\Claude Code\DaedalusEngine\.claude\worktrees\epic-murdock-da675c\out\mcp\buck.psimx 已存在。要覆寫請設 overwrite=true；修改既有電路請用 daedalus_edit。
+
+===== daedalus_inspect {"path":"C:\\Johnny\\Claude Code\\DaedalusEngine\\.claude\\worktrees\\epic-murdock-da675c\\out\\mcp\\buck.psimx"}
+C:\Johnny\Claude Code\DaedalusEngine\.claude\worktrees\epic-murdock-da675c\out\mcp\buck.psimx
+元件 13、導線 20、節點 8；模擬控制 dt=0.2u tt=10m
+元件（名稱 型別 非預設參數 @位置 接腳→節點）：
+  SIMCTRL#2 SIMCTRL dt=0.2u tt=10m @(6,8)
+  PARAMS#3 PARAMS text=Vin = 24⏎fsw = 50k @(19,6)
+  Vin VDC V=Vin @(8,21)  +→VIN -→0
+  Q1 MOSFET @(18,17) rot3  D→VIN S→SW G→GATE
+  Dfw DIODE @(24,21) rot3  A→0 K→SW
+  L1 L L=100u @(32,17)  1→SW 2→LO
+  IL IP @(39,17)  in→LO out→VO
+  Co RC R=10m @(45,22) rot1  1→VO 2→0
+  RL R R=6 @(53,21) rot1  1→VO 2→0
+  Vo VP @(61,15)  n→VO
+  Duty CONST v=0.5 @(6,37)  out→D
+  Vcar VTRI f=fsw @(5,46)  +→CAR -→0
+  PWM COMP @(19,38)  in+→D in-→CAR out→GATE
+節點：
+  0（接地）：Vin.-、Dfw.A、Co.2、RL.2、Vcar.-
+  CAR［控制］：Vcar.+、PWM.in-
+  D［控制］：Duty.out、PWM.in+
+  GATE［控制］：Q1.G、PWM.out
+  LO：L1.2、IL.in
+  SW：Q1.S、Dfw.K、L1.1
+  VIN：Vin.+、Q1.D
+  VO：IL.out、Co.1、RL.1、Vo.n
+波形畫面：Vo | IL
+問題：無
+
+
+===== inspect_q1 {"path":"C:\\Johnny\\Claude Code\\DaedalusEngine\\.claude\\worktrees\\epic-murdock-da675c\\out\\mcp\\buck.psimx","element":"Q1"}
+Q1：N 通道 MOSFET（MOSFET，MOSFET）@(18,17) rot3
+接腳：
+  D ［功率］ 位置 (16,17) → VIN（Vin.+）
+  S ［功率］ 位置 (20,17) → SW（Dfw.K、L1.1）
+  G ［閘極控制］ 位置 (18,19) → GATE（PWM.out）
+參數：
+  ron = 10u [Ω]  — On Resistance 導通電阻
+  vd = 0 [V]  — Diode Voltage Drop 二極體壓降
+  init = 0  — Initial Position 初始狀態
+  roff = 1M [Ω]  — Off Resistance 關斷電阻
+
+
+===== simulate {"path":"C:\\Johnny\\Claude Code\\DaedalusEngine\\.claude\\worktrees\\epic-murdock-da675c\\out\\mcp\\buck.psimx","measures":["CycMean","Pp"],"image":true}
+暫態模擬完成：0.02 秒，50000 步（細分 88、未收斂 0），切換事件 20，dt = 200 ns，總時間 10 ms，記錄 50001 點
+統計區間 8 ms ～ 10 ms（最後 20 %）
+| 探棒 | 平均 | RMS | 最小 | 最大 | 峰對峰 | 終值 |
+|---|---|---|---|---|---|---|
+| IL | 2 A | 2.03 A | 1.398 A | 2.603 A | 1.205 A | 1.976 A |
+| Vo | 12 V | 12 V | 11.98 V | 12.02 V | 34.76 mV | 11.99 V |
+量測：
+  IL：週期平均 2 A，P-P 1.205 A
+  Vo：週期平均 12 V，P-P 34.76 mV
+
+
+===== simulate_window {"path":"C:\\Johnny\\Claude Code\\DaedalusEngine\\.claude\\worktrees\\epic-murdock-da675c\\out\\mcp\\buck.psimx","probes":["Vo"],"from":"9m","to":"10m","measures":["Freq"]}
+暫態模擬完成：0.02 秒，50000 步（細分 88、未收斂 0），切換事件 20，dt = 200 ns，總時間 10 ms，記錄 50001 點
+統計區間 9 ms ～ 10 ms
+| 探棒 | 平均 | RMS | 最小 | 最大 | 峰對峰 | 終值 |
+|---|---|---|---|---|---|---|
+| Vo | 12 V | 12 V | 11.98 V | 12.02 V | 32.73 mV | 11.99 V |
+量測：
+  Vo：頻率 50.01 kHz
+
+
+===== waveform {"path":"C:\\Johnny\\Claude Code\\DaedalusEngine\\.claude\\worktrees\\epic-murdock-da675c\\out\\mcp\\buck.psimx","table":true,"points":20}
+buck 波形：0 s ～ 10 ms，2 個畫面
+數值表（每點為該時間區段的最小～最大）：
+| t | Vo (V) | IL (A) |
+|---|---|---|
+| 2.49900e-4 | 0.0000e0～2.1082e1 | -1.3387e-5～1.2956e1 |
+| 7.49900e-4 | 1.0754e1～1.6243e1 | -5.0213e-8～3.4963e0 |
+| 1.24990e-3 | 1.1280e1～1.2948e1 | 5.9400e-1～3.6639e0 |
+| 1.74990e-3 | 1.1280e1～1.2548e1 | 9.3892e-1～3.2087e0 |
+| 2.24990e-3 | 1.1580e1～1.2322e1 | 9.5417e-1～2.9500e0 |
+| 2.74990e-3 | 1.1754e1～1.2277e1 | 1.1352e0～2.7998e0 |
+| 3.24990e-3 | 1.1852e1～1.2191e1 | 1.2480e0～2.7557e0 |
+| 3.74990e-3 | 1.1910e1～1.2116e1 | 1.3128e0～2.7153e0 |
+| 4.24990e-3 | 1.1909e1～1.2073e1 | 1.3505e0～2.6661e0 |
+| 4.74990e-3 | 1.1941e1～1.2048e1 | 1.3497e0～2.6382e0 |
+| 5.24990e-3 | 1.1959e1～1.2047e1 | 1.3711e0～2.6221e0 |
+| 5.74990e-3 | 1.1970e1～1.2034e1 | 1.3831e0～2.6200e0 |
+| 6.24990e-3 | 1.1974e1～1.2026e1 | 1.3902e0～2.6128e0 |
+| 6.74990e-3 | 1.1976e1～1.2022e1 | 1.3946e0～2.6076e0 |
+| 7.24990e-3 | 1.1980e1～1.2019e1 | 1.3941e0～2.6045e0 |
+| 7.74990e-3 | 1.1982e1～1.2019e1 | 1.3964e0～2.6028e0 |
+| 8.24990e-3 | 1.1983e1～1.2018e1 | 1.3977e0～2.6028e0 |
+| 8.74990e-3 | 1.1983e1～1.2017e1 | 1.3985e0～2.6018e0 |
+| 9.24990e-3 | 1.1984e1～1.2016e1 | 1.3988e0～2.6013e0 |
+| 9.74990e-3 | 1.1984e1～1.2016e1 | 1.3989e0～2.6009e0 |
+
+===== waveform_zoom {"path":"C:\\Johnny\\Claude Code\\DaedalusEngine\\.claude\\worktrees\\epic-murdock-da675c\\out\\mcp\\buck.psimx","probes":["IL"],"from":"9.9m"}
+buck 波形：9.9 ms ～ 10 ms，1 個畫面
+
+===== edit {"path":"C:\\Johnny\\Claude Code\\DaedalusEngine\\.claude\\worktrees\\epic-murdock-da675c\\out\\mcp\\buck.psimx","ops":[{"op":"add","type":"VP","name":"Vsw","pins":{"n":"SW"}},{"op":"set","name":"RL","params":{"R":"12"}},{"op":"screens","screens":[["Vo"],["IL"],["Vsw"]]}],"render":true}
+已存檔：C:\Johnny\Claude Code\DaedalusEngine\.claude\worktrees\epic-murdock-da675c\out\mcp\buck.psimx
+完成的操作：
+  - 新增 Vsw（VP）於 (26, 15)，接腳直接接在節點 SW 的導線上
+  - RL：R=12
+  - 波形畫面：Vo | IL | Vsw
+連線變化（1）：
+  Vsw.n：新增，SW
+問題：無
+
+
+===== simulate_after_edit {"path":"C:\\Johnny\\Claude Code\\DaedalusEngine\\.claude\\worktrees\\epic-murdock-da675c\\out\\mcp\\buck.psimx"}
+暫態模擬完成：0.02 秒，50000 步（細分 300、未收斂 0），切換事件 52，dt = 200 ns，總時間 10 ms，記錄 50001 點
+統計區間 8 ms ～ 10 ms（最後 20 %）
+| 探棒 | 平均 | RMS | 最小 | 最大 | 峰對峰 | 終值 |
+|---|---|---|---|---|---|---|
+| IL | 1 A | 1.059 A | 383.7 mA | 1.618 A | 1.234 A | 977.4 mA |
+| Vo | 12 V | 12 V | 11.97 V | 12.03 V | 63.03 mV | 11.99 V |
+| Vsw | 12 V | 16.97 V | -15.94 µV | 24 V | 24 V | 24 V |
+
+
+===== edit_bad {"path":"C:\\Johnny\\Claude Code\\DaedalusEngine\\.claude\\worktrees\\epic-murdock-da675c\\out\\mcp\\buck.psimx","ops":[{"op":"connect","pin":"Q1.X","net":"A"}]}
+[isError] 第 1 個操作（connect）失敗：Q1（MOSFET）沒有接腳「X」。接腳：D、S、G
+
+===== edit_dry {"path":"C:\\Johnny\\Claude Code\\DaedalusEngine\\.claude\\worktrees\\epic-murdock-da675c\\out\\mcp\\buck.psimx","ops":[{"op":"remove","name":"Vsw"}],"dry_run":true}
+（dry_run：沒有存檔）
+完成的操作：
+  - 刪除 Vsw（VP）
+連線變化（1）：
+  Vsw.n：已刪除
+問題：無
+
+
+===== edit_mix {"path":"C:\\Johnny\\Claude Code\\DaedalusEngine\\.claude\\worktrees\\epic-murdock-da675c\\out\\mcp\\buck.psimx","ops":[{"op":"connect","pin":"Vsw.n","net":"GATE"}],"save_as":"C:\\Johnny\\Claude Code\\DaedalusEngine\\.claude\\worktrees\\epic-murdock-da675c\\out\\mcp\\buck_bad.psimx"}
+已存檔：C:\Johnny\Claude Code\DaedalusEngine\.claude\worktrees\epic-murdock-da675c\out\mcp\buck_bad.psimx
+完成的操作：
+  - Vsw.n 以導線接到節點 GATE
+連線變化（4）：
+  Dfw.K：SW → GATE
+  L1.1：SW → GATE
+  Q1.S：SW → GATE
+  Vsw.n：SW → GATE
+問題（1）：
+  - 功率電路與控制電路直接相連（Q1、Dfw、L1、PWM、LABEL、LABEL、Vsw）。請透過感測器、開關控制器或 Control-Power Interface 連接。
+
+
+===== render {"path":"C:\\Johnny\\Claude Code\\DaedalusEngine\\.claude\\worktrees\\epic-murdock-da675c\\out\\mcp\\buck.psimx","highlight":"SW","pins":true,"save":"C:\\Johnny\\Claude Code\\DaedalusEngine\\.claude\\worktrees\\epic-murdock-da675c\\out\\mcp\\buck.svg"}
+C:\Johnny\Claude Code\DaedalusEngine\.claude\worktrees\epic-murdock-da675c\out\mcp\buck.psimx 的電路圖（深色：功率線；藍色：控制線；紅圈：未接的接腳；邊緣數字：座標）；橘色標出 Q1.S；已存成 C:\Johnny\Claude Code\DaedalusEngine\.claude\worktrees\epic-murdock-da675c\out\mcp\buck.svg
+
+===== sub_new {"path":"C:\\Johnny\\Claude Code\\DaedalusEngine\\.claude\\worktrees\\epic-murdock-da675c\\out\\mcp\\sub.psimx","netlist":{"title":"子電路（MCP 測試）","sim":{"dt":"1u","tt":"20u"},"subckts":{"DIV":{"params":"Rt = 10\nRb = 10","ports":[{"name":"in","net":"A"},{"name":"out","net":"B"}],"elements":[{"type":"
+已建立電路檔。
+C:\Johnny\Claude Code\DaedalusEngine\.claude\worktrees\epic-murdock-da675c\out\mcp\sub.psimx
+元件 6、導線 8、節點 4；模擬控制 dt=1u tt=20u
+元件（名稱 型別 非預設參數 @位置 接腳→節點）：
+  SIMCTRL#2 SIMCTRL dt=1u tt=20u @(6,8)
+  V1 VDC V=12 @(8,21)  +→VIN -→0
+  X1 SUBCKT def=DIV @(19,17)  in→VIN out→O1
+  Vo1 VP @(26,15)  n→O1
+  X2 SUBCKT def=DIV vars="Rb = 30" @(15,26)  in→VIN out→O2
+  Vo2 VP @(22,22)  n→O2
+子電路定義（名稱：埠［方塊邊］；參數預設值；內部元件）：
+  DIV：in［L］ out［R］；Rt=10 Rb=10；R1(R) R2(R) Vm(VP)
+  子電路裡的元件在波形中以「方塊名稱.元件名稱」出現（例如 X1.Vo）。
+節點：
+  0（接地）：V1.-
+  O1：X1.out、Vo1.n
+  O2：X2.out、Vo2.n
+  VIN：V1.+、X1.in、X2.in
+問題：無
+下一步：daedalus_simulate 模擬；daedalus_render 看電路圖。
+
+===== sub_simulate {"path":"C:\\Johnny\\Claude Code\\DaedalusEngine\\.claude\\worktrees\\epic-murdock-da675c\\out\\mcp\\sub.psimx"}
+暫態模擬完成：0.00 秒，20 步（細分 0、未收斂 0），切換事件 0，dt = 1 µs，總時間 20 µs，記錄 21 點
+統計區間 16 µs ～ 20 µs（最後 20 %）
+| 探棒 | 平均 | RMS | 最小 | 最大 | 峰對峰 | 終值 |
+|---|---|---|---|---|---|---|
+| Vo1 | 6 V | 6 V | 6 V | 6 V | 0 V | 6 V |
+| Vo2 | 9 V | 9 V | 9 V | 9 V | 0 V | 9 V |
+| X1.Vm | 6 | 6 | 6 | 6 | 0 | 6 |
+| X2.Vm | 9 | 9 | 9 | 9 | 0 | 9 |
+
+
+===== sub_edit {"path":"C:\\Johnny\\Claude Code\\DaedalusEngine\\.claude\\worktrees\\epic-murdock-da675c\\out\\mcp\\sub.psimx","ops":[{"op":"set","name":"X1","params":{"vars":"Rb = 20"}}]}
+已存檔：C:\Johnny\Claude Code\DaedalusEngine\.claude\worktrees\epic-murdock-da675c\out\mcp\sub.psimx
+完成的操作：
+  - X1：vars=Rb = 20
+連線沒有變化
+問題：無
+
+
+===== sub_simulate2 {"path":"C:\\Johnny\\Claude Code\\DaedalusEngine\\.claude\\worktrees\\epic-murdock-da675c\\out\\mcp\\sub.psimx"}
+暫態模擬完成：0.00 秒，20 步（細分 0、未收斂 0），切換事件 0，dt = 1 µs，總時間 20 µs，記錄 21 點
+統計區間 16 µs ～ 20 µs（最後 20 %）
+| 探棒 | 平均 | RMS | 最小 | 最大 | 峰對峰 | 終值 |
+|---|---|---|---|---|---|---|
+| Vo1 | 8 V | 8 V | 8 V | 8 V | 0 V | 8 V |
+| Vo2 | 9 V | 9 V | 9 V | 9 V | 0 V | 9 V |
+| X1.Vm | 8 | 8 | 8 | 8 | 0 | 8 |
+| X2.Vm | 9 | 9 | 9 | 9 | 0 | 9 |
+
+
+===== sub_inspect_def {"path":"C:\\Johnny\\Claude Code\\DaedalusEngine\\.claude\\worktrees\\epic-murdock-da675c\\out\\mcp\\sub.psimx","subckt":"DIV"}
+C:\Johnny\Claude Code\DaedalusEngine\.claude\worktrees\epic-murdock-da675c\out\mcp\sub.psimx
+子電路 DIV：埠 in［L，功率］ out［R，功率］；參數 Rt=10 Rb=10
+元件 4、導線 5、節點 3（埠在節點表中以埠名稱出現；修改時操作加上 "subckt": "DIV"，埠以 port:名稱 指定）
+元件（名稱 型別 非預設參數 @位置 接腳→節點）：
+  PARAMS#1 PARAMS text=Rt = 10⏎Rb = 10 @(6,3)
+  R1 R R=Rt @(9,11)  1→in 2→out
+  R2 R R=Rb @(15,15) rot1  1→out 2→0
+  Vm VP @(23,9)  n→out
+節點：
+  0（接地）：R2.2
+  in（子電路埠 in）：R1.1、port:in.port
+  out（子電路埠 out）：R1.2、R2.1、Vm.n、port:out.port
+問題：無
+
+
+===== sub_edit_def {"path":"C:\\Johnny\\Claude Code\\DaedalusEngine\\.claude\\worktrees\\epic-murdock-da675c\\out\\mcp\\sub.psimx","ops":[{"op":"params","subckt":"DIV","text":"Rt = 20\nRb = 10"},{"op":"add","subckt":"DIV","type":"SUBPORT","params":{"text":"mid","side":"B"},"pins":{"port":"out"}},{"op":"subckt_new","na
+已存檔：C:\Johnny\Claude Code\DaedalusEngine\.claude\worktrees\epic-murdock-da675c\out\mcp\sub.psimx
+完成的操作：
+  - ［子電路 DIV］參數檔：Rt = 20；Rb = 10
+  - ［子電路 DIV］新增 port:mid（SUBPORT）於 (16, -0)；port:mid.port 以導線接到節點 out
+  - 新增子電路 SER：埠 a［L］ b［R］
+  - 新增 X3（SUBCKT）於 (32, 9)；X3.a 以導線接到節點 O1；X3.b 接到節點 O3
+  - 新增 R3（R）於 (34, 1)；R3.1 以導線接到節點 O3；R3.2 接到節點 0
+  - 新增 Vo3（VP）於 (37, 13)；Vo3.n 以導線接到節點 O3
+連線變化（7）：
+  R3.1：新增，O3
+  R3.2：新增，0
+  Vo3.n：新增，O3
+  X1.mid：新增，（未接）
+  X2.mid：新增，（未接）
+  X3.a：新增，O1
+  X3.b：新增，O3
+問題（2）：
+  - X1.mid 沒有連接：節點「~X1.mid」只有這一隻接腳
+  - X2.mid 沒有連接：節點「~X2.mid」只有這一隻接腳
+子電路 DIV：埠 in［L，功率］ out［R，功率］ mid［B，功率］；方塊 2 個
+  0（接地）：R2.2
+  in（子電路埠 in）：R1.1、port:in.port
+  out（子電路埠 out、mid）：R1.2、R2.1、Vm.n、port:out.port、port:mid.port
+  問題：無
+子電路 SER：埠 a［L，功率］ b［R，功率］；方塊 1 個
+  a（子電路埠 a）：R1.1、port:a.port
+  b（子電路埠 b）：R1.2、port:b.port
+  問題：無
+
+
+===== sub_simulate3 {"path":"C:\\Johnny\\Claude Code\\DaedalusEngine\\.claude\\worktrees\\epic-murdock-da675c\\out\\mcp\\sub.psimx"}
+暫態模擬完成：0.00 秒，20 步（細分 0、未收斂 0），切換事件 0，dt = 1 µs，總時間 20 µs，記錄 21 點
+統計區間 16 µs ～ 20 µs（最後 20 %）
+| 探棒 | 平均 | RMS | 最小 | 最大 | 峰對峰 | 終值 |
+|---|---|---|---|---|---|---|
+| Vo1 | 3 V | 3 V | 3 V | 3 V | 0 V | 3 V |
+| Vo2 | 7.2 V | 7.2 V | 7.2 V | 7.2 V | 0 V | 7.2 V |
+| Vo3 | 1.5 V | 1.5 V | 1.5 V | 1.5 V | 0 V | 1.5 V |
+| X1.Vm | 3 | 3 | 3 | 3 | 0 | 3 |
+| X2.Vm | 7.2 | 7.2 | 7.2 | 7.2 | 0 | 7.2 |
+
+
+===== sub_edit_loop {"path":"C:\\Johnny\\Claude Code\\DaedalusEngine\\.claude\\worktrees\\epic-murdock-da675c\\out\\mcp\\sub.psimx","ops":[{"op":"add","subckt":"SER","type":"SUBCKT","name":"XL","params":{"def":"SER"},"pins":{"a":"A","b":null}}],"dry_run":true}
+[isError] 第 1 個操作（add）失敗：子電路 SER 不能包含 SER：SER 會包含它自己
+
+===== sub_render_def {"path":"C:\\Johnny\\Claude Code\\DaedalusEngine\\.claude\\worktrees\\epic-murdock-da675c\\out\\mcp\\sub.psimx","subckt":"DIV"}
+C:\Johnny\Claude Code\DaedalusEngine\.claude\worktrees\epic-murdock-da675c\out\mcp\sub.psimx 子電路 DIV 的電路圖（深色：功率線；藍色：控制線；紅圈：未接的接腳；邊緣數字：座標）
+
+===== daedalus_examples {}
+內建範例 35 個（key：名稱［類別］）：
+  buck：Buck 轉換器（開迴路 PWM）［電力轉換］
+  buckac：Buck 轉換器 AC 掃頻（小訊號注入）［電力轉換］
+  supervisor：Supervisor 看門狗比較器（AS393 + 301k 修正）［類比與控制 IC］
+  rlc：RLC 低通濾波器波德圖（線性頻域法）［被動電路與濾波］
+  bridge：單相二極體橋式整流（電容濾波）［電力轉換］
+  tl431：TL431 + 光耦合器回授特性［類比與控制 IC］
+  doublepulse：雙脈衝測試（非理想 MOSFET + 二極體反向恢復 + 雜散電感）［功率元件］
+  branches：串聯支路步階響應（RC／LC／RLC、斜坡電源）［被動電路與濾波］
+  threephase_load：三相 RL 線路與 RC／RLC 負載（交流電表、瓦特計）［三相系統］
+  nonlinear：非線性元件（i=f(v)、v=f(i)、飽和電感、可變電阻、dv/dt）［被動電路與濾波］
+  transformers：單相變壓器與耦合電感（理想、含漏感、三繞組、2／3 繞組耦合）［變壓器與磁性元件］
+  rectifier3：三相變壓器＋三相二極體橋（Y/Y、Y/Δ、直流表）［電力轉換］
+  phase_control：單相相控：閘流體橋、TRIAC 調光、SCR 半波、DIAC 觸發［電力轉換］
+  thyristor3：三相閘流體整流：六脈波全橋、三脈波半波、六相半波［電力轉換］
+  switches：開關元件測試台（NPN、PNP、IGBT、PMOS、GTO、雙向開關）［功率元件］
+  mech_switches：機械開關：按鈕、單刀雙擲、雙刀單擲、雙刀雙擲極性反轉、三相開關［功率元件］
+  spice_transistors：SPICE 電晶體電路（BJT 放大、PNP 電流源、MOSFET 放大與負載開關、稽納穩壓）［類比與控制 IC］
+  nonideal_igbt_pmos：非理想 IGBT 與 P-MOSFET（導通壓降、關斷）［功率元件］
+  opamp：運算放大器：反相放大（參數掃描 Rf）、積分器、一對二光耦［類比與控制 IC］
+  ctrl_sources：線性受控源（CCVS、VCVS、CCCS、VCCS 及可變增益型）［電源與受控源］
+  nonlinear_sources：非線性受控源（乘、除、平方根、冪次）［電源與受控源］
+  voltage_sources：電壓源總覽（鋸齒、成對 PWL、電池、亂數、數學式）［電源與受控源］
+  current_sources：電流源總覽（正弦、三角、方波、步階、雙準位、成對 PWL、亂數、數學式）［電源與受控源］
+  control_blocks：控制方塊基礎（比例、積分、PI、微分、重置積分、加減、限制、延遲）［控制方塊］
+  analog_filters：類比濾波器與 s 域轉移函數（一階、二階、帶通、帶拒）［控制方塊］
+  math_blocks：數學函數方塊（乘除、根號、三角／反三角、指數對數、捨入、運算式）［控制方塊］
+  logic：邏輯閘、正反器、單擊電路、脈寬計數與上下數計數器［數位邏輯］
+  digital_control：離散控制方塊（ZOH、1/z、離散積分／微分、FIR、IIR、z 轉移函數、量化、A/D、D/A）［數位控制］
+  vector_lookup：向量／記憶體、多工器、查表與取樣保持［控制方塊］
+  measurement_dq：三相量測鏈：電壓／電流感測器、abc↔dqo、FFT、RMS、THD、控制-功率介面、C 程式方塊［三相系統］
+  montecarlo_rc：蒙地卡羅容差分析：RC 分壓器（兩個電阻 ±5 % 常態、電容 ±10 % 均勻）［分析功能］
+  loop_gain：迴路增益量測（AC 掃頻、迴路探棒、閉迴路 RLC 電壓控制）［分析功能］
+  power_gate：基極／閘極接功率電路：NPN、PNP、SCR、TRIAC、GTO［功率元件］
+  watt_hour3：三相瓦時計：平衡四線與不平衡三線負載的電能［三相系統］
+  subcircuit_rc：子電路：RC 低通方塊（各方塊參數、巢狀子電路、方塊內的探棒）［子電路］
+用 key 加 copy_to 存成檔案。
+
+===== example_buck {"key":"buck","copy_to":"C:\\Johnny\\Claude Code\\DaedalusEngine\\.claude\\worktrees\\epic-murdock-da675c\\out\\mcp\\example_buck.psimx"}
+範例「Buck 轉換器（開迴路 PWM）」已存成檔案。
+說明：Buck 轉換器：Vin=100 V、fsw=50 kHz、D=0.437 → 理想 Vo ≈ 43.7 V。按 F5 執行模擬。
+C:\Johnny\Claude Code\DaedalusEngine\.claude\worktrees\epic-murdock-da675c\out\mcp\example_buck.psimx
+元件 14、導線 14、節點 9；模擬控制 dt=0.2u tt=3m
+元件（名稱 型別 非預設參數 @位置 接腳→節點）：
+  Vin VDC V=100 @(0,6)  +→~Vin.+ -→0
+  Q1 MOSFET @(6,4) rot3  D→~Vin.+ S→~Q1.S G→~Q1.G
+  D1 DIODE @(10,6) rot3  A→0 K→~Q1.S
+  L1 L L=100u @(13,4)  1→~Q1.S 2→~L1.2
+  IL IP @(17,4)  in→~L1.2 out→~IL.out
+  Co C @(19,6) rot1  1→~IL.out 2→0
+  RL R R=5 @(25,6) rot1  1→~IL.out 2→0
+  Vo VP @(22,2)  n→~IL.out
+  Vref VDC V=0.437 @(2,17)  +→~Vref.+ -→0
+  Vtri VTRI f=50k @(2,23)  +→~Vtri.+ -→0
+  CMP COMP @(13,18)  in+→~Vref.+ in-→~Vtri.+ out→~CMP.out
+  ON1 ONCTRL @(19,18)  in→~CMP.out gate→~Q1.G
+  Vg VP @(23,16)  n→~Q1.G
+  SIMCTRL#31 SIMCTRL dt=0.2u tt=3m @(30,2)
+節點：
+  0（接地）：Vin.-、D1.A、Co.2、RL.2、Vref.-、Vtri.-
+  ~CMP.out［控制］：CMP.out、ON1.in
+  ~IL.out：IL.out、Co.1、RL.1、Vo.n
+  ~L1.2：L1.2、IL.in
+  ~Q1.G［控制］：Q1.G、ON1.gate、Vg.n
+  ~Q1.S：Q1.S、D1.K、L1.1
+  ~Vin.+：Vin.+、Q1.D
+  ~Vref.+［控制］：Vref.+、CMP.in+
+  ~Vtri.+［控制］：Vtri.+、CMP.in-
+問題：無
+
+
+===== edit_example {"path":"C:\\Johnny\\Claude Code\\DaedalusEngine\\.claude\\worktrees\\epic-murdock-da675c\\out\\mcp\\example_buck.psimx","ops":[{"op":"remove","name":"Vo"},{"op":"add","type":"VP","name":"Vsw","pins":{"n":"D1.K"}}]}
+已存檔：C:\Johnny\Claude Code\DaedalusEngine\.claude\worktrees\epic-murdock-da675c\out\mcp\example_buck.psimx
+完成的操作：
+  - 刪除 Vo（VP）
+  - 新增 Vsw（VP）於 (-4, 12)；Vsw.n 以導線接到節點 ~Q1.S
+連線變化（2）：
+  Vo.n：已刪除
+  Vsw.n：新增，~Q1.S
+問題：無
+
+
+===== render_example {"path":"C:\\Johnny\\Claude Code\\DaedalusEngine\\.claude\\worktrees\\epic-murdock-da675c\\out\\mcp\\example_buck.psimx"}
+C:\Johnny\Claude Code\DaedalusEngine\.claude\worktrees\epic-murdock-da675c\out\mcp\example_buck.psimx 的電路圖（深色：功率線；藍色：控制線；紅圈：未接的接腳；邊緣數字：座標）
+
+===== example_buckac {"key":"buckac","copy_to":"C:\\Johnny\\Claude Code\\DaedalusEngine\\.claude\\worktrees\\epic-murdock-da675c\\out\\mcp\\buckac.psimx"}
+範例「Buck 轉換器 AC 掃頻（小訊號注入）」已存成檔案。
+說明：激勵源 Vac 經加法器注入調變訊號，AC Sweep Probe 量測 Vo/調變 的開迴路響應（含開關動作）。F5 執行掃頻。
+C:\Johnny\Claude Code\DaedalusEngine\.claude\worktrees\epic-murdock-da675c\out\mcp\buckac.psimx
+元件 16、導線 14、節點 10；模擬控制 dt=0.2u tt=6m ps=10
+元件（名稱 型別 非預設參數 @位置 接腳→節點）：
+  Vin VDC V=100 @(0,6)  +→~Vin.+ -→0
+  Q1 MOSFET @(6,4) rot3  D→~Vin.+ S→~Q1.S G→~Q1.G
+  D1 DIODE @(10,6) rot3  A→0 K→~Q1.S
+  L1 L L=100u @(13,4)  1→~Q1.S 2→~L1.2
+  Co C @(17,6) rot1  1→~L1.2 2→0
+  RL R R=5 @(23,6) rot1  1→~L1.2 2→0
+  Vo_ac ACP @(20,2)  n→~L1.2
+  Vo VP @(27,2)  n→~L1.2
+  Vref VDC V=0.437 @(-4,17)  +→~Vref.+ -→0
+  SUM1 SUM2 @(4,15)  in1→~Vref.+ in2→~SUM1.in2 out→~SUM1.out
+  Vac VSIN Vm=0 f=1k @(4,20)  +→~SUM1.in2 -→0
+  CMP COMP @(13,17)  in+→~SUM1.out in-→~CMP.in- out→~CMP.out
+  Vtri VTRI f=50k @(10,23)  +→~CMP.in- -→0
+  ON1 ONCTRL @(20,17)  in→~CMP.out gate→~Q1.G
+  SIMCTRL#33 SIMCTRL dt=0.2u tt=6m ps=10 @(34,1)
+  ACSWEEP#34 ACSWEEP f0=200 f1=20k n=25 a0=0.005 a1=0.02 maxc=80 tol=0.2 @(34,8)
+節點：
+  0（接地）：Vin.-、D1.A、Co.2、RL.2、Vref.-、Vac.-、Vtri.-
+  ~CMP.in-［控制］：CMP.in-、Vtri.+
+  ~CMP.out［控制］：CMP.out、ON1.in
+  ~L1.2：L1.2、Co.1、RL.1、Vo_ac.n、Vo.n
+  ~Q1.G［控制］：Q1.G、ON1.gate
+  ~Q1.S：Q1.S、D1.K、L1.1
+  ~SUM1.in2［控制］：SUM1.in2、Vac.+
+  ~SUM1.out［控制］：SUM1.out、CMP.in+
+  ~Vin.+：Vin.+、Q1.D
+  ~Vref.+［控制］：Vref.+、SUM1.in1
+問題：無
+
+
+===== simulate_ac {"path":"C:\\Johnny\\Claude Code\\DaedalusEngine\\.claude\\worktrees\\epic-murdock-da675c\\out\\mcp\\buckac.psimx"}
+AC 掃頻完成：0.42 秒，25 個頻率點（200 Hz ～ 20 kHz）
+Vo_ac：
+  0 dB 穿越 @ 15.92 kHz（相位 -178.56°）
+  低頻增益 40.14 dB @ 200 Hz，峰值 53.12 dB @ 1.651 kHz
+  −3 dB 頻寬 2.445 kHz
+  頻率響應：200 Hz 40.14 dB -1.5°；294 Hz 40.29 dB -2.2°；431 Hz 40.65 dB -3.3°；766 Hz 42.22 dB -7.1°；1.12 kHz 45.68 dB -15.8°；1.65 kHz 53.12 dB -110.1°；2.42 kHz 37.38 dB -167.0°；3.56 kHz 27.92 dB -173.6°；5.22 kHz 20.20 dB -176.2°；9.28 kHz 9.62 dB -178.0°；13.6 kHz 2.81 dB -178.7°；20 kHz -3.94 dB -179.0°
+模擬警告（1）：
+  - 頻率 16.51 kHz 在 77 個週期內未達穩態，結果可能有誤差。
+
+
+===== bode {"path":"C:\\Johnny\\Claude Code\\DaedalusEngine\\.claude\\worktrees\\epic-murdock-da675c\\out\\mcp\\buckac.psimx"}
+buckac 波形：波德圖 200 Hz ～ 20 kHz（上：增益 dB，下：相位 °）
+
+===== missing {"path":"C:\\Johnny\\Claude Code\\DaedalusEngine\\.claude\\worktrees\\epic-murdock-da675c\\out\\mcp\\no_such.psimx"}
+[isError] 無法讀取 C:\Johnny\Claude Code\DaedalusEngine\.claude\worktrees\epic-murdock-da675c\out\mcp\no_such.psimx：系統找不到指定的檔案。 (os error 2)
